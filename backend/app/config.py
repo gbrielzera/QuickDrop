@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BACKEND_DIR.parent / "frontend"
+BYTES_PER_MEGABYTE = 1024 * 1024
 
 
 class Settings(BaseSettings):
@@ -24,6 +25,10 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite+aiosqlite:///{BACKEND_DIR / 'quickdrop.db'}"
     storage_dir: Path = BACKEND_DIR / "storage"
 
+    # Limites de tamanho dos arquivos enviados (não há limite de tipo: todo tipo de arquivo é aceito).
+    max_file_size_mb: int = 100
+    max_room_size_mb: int = 500
+
     # Texto separado por vírgulas para ficar fácil de escrever no .env
     allowed_ttl_hours: str = "1,12,24,48"
     default_ttl_hours: int = 12
@@ -35,6 +40,14 @@ class Settings(BaseSettings):
     def ttl_options(self) -> list[int]:
         """Opções de expiração da sala em horas. Ex.: "1,12,24,48" vira [1, 12, 24, 48]."""
         return [int(hours) for hours in self.allowed_ttl_hours.split(",")]
+
+    @property
+    def max_file_size_bytes(self) -> int:
+        return self.max_file_size_mb * BYTES_PER_MEGABYTE
+
+    @property
+    def max_room_size_bytes(self) -> int:
+        return self.max_room_size_mb * BYTES_PER_MEGABYTE
 
     @model_validator(mode="after")
     def check_default_ttl_is_an_option(self) -> "Settings":

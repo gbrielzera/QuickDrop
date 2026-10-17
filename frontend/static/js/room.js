@@ -7,6 +7,8 @@ import { createQrCodeSvg } from "./qr.js";
 import { getRoomParams, joinRoom, loadEncryptionKey } from "./room-access.js";
 import { buildRoomPath, formatRoomCode, readSecretFromHash } from "./room-code.js";
 import { splitTimeLeft } from "./time-left.js";
+import { startFileList } from "./file-list.js";
+import { startUploadPanel } from "./upload-panel.js";
 import { clearMessage, runWithBusyButton, setUpCopyButton, showMessage } from "./ui.js";
 
 const HTTP_UNAUTHORIZED = 401;
@@ -36,6 +38,7 @@ const copyStatus = document.getElementById("copy-status");
 
 let expiresAt = null;
 let expiryTimer = null;
+let filesStarted = false;
 
 function showOnly(viewName) {
   for (const [name, view] of Object.entries(views)) {
@@ -74,6 +77,24 @@ function renderShareOptions() {
   passwordNote.hidden = Boolean(secretFromLink);
 }
 
+// Liga os painéis de enviar e listar arquivos (uma vez só por página).
+function startFiles() {
+  if (filesStarted) {
+    return;
+  }
+  filesStarted = true;
+  const getEncryptionKey = () => loadEncryptionKey(roomCode);
+  const fileList = startFileList({ roomCode, getEncryptionKey });
+  startUploadPanel({
+    roomCode,
+    maxFileBytes: Number(document.body.dataset.maxFileBytes),
+    maxRoomBytes: Number(document.body.dataset.maxRoomBytes),
+    getEncryptionKey,
+    onFileSent: fileList.addEntry,
+  });
+  fileList.load();
+}
+
 async function showRoom() {
   const room = await getRoom(roomCode);
   expiresAt = new Date(room.expires_at).getTime();
@@ -81,6 +102,7 @@ async function showRoom() {
   renderExpiry();
   expiryTimer = setInterval(renderExpiry, EXPIRY_REFRESH_MILLISECONDS);
   showOnly("ready");
+  startFiles();
 }
 
 // ---------- entrar ----------

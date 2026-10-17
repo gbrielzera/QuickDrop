@@ -11,8 +11,13 @@ from app.room_service import find_active_room
 from app.security import ROOM_CODE_PATTERN
 from app.session import read_session_token, session_cookie_name
 
+UUID_PATTERN = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+
 # Código da sala na URL, já validado (6 caracteres do alfabeto permitido).
 RoomCode = Annotated[str, Path(pattern=ROOM_CODE_PATTERN)]
+
+# Id de arquivo na URL: um UUID (o servidor é quem cria os ids).
+FileId = Annotated[str, Path(pattern=UUID_PATTERN)]
 
 
 async def get_db(request: Request) -> AsyncIterator[AsyncSession]:
@@ -35,3 +40,8 @@ async def get_current_room(
     if room is None:
         raise HTTPException(status_code=404, detail="Sala não encontrada ou expirada.")
     return room
+
+
+# Apelidos para usar nas rotas: `db: Database` e `room: CurrentRoom`.
+Database = Annotated[AsyncSession, Depends(get_db)]
+CurrentRoom = Annotated[Room, Depends(get_current_room)]

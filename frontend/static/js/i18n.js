@@ -23,6 +23,11 @@ function detectLanguage() {
   return navigator.language.toLowerCase().startsWith("en") ? "en" : DEFAULT_LANGUAGE;
 }
 
+/** Idioma atual: "pt" ou "en". */
+export function getLanguage() {
+  return currentLanguage;
+}
+
 /** Devolve o texto da chave no idioma atual. Valores como {time} são trocados pelos de `values`. */
 export function t(key, values = {}) {
   const template = messages[currentLanguage][key] ?? messages[DEFAULT_LANGUAGE][key] ?? key;

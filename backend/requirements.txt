@@ -7,3 +7,4 @@ sqlalchemy[asyncio]==2.1.5
 aiosqlite==0.22.1
 argon2-cffi==25.1.0
 itsdangerous==2.2.0
+aiofiles==25.1.0

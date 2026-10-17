@@ -233,8 +233,9 @@ StoredFile (arquivo)
 ├── room_id          FK → Room (on delete cascade)
 ├── encrypted_meta   bytes                     nome, MIME e tamanho original, criptografados
 ├── size_bytes       int                       tamanho do .bin criptografado (para os limites)
-├── uploaded_by      bytes                     apelido do dispositivo, criptografado
 └── created_at       datetime
+
+(uploaded_by, o apelido criptografado do dispositivo, entra na Fase 4 junto com a lista de dispositivos.)
 
 RoomText (editor compartilhado, 1 por sala)
 ├── room_id          FK → Room (PK)
@@ -266,7 +267,7 @@ Disco: `storage/{room_id}/{file_id}`. Apagar a sala = apagar a pasta inteira + r
 | `DELETE` | `/api/rooms/{code}` | Encerra a sala e apaga tudo |
 | `POST` | `/api/rooms/{code}/leave` | Sai (apaga cookie) |
 | `GET` | `/api/rooms/{code}/files` | Lista arquivos |
-| `POST` | `/api/rooms/{code}/files` | Upload de **um arquivo já criptografado** (multipart: `blob` + `encrypted_meta` + `uploaded_by`) |
+| `POST` | `/api/rooms/{code}/files` | Upload de **um arquivo já criptografado**: o corpo da requisição é o arquivo (lido em streaming, sem `python-multipart`) e o cabeçalho `X-File-Meta` leva o nome, tipo e tamanho originais, criptografados. Erro `413` com `file_too_large` ou `room_full` |
 | `GET` | `/api/rooms/{code}/files/{file_id}` | Download do `.bin` criptografado (o navegador descriptografa) |
 | `DELETE` | `/api/rooms/{code}/files/{file_id}` | Exclui arquivo |
 | `GET` | `/api/rooms/{code}/text` | Texto criptografado atual + versão (para carga inicial) |
@@ -282,7 +283,7 @@ Autenticado pelo cookie. Mensagens em JSON com campo `type`:
 **Servidor → cliente**
 ```json
 {"type": "init",          "text": {"ciphertext": "...", "version": 12}, "files": [...], "clips": [...], "online": 2}
-{"type": "file_added",    "file": {"id": "...", "encrypted_meta": "...", "size": 204800, "uploaded_by": "..."}}
+{"type": "file_added",    "file": {"id": "...", "encrypted_meta": "...", "size_bytes": 204800, "created_at": "..."}}
 {"type": "file_deleted",  "file_id": "..."}
 {"type": "text_updated",  "ciphertext": "...", "version": 13}
 {"type": "clip_added",    "clip": {"id": "...", "ciphertext": "..."}}
@@ -467,11 +468,14 @@ Vem antes de tudo porque todas as outras partes dependem dela.
 - [x] 31 testes no backend (criar, entrar, senha errada, sala inexistente, TTL inválido, cookie falso, sala expirada) e 35 no frontend
 - Fica para depois: apelido do dispositivo e lista de dispositivos online (Fase 4), limite de tentativas no `/params` e no `/join` (Fase 6), botão "encerrar sala" (Fase 6)
 
-### Fase 3: Arquivos, sem tempo real ainda (2–3 dias)
-- [ ] `storage.py`: salvar em streaming com limite de tamanho, ler, apagar
-- [ ] Rotas de upload, listagem, download e exclusão
-- [ ] Front: criptografar antes do upload, descriptografar após download, drag-and-drop, seleção múltipla, barra de progresso, lista com nomes descriptografados
-- [ ] Testes: upload, download, limite de 100 MB/arquivo e 500 MB/sala, arquivo de outra sala (deve negar)
+### Fase 3: Arquivos, sem tempo real ainda (2–3 dias) ✅
+- [x] `storage.py`: grava em streaming (sem carregar o arquivo na memória), confere o tamanho durante o envio e apaga o que sobrar se passar do limite; arquivos no disco com nome UUID
+- [x] Rotas: enviar, listar, baixar (sempre como anexo, `nosniff`) e excluir; só quem entrou na sala; arquivo de outra sala devolve 404
+- [x] Limites: 100 MB por arquivo (com 1 MB de folga para o acréscimo da criptografia) e 500 MB por sala, somando todos os arquivos; todo tipo de arquivo é aceito
+- [x] Front: criptografa antes de enviar (fila, um por vez), barra de progresso amarela (em trânsito), arrastar e soltar, seleção múltipla, lista com nomes descriptografados, baixar (descriptografa no navegador) e excluir com confirmação
+- [x] 58 testes no backend (incluindo limites, sala cheia, cookie falso, arquivo de outra sala e sala expirada) e 40 no frontend
+- [x] Verificado no navegador com dois "aparelhos": arquivo de texto, binário de 2,5 MB com extensão rara e arquivo vazio voltaram idênticos; no disco só há bytes embaralhados
+- Fica para a Fase 4: a lista dos outros aparelhos só atualiza ao recarregar a página (o tempo real chega com o WebSocket)
 
 ### Fase 4: Tempo real (2 dias)
 - [ ] `ConnectionManager` (entrar/sair da sala, broadcast)

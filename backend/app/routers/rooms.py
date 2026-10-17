@@ -1,11 +1,9 @@
 """Rotas para criar uma sala, entrar nela e consultar seus dados."""
 
-from typing import Annotated
-
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import RoomCode, get_current_room, get_db
+from app.dependencies import CurrentRoom, Database, RoomCode
 from app.encoding import from_base64url, to_base64url
 from app.models import Room
 from app.room_service import RoomCodeUnavailableError, create_room, find_active_room
@@ -20,8 +18,6 @@ from app.security import hash_auth_key, verify_auth_key
 from app.session import set_session_cookie
 
 router = APIRouter(prefix="/api/rooms", tags=["salas"])
-
-Database = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def _get_active_room_or_404(db: AsyncSession, room_code: str) -> Room:
@@ -68,7 +64,7 @@ async def join_room(code: RoomCode, body: JoinRoomRequest, response: Response, d
 
 
 @router.get("/{code}")
-async def get_room(room: Annotated[Room, Depends(get_current_room)]) -> RoomResponse:
+async def get_room(room: CurrentRoom) -> RoomResponse:
     """Dados da sala. Só quem já entrou consegue ver."""
     return _to_room_response(room)
 

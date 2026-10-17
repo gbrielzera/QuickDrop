@@ -12,8 +12,12 @@ import {
 
 const KEY_STORAGE_PREFIX = "quickdrop:key:";
 
-// A chave fica no sessionStorage: sobrevive ao F5, mas some quando a aba é fechada.
+// Chaves já conhecidas nesta página. Garante que a chave funcione mesmo sem sessionStorage.
+const keysInMemory = new Map();
+
+// A chave também fica no sessionStorage: sobrevive ao F5, mas some quando a aba é fechada.
 function saveEncryptionKey(roomCode, encryptionKey) {
+  keysInMemory.set(roomCode, encryptionKey);
   try {
     sessionStorage.setItem(KEY_STORAGE_PREFIX + roomCode, toBase64Url(encryptionKey));
   } catch {
@@ -23,6 +27,9 @@ function saveEncryptionKey(roomCode, encryptionKey) {
 
 /** Devolve a chave de criptografia guardada para a sala, ou null se este aparelho ainda não entrou. */
 export function loadEncryptionKey(roomCode) {
+  if (keysInMemory.has(roomCode)) {
+    return keysInMemory.get(roomCode);
+  }
   try {
     const savedKey = sessionStorage.getItem(KEY_STORAGE_PREFIX + roomCode);
     return savedKey ? fromBase64Url(savedKey) : null;

@@ -65,3 +65,12 @@ class RoomResponse(BaseModel):
     code: str
     has_password: bool
     expires_at: datetime
+
+
+class FileResponse(BaseModel):
+    """Um arquivo da sala. O nome, o tipo e o tamanho originais estão dentro de `encrypted_meta`."""
+
+    id: str
+    encrypted_meta: str
+    size_bytes: int
+    created_at: datetime

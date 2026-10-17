@@ -2,7 +2,7 @@
 {% from "_icons.html" import icon %}
 
 {% block title %}{{ room_code }} · {{ app_name }}{% endblock %}
-{% block body_attributes %}data-room-code="{{ room_code }}"{% endblock %}
+{% block body_attributes %}data-room-code="{{ room_code }}" data-max-file-bytes="{{ max_file_bytes }}" data-max-room-bytes="{{ max_room_bytes }}"{% endblock %}
 
 {% block content %}
 <p class="lead" id="view-loading" role="status" data-i18n="room.loading">Entrando na sala...</p>
@@ -35,6 +35,40 @@
     </h1>
     <span class="tag tag--large" data-expiry></span>
   </div>
+  <div class="signs">
+    <section class="sign sign--blue" aria-labelledby="send-title">
+      <h2 class="sign__band" id="send-title">
+        <span class="roundel">{{ icon("upload") }}</span>
+        <span data-i18n="files.sendTitle">Enviar arquivos</span>
+      </h2>
+      <div class="sign__body">
+        <div class="dropzone" id="dropzone">
+          <p class="dropzone__text" data-i18n="files.dropHint">Arraste arquivos para cá</p>
+          <input type="file" id="file-input" multiple hidden>
+          <button class="button button--blue" type="button" id="choose-files" data-i18n="files.choose">Escolher arquivos</button>
+        </div>
+        <p class="hint" id="limits-hint"></p>
+        <ul class="transfers" id="upload-list" aria-live="polite"></ul>
+      </div>
+    </section>
+
+    <section class="sign sign--green" aria-labelledby="files-title">
+      <h2 class="sign__band" id="files-title">
+        <span class="roundel">{{ icon("files") }}</span>
+        <span data-i18n="files.roomTitle">Na sala</span>
+      </h2>
+      <div class="sign__body">
+        <p class="empty" id="files-empty">
+          <span data-i18n="files.empty">Nenhum arquivo ainda. O que for enviado por qualquer aparelho aparece aqui.</span>
+          <a href="#invite" data-i18n="files.inviteLink">Convidar outro aparelho</a>
+        </p>
+        <ul class="file-list" id="file-list"></ul>
+        <p class="error" id="files-status" role="status"></p>
+      </div>
+    </section>
+  </div>
+
+  <h2 class="section-title" id="invite" data-i18n="room.inviteTitle">Convidar outro aparelho</h2>
   <p class="lead" data-i18n="room.lead">Entre pelo outro aparelho com uma das opções abaixo.</p>
 
   <div class="signs">

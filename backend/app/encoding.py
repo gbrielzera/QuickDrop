@@ -11,8 +11,11 @@ def to_base64url(data: bytes) -> str:
 
 def from_base64url(text: str) -> bytes:
     """Faz o caminho inverso de to_base64url. Lança ValueError se o texto for inválido."""
+    if "+" in text or "/" in text:
+        raise ValueError("Texto base64url inválido.")  # "+" e "/" são do base64 comum, não do base64url
     padding = "=" * (-len(text) % 4)
     try:
-        return base64.urlsafe_b64decode(text + padding)
-    except (binascii.Error, UnicodeEncodeError) as error:
+        # validate=True recusa qualquer caractere fora do alfabeto (sem isso, o Python os ignora em silêncio).
+        return base64.b64decode(text + padding, altchars=b"-_", validate=True)
+    except (binascii.Error, ValueError) as error:
         raise ValueError("Texto base64url inválido.") from error

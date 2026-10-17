@@ -30,7 +30,14 @@ async def index(request: Request) -> HTMLResponse:
 @router.get("/r/{code}", response_class=HTMLResponse)
 async def room_page(code: RoomCode, request: Request) -> HTMLResponse:
     """Página de uma sala. O navegador entra na sala e mostra o conteúdo (tudo é descriptografado lá)."""
-    page_data = {"app_name": get_settings().app_name, "room_code": code}
+    settings = get_settings()
+    page_data = {
+        "app_name": settings.app_name,
+        "room_code": code,
+        # O JavaScript usa estes limites para avisar antes de enviar um arquivo grande demais.
+        "max_file_bytes": settings.max_file_size_bytes,
+        "max_room_bytes": settings.max_room_size_bytes,
+    }
     return templates.TemplateResponse(request, "room.html", page_data)
 
 
