@@ -1,17 +1,72 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {% block content %}
-<header class="hero">
-  <h1>{{ app_name }}</h1>
-  <p>Transfira arquivos e textos entre seus dispositivos, com criptografia de ponta a ponta.</p>
-</header>
+<h1 data-i18n="home.title">Do seu PC ao celular, em segundos.</h1>
+<p class="lead" data-i18n="home.lead">Sem conta, sem anúncios. Tudo é criptografado neste aparelho: nem nós conseguimos ler.</p>
 
-<section class="card">
-  <h2>Em construção</h2>
-  <p>Fase 0 concluída: o servidor está no ar. As telas de criar e entrar em salas chegam na Fase 2.</p>
-  <p class="muted">
-    Opções de expiração configuradas:
-    {% for ttl in ttl_options %}{{ ttl }}h{% if ttl == default_ttl %} (padrão){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
-  </p>
-</section>
+<div class="signs">
+  <section class="sign sign--blue" aria-labelledby="create-title">
+    <h2 class="sign__band" id="create-title">
+      <span class="roundel">{{ icon("plus") }}</span>
+      <span data-i18n="create.title">Criar sala</span>
+    </h2>
+    <form class="sign__body" id="create-form" novalidate>
+      <fieldset>
+        <legend data-i18n="create.expiry">A sala expira em</legend>
+        <div class="segmented">
+          {% for ttl_hours in ttl_options %}
+          <label>
+            <input type="radio" name="ttl" value="{{ ttl_hours }}" {% if ttl_hours == default_ttl %}checked{% endif %}>
+            <span>{{ ttl_hours }} h</span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <label class="check">
+        <input type="checkbox" id="use-password">
+        <span data-i18n="create.usePassword">Proteger com minha própria senha</span>
+      </label>
+      <div class="field" id="create-password-field" hidden>
+        <label for="create-password" data-i18n="create.passwordLabel">Senha</label>
+        <input type="password" id="create-password" autocomplete="new-password" aria-describedby="create-password-hint">
+        <p class="hint" id="create-password-hint" data-i18n="create.passwordHint">Mínimo de 6 caracteres. Se esquecer, ninguém consegue recuperar o conteúdo.</p>
+      </div>
+      <p class="error" id="create-error" role="alert"></p>
+      <button class="button button--blue" type="submit" id="create-submit" data-i18n="create.submit">Criar sala</button>
+    </form>
+  </section>
+
+  <section class="sign sign--green" aria-labelledby="join-title">
+    <h2 class="sign__band" id="join-title">
+      <span class="roundel">{{ icon("enter") }}</span>
+      <span data-i18n="join.title">Entrar numa sala</span>
+    </h2>
+    <form class="sign__body" id="join-form" novalidate>
+      <div class="field">
+        <label for="join-code" data-i18n="join.codeLabel">Código da sala</label>
+        <input type="text" id="join-code" placeholder="K7P3XM-HQ4T-9WZC" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" aria-describedby="join-code-hint">
+        <p class="hint" id="join-code-hint" data-i18n="join.codeHint">Digite o código completo ou escaneie o QR Code da outra tela com a câmera do celular.</p>
+      </div>
+      <div class="field" id="join-password-field" hidden>
+        <label for="join-password" data-i18n="join.passwordLabel">Senha da sala</label>
+        <input type="password" id="join-password" autocomplete="current-password">
+      </div>
+      <p class="error" id="join-error" role="alert"></p>
+      <button class="button button--green" type="submit" id="join-submit" data-i18n="join.submit">Entrar</button>
+    </form>
+  </section>
+</div>
+
+{% set stations = [
+  {"name_key": "route.pc", "name": "Seu PC", "detail_key": "route.pcDetail", "detail": "Envia"},
+  {"name_key": "route.room", "name": "A sala", "detail_key": "route.roomDetail", "detail": "Expira quando você escolher"},
+  {"name_key": "route.phone", "name": "Seu celular", "detail_key": "route.phoneDetail", "detail": "Recebe"},
+] %}
+{% set show_train = true %}
+{% include "_route.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='js/home.js') }}"></script>
 {% endblock %}

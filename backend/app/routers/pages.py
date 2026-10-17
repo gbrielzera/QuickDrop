@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import FRONTEND_DIR, get_settings
+from app.dependencies import RoomCode
 
 templates = Jinja2Templates(directory=FRONTEND_DIR / "templates")
 
@@ -24,6 +25,13 @@ async def index(request: Request) -> HTMLResponse:
         "default_ttl": settings.default_ttl_hours,
     }
     return templates.TemplateResponse(request, "index.html", page_data)
+
+
+@router.get("/r/{code}", response_class=HTMLResponse)
+async def room_page(code: RoomCode, request: Request) -> HTMLResponse:
+    """Página de uma sala. O navegador entra na sala e mostra o conteúdo (tudo é descriptografado lá)."""
+    page_data = {"app_name": get_settings().app_name, "room_code": code}
+    return templates.TemplateResponse(request, "room.html", page_data)
 
 
 @dev_router.get("/dev/crypto", response_class=HTMLResponse)

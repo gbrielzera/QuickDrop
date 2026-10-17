@@ -219,14 +219,14 @@ senha + salt da sala ──Argon2id──▶ chave-mestra
 Room (sala)
 ├── id               UUID (PK)
 ├── code             str(6), único, indexado   ex.: "K7P3XM"
-├── has_password     bool
-├── kdf_salt         bytes(16) | null          salt do Argon2id do navegador (só se tiver senha)
-├── auth_hash        str | null                Argon2(auth_key), calculado no servidor (só se tiver senha)
-├── ttl_hours        int                       1, 12, 24 ou 48
-├── created_at       datetime
-├── expires_at       datetime                  (indexado, para a limpeza)
-├── last_activity_at datetime
-└── max_storage_bytes int                      (padrão 500 MB)
+├── has_password     bool                      true = o criador escolheu a senha; false = o app gerou um segredo
+├── kdf_salt         bytes(16)                 salt do Argon2id do navegador (sempre existe)
+├── auth_hash        str                       Argon2(auth_key), calculado no servidor (sempre existe)
+├── created_at       datetime                  (UTC, sem fuso no banco)
+└── expires_at       datetime                  (indexado, para a limpeza)
+
+Campos que entram só quando forem usados: last_activity_at (Fase 6, se a limpeza precisar).
+O limite de 500 MB por sala vem da configuração (MAX_ROOM_SIZE_MB), não de uma coluna.
 
 StoredFile (arquivo)
 ├── id               UUID (PK)                 também é o nome no disco
@@ -457,14 +457,15 @@ Vem antes de tudo porque todas as outras partes dependem dela.
 - [x] Página `/dev/crypto` (só com `DEBUG=true`) que mede o Argon2id e testa texto e arquivo no navegador
 - [ ] Medir o Argon2id num celular de verdade (no PC leva ~130 ms; o alvo é até ~1 s) e ajustar os parâmetros se precisar
 
-### Fase 2: Salas (2 dias)
-- [ ] Modelo `Room` e banco SQLite criado no startup
-- [ ] Gerar código seguro; Argon2 do `auth_key` no servidor
-- [ ] `POST /api/rooms`, `GET /api/rooms/{code}/params`, `POST /api/rooms/{code}/join` com cookie de sessão
-- [ ] Dependência `get_current_room()` que valida o cookie em todas as rotas protegidas
-- [ ] Telas `index.html` (criar com/sem senha, expiração 1/12/24/48h; entrar) e `room.html` (mostra código, link e QR Code)
-- [ ] Sala sem senha: chave no fragmento `#k=...` do link/QR
-- [ ] Testes: criar com e sem senha, entrar com `auth_key` certo/errado, sala inexistente, TTL inválido
+### Fase 2: Salas (2 dias) ✅
+- [x] Modelo `Room` e banco SQLite criado no startup (SQLAlchemy assíncrono; trocar a URL basta para usar PostgreSQL)
+- [x] Código aleatório seguro (`secrets`, alfabeto sem caracteres ambíguos); Argon2 do `auth_key` no servidor, em outra thread
+- [x] `POST /api/rooms`, `GET /api/rooms/{code}/params`, `POST /api/rooms/{code}/join` e `GET /api/rooms/{code}`, com cookie de sessão assinado (um por sala, `HttpOnly`, `SameSite=Strict`)
+- [x] Dependência `get_current_room()` que valida o cookie nas rotas protegidas
+- [x] Segredo gerado vai no fragmento `#k=...` do link e do QR Code; o código completo para digitar é `K7P3XM-HQ4T-9WZC`
+- [x] Telas: início (criar e entrar com o mesmo peso) e página da sala (código, link, QR Code, tempo restante), em português e inglês, claro e escuro, com o mundo visual "Linhas de Metrô" (Impeccable)
+- [x] 31 testes no backend (criar, entrar, senha errada, sala inexistente, TTL inválido, cookie falso, sala expirada) e 35 no frontend
+- Fica para depois: apelido do dispositivo e lista de dispositivos online (Fase 4), limite de tentativas no `/params` e no `/join` (Fase 6), botão "encerrar sala" (Fase 6)
 
 ### Fase 3: Arquivos, sem tempo real ainda (2–3 dias)
 - [ ] `storage.py`: salvar em streaming com limite de tamanho, ler, apagar

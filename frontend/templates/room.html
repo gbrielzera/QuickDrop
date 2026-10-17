@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}{{ room_code }} · {{ app_name }}{% endblock %}
+{% block body_attributes %}data-room-code="{{ room_code }}"{% endblock %}
+
+{% block content %}
+<p class="lead" id="view-loading" role="status" data-i18n="room.loading">Entrando na sala...</p>
+
+<section id="view-password" class="single" hidden aria-labelledby="password-title">
+  <h1 id="password-title" data-i18n="room.passwordTitle">Esta sala tem senha</h1>
+  <form class="sign sign--green spaced" id="room-password-form" novalidate>
+    <div class="sign__body">
+      <div class="field">
+        <label for="room-password" data-i18n="join.passwordLabel">Senha da sala</label>
+        <input type="password" id="room-password" autocomplete="current-password">
+      </div>
+      <p class="error" id="room-password-error" role="alert"></p>
+      <button class="button button--green" type="submit" id="room-password-submit" data-i18n="room.passwordSubmit">Entrar na sala</button>
+    </div>
+  </form>
+</section>
+
+<section id="view-missing" class="single" hidden aria-labelledby="missing-title">
+  <h1 id="missing-title" data-i18n="room.missingTitle">Sala não encontrada</h1>
+  <p class="lead error" id="missing-detail" role="alert"></p>
+  <a class="button button--blue spaced" href="/" data-i18n="room.backHome">Voltar ao início</a>
+</section>
+
+<div id="view-ready" hidden>
+  <div class="room-heading">
+    <h1 class="room-title">
+      <span data-i18n="room.title">Sala</span>
+      <span class="room-code">{{ room_code }}</span>
+    </h1>
+    <span class="tag tag--large" data-expiry></span>
+  </div>
+  <p class="lead" data-i18n="room.lead">Entre pelo outro aparelho com uma das opções abaixo.</p>
+
+  <div class="signs">
+    <section class="sign sign--green" aria-labelledby="link-title">
+      <h2 class="sign__band" id="link-title">
+        <span class="roundel">{{ icon("qr") }}</span>
+        <span data-i18n="room.linkTitle">Link e QR Code</span>
+      </h2>
+      <div class="sign__body">
+        <div class="qr" id="qr-container"></div>
+        <div class="field">
+          <label for="room-link" data-i18n="room.linkLabel">Link da sala</label>
+          <input type="url" id="room-link" readonly>
+        </div>
+        <button class="button button--outline" type="button" id="copy-link" data-i18n="room.copyLink">Copiar link</button>
+      </div>
+    </section>
+
+    <section class="sign sign--green" aria-labelledby="code-title">
+      <h2 class="sign__band" id="code-title">
+        <span class="roundel">{{ icon("keys") }}</span>
+        <span data-i18n="room.codeTitle">Código para digitar</span>
+      </h2>
+      <div class="sign__body">
+        <p class="typed-code" id="room-code-text"></p>
+        <p class="hint" data-i18n="room.codeHint">No outro aparelho, abra o QuickDrop e digite o código em "Entrar numa sala".</p>
+        <p class="hint" id="room-password-note" data-i18n="room.passwordNote" hidden>Quem entrar também precisa da senha que você escolheu.</p>
+        <button class="button button--outline" type="button" id="copy-code" data-i18n="room.copyCode">Copiar código</button>
+      </div>
+    </section>
+  </div>
+  <p class="status" id="copy-status" role="status"></p>
+
+  {% set stations = [
+    {"name_key": "route.thisDevice", "name": "Este aparelho", "detail_key": "route.thisDeviceDetail", "detail": "Você está aqui"},
+    {"name_key": "route.room", "name": "A sala", "detail": "", "detail_tag": true},
+    {"name_key": "route.otherDevice", "name": "Outro aparelho", "detail_key": "route.otherDeviceDetail", "detail": "Aguardando entrar"},
+  ] %}
+  {% include "_route.html" %}
+
+  <p class="note">
+    {{ icon("lock") }}
+    <span data-i18n="room.encryptionNote">Tudo é criptografado neste aparelho antes de sair. Se perder o link e a senha, ninguém consegue recuperar o conteúdo.</span>
+  </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='js/room.js') }}"></script>
+{% endblock %}

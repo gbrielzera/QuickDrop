@@ -6,14 +6,23 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.config import FRONTEND_DIR, get_settings
-from app.routers import pages
+from app.database import create_engine, create_session_maker, create_tables
+from app.routers import pages, rooms
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Prepara o que o app precisa antes de começar a receber requisições."""
-    get_settings().storage_dir.mkdir(parents=True, exist_ok=True)
+    settings = get_settings()
+    settings.storage_dir.mkdir(parents=True, exist_ok=True)
+
+    engine = create_engine(settings.database_url)
+    await create_tables(engine)
+    app.state.session_maker = create_session_maker(engine)
+
     yield
+
+    await engine.dispose()
 
 
 def create_app() -> FastAPI:
@@ -23,6 +32,7 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
     app.include_router(pages.router)
+    app.include_router(rooms.router)
     if settings.debug:
         app.include_router(pages.dev_router)
 

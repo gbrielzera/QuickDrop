@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-17T00:00:00Z",
+  "title": "Design System: QuickDrop",
+  "extensions": {
+    "colorMeta": {
+      "ground": { "role": "neutral", "displayName": "Fundo Gelo", "canonical": "#f4f6f8", "tonalRamp": ["#101820", "#2a3541", "#46515d", "#68737f", "#8e98a3", "#b5bdc6", "#dbe0e6", "#f4f6f8"] },
+      "ink": { "role": "neutral", "displayName": "Tinta Marinho", "canonical": "#101820", "tonalRamp": ["#101820", "#243040", "#3b4652", "#5d6874", "#818c98", "#a6afba", "#cbd2da", "#eef2f6"] },
+      "line-blue": { "role": "primary", "displayName": "Linha Azul", "canonical": "#0455a1", "tonalRamp": ["#022a52", "#033d75", "#0455a1", "#2c73b8", "#5591cb", "#6aaeff", "#a9cdee", "#dbe9f6"] },
+      "line-green": { "role": "secondary", "displayName": "Linha Verde", "canonical": "#007a5e", "tonalRamp": ["#003d2f", "#005a45", "#007a5e", "#2c9378", "#3dd6a6", "#7bd9bd", "#b3e8d9", "#e0f4ee"] },
+      "signal-yellow": { "role": "tertiary", "displayName": "Amarelo de Sinalização", "canonical": "#ffd100", "tonalRamp": ["#665300", "#997d00", "#cca700", "#ffd100", "#ffd933", "#ffe266", "#ffec99", "#fff6cc"] },
+      "danger": { "role": "neutral", "displayName": "Vermelho de Erro", "canonical": "#b3261e", "tonalRamp": ["#4d100d", "#751915", "#8f1f19", "#b3261e", "#d2554e", "#ff8a80", "#ffb8b2", "#ffe0dd"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Título da tela inicial." },
+      "headline": { "displayName": "Headline", "purpose": "Faixas das placas, nomes de estação, marca." },
+      "title": { "displayName": "Title", "purpose": "Botões, linha de apoio, código digitado." },
+      "body": { "displayName": "Body", "purpose": "Texto corrido e detalhes." },
+      "label": { "displayName": "Label", "purpose": "Rótulos de campo em caixa de frase." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ride", "value": "2.4s cubic-bezier(0.16, 1, 0.3, 1) both", "purpose": "O trem 'arquivo' percorre a linha uma vez; desligado em prefers-reduced-motion e oculto sob 760px." },
+      { "name": "pressed", "value": "translateY(2px)", "purpose": "Botão pressionado." },
+      { "name": "hover-brightness", "value": "brightness(1.1)", "purpose": "Hover dos botões preenchidos." }
+    ],
+    "breakpoints": [
+      { "name": "phone", "value": "760px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão azul (criar)",
+      "kind": "button",
+      "refersTo": "button-blue",
+      "description": "Ação de criar sala; verde para entrar, contorno para secundário.",
+      "html": "<button class=\"ds-button\">Criar sala</button>",
+      "css": ".ds-button { display: grid; place-items: center; width: 100%; min-height: 60px; border: 3px solid transparent; border-radius: 6px; background: var(--blue, #0455a1); color: var(--on-blue, #fff); font: 800 1.375rem Barlow, system-ui, sans-serif; cursor: pointer; } .ds-button:hover { filter: brightness(1.1); } .ds-button:active { transform: translateY(2px); } .ds-button:focus-visible { outline: 3px solid var(--ink, #101820); outline-offset: 3px; }"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Campo de 60px com contorno de 3px.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Código da sala\">",
+      "css": ".ds-input { width: 100%; min-height: 60px; padding: 0 1rem; border: 3px solid var(--outline, #101820); border-radius: 6px; background: var(--surface, #fff); color: var(--ink, #101820); font: 700 1.375rem Barlow, system-ui, sans-serif; letter-spacing: 0.04em; } .ds-input:hover { border-color: var(--ink, #101820); } .ds-input:focus-visible { border-color: var(--ink, #101820); outline: 3px solid var(--ink, #101820); outline-offset: 3px; }"
+    },
+    {
+      "name": "Placa",
+      "kind": "card",
+      "refersTo": "sign",
+      "description": "Painel com faixa de linha, círculo de linha e corpo.",
+      "html": "<section class=\"ds-sign\"><div class=\"ds-sign-band\"><span class=\"ds-roundel\"></span>Criar sala</div><div class=\"ds-sign-body\">Conteúdo</div></section>",
+      "css": ".ds-sign { overflow: hidden; border: 3px solid var(--outline, #101820); border-radius: 6px; background: var(--surface, #fff); color: var(--ink, #101820); font-family: Barlow, system-ui, sans-serif; } .ds-sign-band { display: flex; align-items: center; gap: 1rem; min-height: 72px; padding: 0 1.5rem; background: var(--blue, #0455a1); color: var(--on-blue, #fff); font-size: 1.75rem; font-weight: 800; } .ds-roundel { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--on-blue, #fff); } .ds-sign-body { padding: 1.5rem; }"
+    },
+    {
+      "name": "Etiqueta de tempo",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Amarelo de sinalização para tempo restante.",
+      "html": "<span class=\"ds-tag\">23h 59min</span>",
+      "css": ".ds-tag { display: inline-block; padding: 0.125rem 0.625rem; border-radius: 4px; background: var(--signal, #ffd100); color: var(--on-signal, #101820); font: 800 1.125rem Barlow, system-ui, sans-serif; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Seletor de expiração",
+      "kind": "custom",
+      "refersTo": "input-text",
+      "description": "Quatro segmentos com divisórias de 3px; o marcado fica azul.",
+      "html": "<div class=\"ds-segmented\"><span>1h</span><span class=\"ds-on\">12h</span><span>24h</span><span>48h</span></div>",
+      "css": ".ds-segmented { display: grid; grid-template-columns: repeat(4, 1fr); overflow: hidden; border: 3px solid var(--outline, #101820); border-radius: 6px; font: 700 1.375rem Barlow, system-ui, sans-serif; color: var(--ink, #101820); text-align: center; } .ds-segmented span { padding: 0.875rem 0.5rem; border-right: 3px solid var(--outline, #101820); } .ds-segmented span:last-child { border-right: 0; } .ds-segmented span:hover { background: color-mix(in srgb, var(--blue, #0455a1) 14%, transparent); } .ds-segmented .ds-on { background: var(--blue, #0455a1); color: var(--on-blue, #fff); }"
+    },
+    {
+      "name": "Diagrama da rota",
+      "kind": "custom",
+      "refersTo": "train-chip",
+      "description": "Elemento de assinatura: três estações sobre uma linha azul-verde, com o trem amarelo.",
+      "html": "<div class=\"ds-route\"><div class=\"ds-line\"></div><div class=\"ds-train\">arquivo</div><div class=\"ds-stations\"><div><span class=\"ds-dot\"></span><b>PC</b></div><div><span class=\"ds-dot\"></span><b>Sala</b></div><div><span class=\"ds-dot\"></span><b>Celular</b></div></div></div>",
+      "css": ".ds-route { position: relative; font-family: Barlow, system-ui, sans-serif; color: var(--ink, #101820); } .ds-line { position: absolute; top: 21px; left: calc(100% / 6); right: calc(100% / 6); height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--blue, #0455a1) 50%, var(--green, #007a5e) 50%); } .ds-train { position: absolute; top: 8px; left: calc(100% / 3); transform: translateX(-50%); z-index: 2; padding: 0.25rem 1rem; border: 3px solid var(--ink, #101820); border-radius: 999px; background: var(--signal, #ffd100); color: var(--on-signal, #101820); font-weight: 800; font-size: 1.125rem; } .ds-stations { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; justify-items: center; } .ds-dot { display: block; width: 56px; height: 56px; border: 10px solid var(--ink, #101820); border-radius: 50%; background: var(--ground, #f4f6f8); position: relative; z-index: 1; } .ds-stations b { display: block; margin-top: 0.5rem; font-size: 1.75rem; font-weight: 800; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Linhas de Metrô",
+    "overview": "Uma sala é uma linha de metrô: cada aparelho é uma estação e cada arquivo viaja entre elas. O sistema se parece com sinalização de estação: placas esmaltadas com contorno firme, círculos de linha e um diagrama de rota. É calmo, direto e legível de longe. Claro e escuro seguem o aparelho; no escuro o fundo vira tinta e as cores de linha clareiam.\n\nCriar e entrar têm o mesmo peso visual: dois painéis de mesma largura, um de faixa azul e outro de faixa verde. O único elemento de assinatura é o diagrama da rota.",
+    "keyCharacteristics": [
+      "Cor significa função: azul é criar/origem, verde é entrar/destino, amarelo é só tempo restante e o que está em trânsito.",
+      "Contorno de tinta de 3px e raio de 6px em toda placa, campo e botão.",
+      "Uma família (Barlow) em três pesos, sem fonte de exibição separada.",
+      "Plano: profundidade vem de contorno e faixa de cor, nunca de sombra.",
+      "Uma única animação autoral, o trem que percorre a linha."
+    ],
+    "rules": [
+      { "name": "The Line-Means-Job Rule", "body": "Azul e verde só aparecem onde a ação é criar ou entrar; amarelo só onde há tempo restante ou algo em trânsito. Nunca use uma cor de linha como decoração.", "section": "colors" },
+      { "name": "The Ink-On-Line Rule", "body": "Texto sobre cor de linha usa o par on-* do token; no escuro ele é tinta, não branco.", "section": "colors" },
+      { "name": "The Three-Weights Rule", "body": "Só 500, 700 e 800. Hierarquia vem de peso e tamanho, não de outra fonte.", "section": "typography" },
+      { "name": "The Flat-Enamel Rule", "body": "Placas são planas como esmalte; separe camadas com contorno, não com sombra.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do manter contorno de 3px e raio de 6px em toda superfície interativa nova.",
+      "Do usar azul para criar/origem, verde para entrar/destino e amarelo só para tempo restante e o que está em trânsito.",
+      "Do usar o foco de 3px em tinta com 3px de afastamento e tocar alvos de no mínimo 44px.",
+      "Do respeitar prefers-reduced-motion em qualquer movimento novo.",
+      "Do manter os mesmos estados: repouso, hover (brilho ou segmento tingido), pressionado (2px para baixo), desabilitado/ocupado (60%, cursor progress), erro (texto danger)."
+    ],
+    "donts": [
+      "Don't usar sombras, gradientes decorativos ou outra fonte além de Barlow 500/700/800.",
+      "Don't usar o amarelo ou as cores de linha como enfeite.",
+      "Don't reunir criar e entrar num cartão único com abas, nem dar pesos diferentes aos dois.",
+      "Don't hospedar fontes ou ativos em CDN; tudo funciona sem internet.",
+      "Don't criar um segundo elemento de assinatura que dispute com o diagrama."
+    ]
+  }
+}

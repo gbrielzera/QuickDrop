@@ -22,6 +22,17 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
 copy .env.example .env
+```
+
+Abra o arquivo `backend/.env` e troque o valor de `SECRET_KEY` (o app não inicia sem uma chave de verdade). Para gerar uma:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Depois, ainda em `backend/`:
+
+```powershell
 uvicorn app.main:app --reload
 ```
 

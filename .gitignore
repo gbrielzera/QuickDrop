@@ -24,3 +24,8 @@ Thumbs.db
 
 # Impeccable: estado local de cada desenvolvedor
 .impeccable/config.local.json
+
+# Impeccable: rascunhos, capturas de tela e estado das perguntas (a marca fica em DESIGN.md e .impeccable/surfaces)
+.impeccable/questions/
+.impeccable/mocks/
+.impeccable/review/

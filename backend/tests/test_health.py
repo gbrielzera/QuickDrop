@@ -11,11 +11,24 @@ def test_health_returns_ok(client):
     assert response.json()["status"] == "ok"
 
 
-def test_index_page_shows_default_ttl(client):
+def test_index_page_offers_the_expiration_options_with_12h_selected(client):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "12h (padrão)" in response.text
+    for hours in (1, 12, 24, 48):
+        assert f'value="{hours}"' in response.text
+    assert 'value="12" checked' in response.text
+
+
+def test_room_page_knows_its_room_code(client):
+    response = client.get("/r/K7P3XM")
+
+    assert response.status_code == 200
+    assert 'data-room-code="K7P3XM"' in response.text
+
+
+def test_room_page_rejects_an_invalid_code(client):
+    assert client.get("/r/ABC").status_code == 422
 
 
 def test_static_css_is_served(client):

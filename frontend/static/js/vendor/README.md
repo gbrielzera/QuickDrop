@@ -10,3 +10,7 @@ A versão *sumo* é necessária porque inclui o Argon2id (`crypto_pwhash`).
 `from"./libsodium-sumo.mjs"`, para o navegador achar o arquivo sem precisar de bundler.
 
 Para atualizar: baixe os dois pacotes com `npm pack`, copie os arquivos e repita a alteração acima.
+
+## qrcode-generator (versão 2.0.4, licença MIT)
+
+Gerador de QR Code (Kazuhiko Arase). Arquivo `dist/qrcode.mjs` do pacote npm `qrcode-generator`, sem alterações.

@@ -1,0 +1,19 @@
+{# Diagrama da rota. A página define `stations` (três itens com name_key, name, detail_key e detail) e, se quiser o trem em trânsito, `show_train`. #}
+<div class="route" role="group" aria-label="Caminho do arquivo entre os aparelhos" data-i18n-aria-label="route.label">
+  <ol class="route__stations">
+    {% for station in stations %}
+    <li class="station">
+      <span class="station__dot" aria-hidden="true"></span>
+      <span class="station__name" data-i18n="{{ station.name_key }}">{{ station.name }}</span>
+      {% if station.detail_tag %}
+      <span class="station__detail"><span class="tag" data-expiry>{{ station.detail }}</span></span>
+      {% else %}
+      <span class="station__detail" data-i18n="{{ station.detail_key }}">{{ station.detail }}</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% if show_train %}
+  <span class="route__train" aria-hidden="true" data-i18n="route.file">arquivo</span>
+  {% endif %}
+</div>
