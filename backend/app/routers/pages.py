@@ -10,6 +10,9 @@ templates = Jinja2Templates(directory=FRONTEND_DIR / "templates")
 
 router = APIRouter(include_in_schema=False)
 
+# Páginas que só existem durante o desenvolvimento (o app só inclui este router com DEBUG=true).
+dev_router = APIRouter(include_in_schema=False)
+
 
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request) -> HTMLResponse:
@@ -21,3 +24,10 @@ async def index(request: Request) -> HTMLResponse:
         "default_ttl": settings.default_ttl_hours,
     }
     return templates.TemplateResponse(request, "index.html", page_data)
+
+
+@dev_router.get("/dev/crypto", response_class=HTMLResponse)
+async def dev_crypto(request: Request) -> HTMLResponse:
+    """Página para testar a criptografia do navegador."""
+    page_data = {"app_name": get_settings().app_name}
+    return templates.TemplateResponse(request, "dev_crypto.html", page_data)

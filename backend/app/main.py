@@ -23,6 +23,8 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
     app.include_router(pages.router)
+    if settings.debug:
+        app.include_router(pages.dev_router)
 
     @app.get("/api/health", tags=["sistema"])
     async def health() -> dict[str, str]:

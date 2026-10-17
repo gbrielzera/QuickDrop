@@ -171,7 +171,7 @@ Por que não a Web Crypto API nativa do navegador: o `crypto.subtle` **só funci
 | Derivar chave da senha | `crypto_pwhash` (**Argon2id**) | Transforma a senha em uma chave-mestra de 32 bytes, de forma lenta de propósito (dificulta força bruta) |
 | Separar chaves | `crypto_kdf_derive_from_key` | Da chave-mestra saem duas subchaves independentes: `auth_key` e `enc_key` |
 | Criptografar arquivos | `crypto_secretstream_xchacha20poly1305` | Criptografa em **blocos de 1 MB**, sem precisar do arquivo inteiro na memória; detecta adulteração e truncamento |
-| Criptografar textos, clips e metadados | `crypto_secretbox_easy` (XSalsa20-Poly1305) com nonce aleatório | Mensagens pequenas |
+| Criptografar textos, clips e metadados | `crypto_secretbox_easy` (XSalsa20-Poly1305) com nonce aleatório de 24 bytes, guardado junto do texto cifrado | Mensagens pequenas |
 
 #### Como as chaves funcionam
 
@@ -199,8 +199,8 @@ senha + salt da sala ──Argon2id──▶ chave-mestra
 |---|---|
 | Conteúdo do arquivo | Arquivo `.bin` criptografado em blocos (secretstream) |
 | Nome, tipo MIME e tamanho original | Um campo `encrypted_meta` (JSON criptografado) |
-| Texto do editor | `ciphertext` + `nonce` |
-| Cada clip | `ciphertext` + `nonce` |
+| Texto do editor | `ciphertext` (o nonce vai junto, nos primeiros 24 bytes) |
+| Cada clip | `ciphertext` (idem) |
 | Apelido do dispositivo | Também criptografado (aparece só para quem tem a chave) |
 
 #### Consequências práticas (bom saber desde já)
@@ -239,7 +239,6 @@ StoredFile (arquivo)
 RoomText (editor compartilhado, 1 por sala)
 ├── room_id          FK → Room (PK)
 ├── ciphertext       bytes                     (limite ex.: 1 MB)
-├── nonce            bytes(24)
 ├── version          int                       incrementa a cada alteração
 └── updated_at       datetime
 
@@ -247,7 +246,6 @@ Clip (textos colados)
 ├── id               UUID (PK)
 ├── room_id          FK → Room (on delete cascade)
 ├── ciphertext       bytes                     (limite ex.: 64 KB cada, até 200 por sala)
-├── nonce            bytes(24)
 └── created_at       datetime
 ```
 
@@ -273,21 +271,21 @@ Disco: `storage/{room_id}/{file_id}`. Apagar a sala = apagar a pasta inteira + r
 | `DELETE` | `/api/rooms/{code}/files/{file_id}` | Exclui arquivo |
 | `GET` | `/api/rooms/{code}/text` | Texto criptografado atual + versão (para carga inicial) |
 | `GET` | `/api/rooms/{code}/clips` | Lista clips (criptografados) |
-| `POST` | `/api/rooms/{code}/clips` | Cria clip `{ciphertext, nonce}` |
+| `POST` | `/api/rooms/{code}/clips` | Cria clip `{ciphertext}` |
 | `DELETE` | `/api/rooms/{code}/clips/{clip_id}` | Exclui clip |
 
-Campos binários (`ciphertext`, `nonce`, `kdf_salt`, `encrypted_meta`, `auth_key`) trafegam em JSON como **base64url**.
+Campos binários (`ciphertext`, `kdf_salt`, `encrypted_meta`, `auth_key`) trafegam em JSON como **base64url**.
 
 ### WebSocket: `/ws/rooms/{code}`
 Autenticado pelo cookie. Mensagens em JSON com campo `type`:
 
 **Servidor → cliente**
 ```json
-{"type": "init",          "text": {"ciphertext": "...", "nonce": "...", "version": 12}, "files": [...], "clips": [...], "online": 2}
+{"type": "init",          "text": {"ciphertext": "...", "version": 12}, "files": [...], "clips": [...], "online": 2}
 {"type": "file_added",    "file": {"id": "...", "encrypted_meta": "...", "size": 204800, "uploaded_by": "..."}}
 {"type": "file_deleted",  "file_id": "..."}
-{"type": "text_updated",  "ciphertext": "...", "nonce": "...", "version": 13}
-{"type": "clip_added",    "clip": {"id": "...", "ciphertext": "...", "nonce": "..."}}
+{"type": "text_updated",  "ciphertext": "...", "version": 13}
+{"type": "clip_added",    "clip": {"id": "...", "ciphertext": "..."}}
 {"type": "clip_deleted",  "clip_id": "..."}
 {"type": "presence",      "online": 2}
 {"type": "room_closed",   "reason": "expired"}
@@ -295,7 +293,7 @@ Autenticado pelo cookie. Mensagens em JSON com campo `type`:
 
 **Cliente → servidor**
 ```json
-{"type": "text_update", "ciphertext": "...", "nonce": "...", "base_version": 12}
+{"type": "text_update", "ciphertext": "...", "base_version": 12}
 {"type": "ping"}
 ```
 
@@ -451,11 +449,13 @@ O mesmo código roda local e na internet; só muda o `.env`.
 - [x] FastAPI "olá mundo" rodando com `uvicorn app.main:app --reload`
 - [x] Estrutura de pastas e `config.py`
 
-### Fase 1: Criptografia no navegador (2 dias)
+### Fase 1: Criptografia no navegador (2 dias) ✅
 Vem antes de tudo porque todas as outras partes dependem dela.
-- [ ] Baixar a `libsodium-wrappers-sumo` para `static/js/vendor/`
-- [ ] `crypto.js`: derivar chaves (Argon2id + KDF), gerar chave aleatória, `encryptText`/`decryptText`, `encryptFile`/`decryptFile` em blocos de 1 MB, codificação base64url
-- [ ] Página de teste `/dev/crypto` (só em modo dev): criptografa e descriptografa um texto e um arquivo, compara com o original e mede o tempo do Argon2id no celular (ajustar os parâmetros para ficar em ~1 s)
+- [x] Baixar a libsodium (`libsodium-wrappers-sumo` 0.8.4, versão ESM) para `frontend/static/js/vendor/`
+- [x] `crypto.js`: derivar chaves (Argon2id + KDF), gerar salt e segredo aleatórios, `encryptText`/`decryptText`, `encryptJson`/`decryptJson`, `encryptFile`/`decryptFile` em blocos de 1 MB, codificação base64url
+- [x] 27 testes em `frontend/tests/` (`npm test` ou `node --test`): ida e volta, chave errada, dado adulterado, arquivo cortado ou com dados extras, conteúdo cifrado sem o texto original
+- [x] Página `/dev/crypto` (só com `DEBUG=true`) que mede o Argon2id e testa texto e arquivo no navegador
+- [ ] Medir o Argon2id num celular de verdade (no PC leva ~130 ms; o alvo é até ~1 s) e ajustar os parâmetros se precisar
 
 ### Fase 2: Salas (2 dias)
 - [ ] Modelo `Room` e banco SQLite criado no startup

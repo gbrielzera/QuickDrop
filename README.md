@@ -38,8 +38,18 @@ no Firewall do Windows para redes privadas.
 
 ## Testes e lint
 
+Backend (dentro de `backend/`):
+
 ```powershell
 pytest
 ruff check .
 ruff format .
 ```
+
+Frontend, criptografia (dentro de `frontend/`, precisa do Node 20 ou mais novo):
+
+```powershell
+npm test
+```
+
+Com `DEBUG=true` no `backend/.env`, a página http://localhost:8000/dev/crypto testa a criptografia no navegador.

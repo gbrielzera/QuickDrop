@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Teste da criptografia · {{ app_name }}{% endblock %}
+
+{% block content %}
+<header class="hero">
+  <h1>Teste da criptografia</h1>
+  <p class="muted">Página de desenvolvimento: só existe com DEBUG=true. Nada aqui é enviado ao servidor.</p>
+</header>
+
+<section class="card">
+  <h2>1. Velocidade da derivação de chaves</h2>
+  <p>Mede quanto tempo o Argon2id leva neste aparelho. Abra esta página no celular também; o ideal é ficar perto de 1 segundo.</p>
+  <button type="button" id="measure-button">Medir</button>
+  <p id="measure-result" class="muted" aria-live="polite"></p>
+</section>
+
+<section class="card">
+  <h2>2. Texto: criptografar e descriptografar</h2>
+  <label for="text-input">Texto</label>
+  <textarea id="text-input" rows="3">Olá! Este texto vai ser criptografado e descriptografado aqui no navegador.</textarea>
+  <button type="button" id="text-button">Testar texto</button>
+  <p id="text-result" aria-live="polite"></p>
+</section>
+
+<section class="card">
+  <h2>3. Arquivo: criptografar e descriptografar</h2>
+  <label for="file-input">Arquivo (qualquer tipo, até 100 MB)</label>
+  <input type="file" id="file-input">
+  <button type="button" id="file-button">Testar arquivo</button>
+  <p id="file-result" aria-live="polite"></p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='js/dev-crypto.js') }}"></script>
+{% endblock %}

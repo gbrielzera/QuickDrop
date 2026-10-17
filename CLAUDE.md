@@ -51,3 +51,9 @@ pytest
 ruff check .
 ruff format .
 ```
+
+Testes da criptografia, a partir da pasta `frontend/`:
+
+```powershell
+npm test
+```
