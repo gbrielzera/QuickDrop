@@ -17,3 +17,10 @@ storage/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Claude Code: configurações locais e binário da Impeccable (baixado na instalação)
+.claude/settings.local.json
+.claude/skills/impeccable/scripts/bin/
+
+# Impeccable: estado local de cada desenvolvedor
+.impeccable/config.local.json
