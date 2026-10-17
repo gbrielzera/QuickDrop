@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="hero">
+  <h1>{{ app_name }}</h1>
+  <p>Transfira arquivos e textos entre seus dispositivos, com criptografia de ponta a ponta.</p>
+</header>
+
+<section class="card">
+  <h2>Em construção</h2>
+  <p>Fase 0 concluída: o servidor está no ar. As telas de criar e entrar em salas chegam na Fase 2.</p>
+  <p class="muted">
+    Opções de expiração configuradas:
+    {% for ttl in ttl_options %}{{ ttl }}h{% if ttl == default_ttl %} (padrão){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+  </p>
+</section>
+{% endblock %}
