@@ -64,6 +64,11 @@ export function getRoom(code) {
   return request("GET", `/api/rooms/${code}`);
 }
 
+/** Tranca ou destranca a sala (só o dono pode). Sala trancada não aceita novos aparelhos. */
+export function lockRoom(code, locked) {
+  return request("PUT", `/api/rooms/${code}/lock`, { locked });
+}
+
 /** Encerra a sala: apaga tudo o que havia nela. */
 export function deleteRoom(code) {
   return request("DELETE", `/api/rooms/${code}`);

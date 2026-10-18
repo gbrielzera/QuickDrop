@@ -13,7 +13,7 @@ from starlette.requests import ClientDisconnect
 
 from app import file_service, storage
 from app.config import BYTES_PER_MEGABYTE, get_settings
-from app.dependencies import Connections, CurrentRoom, Database, ItemId
+from app.dependencies import Connections, CurrentRoom, Database, ItemId, UploadLock
 from app.encoding import from_base64url, to_base64url
 from app.models import StoredFile
 from app.schemas import FileResponse
@@ -56,6 +56,18 @@ def _read_encrypted_meta(header_value: str) -> bytes:
     return encrypted_meta
 
 
+async def _space_error_for(db, room_id: str, new_file_bytes: int) -> tuple[int, str] | None:
+    """Devolve (status, código) se um arquivo novo desse tamanho estouraria um limite; senão, None."""
+    settings = get_settings()
+    room_total = await file_service.total_size_of_room(db, room_id)
+    if room_total + new_file_bytes > settings.max_room_size_bytes:
+        return 413, ROOM_FULL
+    server_total = await file_service.total_size_of_all_files(db)
+    if server_total + new_file_bytes > settings.max_total_storage_bytes:
+        return HTTP_INSUFFICIENT_STORAGE, SERVER_FULL
+    return None
+
+
 @router.get("")
 async def list_room_files(room: CurrentRoom, db: Database) -> list[FileResponse]:
     """Lista os arquivos da sala."""
@@ -69,6 +81,7 @@ async def upload_file(
     room: CurrentRoom,
     db: Database,
     connections: Connections,
+    upload_lock: UploadLock,
     x_file_meta: Annotated[str, Header()],
 ) -> FileResponse:
     """Recebe um arquivo já criptografado (o corpo da requisição).
@@ -116,7 +129,14 @@ async def upload_file(
         storage.delete_file(room.id, file_id)
         raise HTTPException(status_code=422, detail="Arquivo inválido.")
 
-    stored_file = await file_service.save_file_record(db, room.id, file_id, encrypted_meta, size_bytes)
+    # Dois envios ao mesmo tempo passam juntos pela conferência do início. Por isso conferimos de novo,
+    # um de cada vez, agora que sabemos o tamanho real de cada arquivo gravado.
+    async with upload_lock:
+        full_error = await _space_error_for(db, room.id, size_bytes)
+        if full_error is not None:
+            storage.delete_file(room.id, file_id)
+            raise HTTPException(status_code=full_error[0], detail=full_error[1])
+        stored_file = await file_service.save_file_record(db, room.id, file_id, encrypted_meta, size_bytes)
     file_response = _to_file_response(stored_file)
     await connections.broadcast(
         room.code, {"type": "file_added", "file": file_response.model_dump(mode="json")}

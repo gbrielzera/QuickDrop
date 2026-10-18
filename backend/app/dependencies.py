@@ -1,5 +1,6 @@
 """Dependências do FastAPI: coisas que várias rotas precisam receber prontas."""
 
+import asyncio
 from collections.abc import AsyncIterator
 from typing import Annotated
 
@@ -39,18 +40,22 @@ async def get_rate_limits(connection: HTTPConnection) -> RateLimits:
     return connection.app.state.rate_limits
 
 
+async def get_upload_lock(connection: HTTPConnection) -> asyncio.Lock:
+    """Entrega o cadeado que organiza a conferência de espaço dos envios."""
+    return connection.app.state.upload_lock
+
+
 async def get_current_room(
     code: RoomCode,
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> Room:
     """Devolve a sala da URL, mas só se o dispositivo tiver entrado nela (cookie válido)."""
-    if not has_session_for_room(request.cookies, code):
-        raise HTTPException(status_code=401, detail="Entre na sala primeiro.")
-
     room = await find_active_room(db, code)
     if room is None:
         raise HTTPException(status_code=404, detail="Sala não encontrada ou expirada.")
+    if not has_session_for_room(request.cookies, room):
+        raise HTTPException(status_code=401, detail="Entre na sala primeiro.")
     return room
 
 
@@ -59,3 +64,4 @@ Database = Annotated[AsyncSession, Depends(get_db)]
 CurrentRoom = Annotated[Room, Depends(get_current_room)]
 Connections = Annotated[ConnectionManager, Depends(get_connections)]
 Limits = Annotated[RateLimits, Depends(get_rate_limits)]
+UploadLock = Annotated[asyncio.Lock, Depends(get_upload_lock)]

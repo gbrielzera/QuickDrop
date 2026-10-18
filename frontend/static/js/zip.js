@@ -4,6 +4,8 @@
 // então comprimir de novo quase não reduziria nada e deixaria tudo mais lento.
 // Formato: [cabeçalho + conteúdo de cada arquivo][diretório central][fim do diretório central].
 
+import { safeFileName } from "./file-size.js";
+
 const LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50;
 const CENTRAL_DIRECTORY_SIGNATURE = 0x02014b50;
 const END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50;
@@ -115,7 +117,7 @@ function buildEndRecord(entryCount, centralDirectorySize, centralDirectoryOffset
 
 /**
  * Monta o .zip. `files` é uma lista de `{ name, blob, date }`. Devolve um Blob do tipo application/zip.
- * Quem chama garante nomes diferentes (veja `uniqueNames`).
+ * Quem chama garante nomes diferentes (veja `uniqueNames`); os nomes passam por `safeFileName`.
  */
 export async function createZip(files) {
   if (files.length > MAX_ENTRIES) {
@@ -131,7 +133,7 @@ export async function createZip(files) {
     const bytes = new Uint8Array(await file.blob.arrayBuffer());
     const { date: dosDate, time: dosTime } = toDosDateTime(file.date);
     const entry = {
-      nameBytes: encoder.encode(file.name),
+      nameBytes: encoder.encode(safeFileName(file.name)),
       size: bytes.length,
       crc: crc32(bytes),
       dosDate,

@@ -17,13 +17,23 @@ export function formatFileSize(bytes, language) {
   return `${number} ${UNITS[unitIndex]}`;
 }
 
+// Nomes que o Windows reserva para dispositivos: "con.txt", "nul" etc. não podem virar arquivos.
+const WINDOWS_RESERVED_NAME = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
+const MAX_FILE_NAME_LENGTH = 200;
+
 /**
  * Deixa um nome de arquivo seguro para salvar. O nome vem de outro aparelho, então tiramos
- * barras e caracteres que o Windows não aceita (isso também impede nomes como "../../x").
+ * barras e caracteres que o Windows não aceita (isso também impede nomes como "../../x"),
+ * pontos e espaços no fim, nomes reservados do Windows e nomes enormes.
  */
 export function safeFileName(name) {
   const cleaned = name
     .replace(/[\u0000-\u001f\\/:*?"<>|]/g, "_")
-    .trim();
-  return cleaned === "" || /^\.+$/.test(cleaned) ? FALLBACK_FILE_NAME : cleaned;
+    .trim()
+    .replace(/[. ]+$/, "")
+    .slice(0, MAX_FILE_NAME_LENGTH);
+  if (cleaned === "" || /^\.+$/.test(cleaned)) {
+    return FALLBACK_FILE_NAME;
+  }
+  return WINDOWS_RESERVED_NAME.test(cleaned) ? `_${cleaned}` : cleaned;
 }

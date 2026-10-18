@@ -31,7 +31,9 @@ const TAG_FINAL = sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL;
 
 // Alfabeto do segredo gerado: sem 0/O, 1/I/L, que são fáceis de confundir ao digitar.
 const SECRET_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-const SECRET_LENGTH = 8;
+// 12 caracteres de um alfabeto de 31 dão cerca de 59 bits: tentar todas as combinações é inviável,
+// mesmo para quem roubasse o banco de dados e testasse senhas sem passar pelo site.
+const SECRET_LENGTH = 12;
 
 // ---------- Codificação para enviar ao servidor ----------
 
@@ -52,7 +54,7 @@ export function generateSalt() {
   return sodium.randombytes_buf(sodium.crypto_pwhash_SALTBYTES);
 }
 
-/** Gera o segredo de 8 caracteres usado quando o usuário não escolhe uma senha. */
+/** Gera o segredo de 12 caracteres usado quando o usuário não escolhe uma senha. */
 export function generateRoomSecret() {
   let secret = "";
   for (let position = 0; position < SECRET_LENGTH; position++) {

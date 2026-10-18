@@ -6,7 +6,7 @@ import * as roomAccess from "./room-access.js";
 import { buildRoomPath, isValidRoomCode, isValidSecret, parseRoomCodeInput } from "./room-code.js";
 import { clearMessage, runWithBusyButton, showMessage } from "./ui.js";
 
-const MIN_PASSWORD_LENGTH = 6;
+const MIN_PASSWORD_LENGTH = 10;
 
 /** A sala não tem senha, então o código digitado sozinho não basta para abrir o conteúdo. */
 class SecretNeededError extends Error {}

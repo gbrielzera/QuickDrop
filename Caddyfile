@@ -3,6 +3,9 @@
 {$DOMAIN} {
 	encode zstd gzip
 
+	# Não anuncia qual software está por trás.
+	header -Server
+
 	# Arquivo de 100 MB + o acréscimo da criptografia. O app confere o limite exato.
 	request_body {
 		max_size 110MB

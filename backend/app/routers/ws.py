@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from app.config import get_settings
 from app.dependencies import RoomCode
 from app.room_service import find_active_room
 from app.session import has_session_for_room
@@ -29,21 +30,25 @@ def _comes_from_this_site(websocket: WebSocket) -> bool:
     return urlparse(origin).netloc == websocket.headers.get("host")
 
 
-async def _room_exists(websocket: WebSocket, room_code: str) -> bool:
+async def _may_join(websocket: WebSocket, room_code: str) -> bool:
+    """True se a conexão vem deste site, a sala existe e o aparelho entrou nela."""
+    if not _comes_from_this_site(websocket):
+        return False
     # A sessão do banco é aberta só para esta consulta, não fica presa durante a conexão inteira.
     async with websocket.app.state.session_maker() as db:
-        return await find_active_room(db, room_code) is not None
+        room = await find_active_room(db, room_code)
+    return room is not None and has_session_for_room(websocket.cookies, room)
 
 
 @router.websocket("/ws/rooms/{code}")
 async def room_socket(websocket: WebSocket, code: RoomCode) -> None:
     """Mantém a conexão de um aparelho com a sala. Só entra quem tem o cookie da sala."""
-    allowed = _comes_from_this_site(websocket) and has_session_for_room(websocket.cookies, code)
-    if not allowed or not await _room_exists(websocket, code):
+    connections = websocket.app.state.connections
+    room_is_crowded = connections.count(code) >= get_settings().max_connections_per_room
+    if room_is_crowded or not await _may_join(websocket, code):
         await websocket.close(code=WEBSOCKET_POLICY_VIOLATION)
         return
 
-    connections = websocket.app.state.connections
     await connections.connect(code, websocket)
     try:
         while True:

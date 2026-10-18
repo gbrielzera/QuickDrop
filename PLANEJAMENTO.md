@@ -551,6 +551,21 @@ Antes, qualquer convidado podia encerrar a sala. Agora só quem a criou pode.
 - Limitação: o dono é o **navegador** que criou. Criar no PC e abrir no celular pelo QR Code faz do celular um convidado; limpar os cookies do PC tira o poder de encerrar (a sala ainda expira sozinha). Salas criadas antes desta atualização ficam sem dono
 - [x] 164 testes no backend (7 novos) e 68 no frontend; conferido no navegador com dois "aparelhos" (`localhost` dono, `127.0.0.1` convidado)
 
+### Extra: revisão de segurança (depois da Fase 8) ✅
+Análise feita como revisão de um especialista, com as correções abaixo. Cada item tem teste ou foi conferido no Docker.
+- [x] **Segredo gerado de 8 para 12 caracteres** (de ~40 para ~59 bits) e **senha própria mínima de 10 caracteres**: quem roubasse o banco de dados poderia testar senhas fora do site, sem limite de tentativas, então a força da senha é a defesa. O código completo agora é `K7P3XM-HQ4T-9WZC-MPN2`. Links antigos (8 caracteres) deixam de valer
+- [x] **Nomes de arquivo no zip**: a função `safeFileName` já trocava barras e caracteres proibidos (sem "Zip Slip"); agora também trata nomes reservados do Windows (`con.txt`), pontos e espaços no fim e nomes enormes. Correção da análise: o risco de sair da pasta já não existia
+- [x] **Negação de serviço**: o hash Argon2 guardado no servidor passou de 64 MiB para **19 MiB** (mínimo recomendado pela OWASP; a `authKey` já é aleatória de 256 bits) e no máximo **2 cálculos ao mesmo tempo**, com os demais em fila. Hashes antigos continuam válidos. Limite de **20 aparelhos por sala** no WebSocket e mensagens do WebSocket de no máximo **4 KB**
+- [x] **Envios simultâneos** não passam mais do limite: depois de gravar, a conferência de espaço é refeita sob um cadeado (um envio de cada vez)
+- [x] **Registros**: sem registro de acesso (`--no-access-log`: guardava IP e código de sala), e os logs do Docker rodam em até 3 arquivos de 10 MB
+- [x] **Link vazado**: o segredo sai da barra de endereço (e do histórico) logo depois de entrar, e fica só na aba (`sessionStorage`). O dono pode **trancar a sala**: ninguém novo entra, quem já entrou continua (coluna `locked`, com migração automática no início do servidor). Não há "expulsar": os cookies não identificam aparelhos individuais; trancar e encerrar cobrem o caso
+- [x] **Cookie de participante** passou a guardar o id interno da sala, como o de dono
+- [x] **Política de segurança (CSP)**: o WebSocket só é liberado para o endereço do próprio site (antes valia `ws:` e `wss:` para qualquer servidor)
+- [x] **Documentação da API** (`/docs`, `/redoc`, `/openapi.json`) desligada fora do desenvolvimento; cabeçalho `Server` removido (Uvicorn e Caddy)
+- [x] **Servidor**: `.env` com permissão 600, porta SSH liberada só para o IP do administrador, `pip-audit` sem vulnerabilidades conhecidas
+- Não resolvido, por natureza: a criptografia de ponta a ponta numa página web depende de confiar no JavaScript que o servidor entrega; se o servidor for invadido, ele pode entregar código malicioso. Por isso o endurecimento do servidor (SSH restrito, atualizações automáticas, contêiner sem privilégios) importa tanto
+- 180 testes no backend e 72 no frontend; imagem Docker testada localmente (cabeçalhos, `/docs` 404, sem registros de acesso, WebSocket de 10 KB derrubado)
+
 ### Fase 8: Internet (no ar em https://quickdrop-syoti.mexicocentral.cloudapp.azure.com; celular na 4G funcionou)
 Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always Free** (uma VM Ubuntu de verdade, ligada 24 h) com **Docker + Caddy** e um endereço grátis do **DuckDNS**.
 

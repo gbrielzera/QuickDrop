@@ -55,9 +55,9 @@ test("base64url: ida e volta devolve os mesmos bytes", () => {
 
 // ---------- segredo e chaves ----------
 
-test("segredo gerado tem 8 caracteres e não usa caracteres ambíguos", () => {
+test("segredo gerado tem 12 caracteres e não usa caracteres ambíguos", () => {
   for (let attempt = 0; attempt < 200; attempt++) {
-    assert.match(generateRoomSecret(), /^[2-9A-HJKMNP-Z]{8}$/);
+    assert.match(generateRoomSecret(), /^[2-9A-HJKMNP-Z]{12}$/);
   }
 });
 

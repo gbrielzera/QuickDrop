@@ -1,10 +1,18 @@
 # Sobe o QuickDrop na internet: o app e o Caddy (HTTPS automático).
 # Configurações ficam no arquivo .env desta pasta (copie de .env.production.example).
 
+# Os registros do Docker crescem para sempre se ninguém limitar: aqui ficam no máximo 3 arquivos de 10 MB.
+x-logging: &limited-logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
     build: .
     restart: unless-stopped
+    logging: *limited-logs
     env_file: .env
     environment:
       DEBUG: "false"
@@ -17,6 +25,7 @@ services:
   caddy:
     image: caddy:2
     restart: unless-stopped
+    logging: *limited-logs
     depends_on:
       - app
     ports:

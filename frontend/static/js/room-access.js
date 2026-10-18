@@ -11,6 +11,7 @@ import {
 } from "./crypto.js";
 
 const KEY_STORAGE_PREFIX = "quickdrop:key:";
+const SECRET_STORAGE_PREFIX = "quickdrop:secret:";
 
 // Chaves já conhecidas nesta página. Garante que a chave funcione mesmo sem sessionStorage.
 const keysInMemory = new Map();
@@ -38,10 +39,33 @@ export function loadEncryptionKey(roomCode) {
   }
 }
 
+/**
+ * Guarda o segredo do link nesta aba (para o convite continuar completo depois de recarregar a página).
+ * Devolve false se não foi possível guardar; nesse caso o segredo precisa continuar no endereço.
+ */
+export function saveRoomSecret(roomCode, secret) {
+  try {
+    sessionStorage.setItem(SECRET_STORAGE_PREFIX + roomCode, secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Devolve o segredo guardado por saveRoomSecret, ou "" se não houver. */
+export function loadRoomSecret(roomCode) {
+  try {
+    return sessionStorage.getItem(SECRET_STORAGE_PREFIX + roomCode) ?? "";
+  } catch {
+    return "";
+  }
+}
+
 /** Esquece a chave da sala (usado quando a sala acaba). */
 export function forgetEncryptionKey(roomCode) {
   keysInMemory.delete(roomCode);
   try {
+    sessionStorage.removeItem(SECRET_STORAGE_PREFIX + roomCode);
     sessionStorage.removeItem(KEY_STORAGE_PREFIX + roomCode);
   } catch {
     // Sem sessionStorage: não há nada guardado para esquecer.

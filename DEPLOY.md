@@ -113,7 +113,11 @@ No `nano`, preencha:
 - `SECRET_KEY`: o valor gerado acima.
 - `CONTACT_EMAIL`: seu e-mail para denúncias (opcional).
 
-Salve com **Ctrl+O, Enter** e saia com **Ctrl+X**.
+Salve com **Ctrl+O, Enter** e saia com **Ctrl+X**. Depois, deixe o arquivo legível só por você:
+
+```bash
+chmod 600 .env
+```
 
 ## Passo 7: ligar
 
@@ -145,6 +149,26 @@ docker compose up -d --build
 ```
 
 Os arquivos e o banco ficam no volume e não se perdem. As salas ativas continuam (os aparelhos reconectam sozinhos).
+
+## Manutenção de segurança
+
+- **Todo mês**, para pegar as correções das imagens base (Python e Caddy) e do Ubuntu:
+
+  ```bash
+  cd QuickDrop
+  git pull
+  docker compose pull
+  docker compose up -d --build
+  sudo apt-get update && sudo apt-get upgrade -y
+  ```
+
+- **Porta SSH só para o seu IP** (Azure): a regra `default-allow-ssh` do grupo de segurança de rede foi limitada ao IP do administrador. Se o seu IP mudar (internet residencial costuma mudar) e o SSH parar de responder, atualize a regra de qualquer lugar com o Azure CLI:
+
+  ```bash
+  az network nsg rule update --resource-group quickdrop --nsg-name quickdropNSG --name default-allow-ssh --source-address-prefixes SEU.IP.NOVO/32
+  ```
+
+- **Auditar as dependências do Python** (no PC, em `backend/`): `pip install pip-audit` e `pip-audit -r requirements.txt`.
 
 ## Comandos úteis
 

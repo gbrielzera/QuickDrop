@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     # Limites do servidor inteiro. Sem eles, poucas pessoas encheriam o disco de uma hospedagem grátis.
     max_total_storage_mb: int = 30 * 1024  # soma dos arquivos de todas as salas
     max_active_rooms: int = 500
+    max_connections_per_room: int = 20  # aparelhos conectados ao mesmo tempo numa sala
 
     # De quanto em quanto tempo o servidor apaga as salas que expiraram.
     cleanup_interval_minutes: int = 5

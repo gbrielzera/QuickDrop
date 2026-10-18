@@ -151,3 +151,11 @@ test("arquivo copiado do computador mantém o nome", () => {
   assert.equal(pastedFileName({ name: "relatório.pdf", type: "application/pdf" }, SOME_DATE), "relatório.pdf");
   assert.equal(pastedFileName({ name: "foto-da-praia.png", type: "image/png" }, SOME_DATE), "foto-da-praia.png");
 });
+
+test("o zip nunca grava um nome com caminho", async () => {
+  const files = [{ name: "../../evil.txt", blob: new Blob(["x"]), date: new Date(2026, 0, 1) }];
+
+  const entries = await zipToEntries(files);
+
+  assert.equal(entries[0].name, ".._.._evil.txt");
+});

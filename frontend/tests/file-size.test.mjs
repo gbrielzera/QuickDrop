@@ -34,3 +34,20 @@ test("nome vazio ou só de pontos vira um nome padrão", () => {
   assert.equal(safeFileName("   "), "quickdrop-file");
   assert.equal(safeFileName(".."), "quickdrop-file");
 });
+
+test("nome seguro: nomes reservados do Windows ganham um _ na frente", () => {
+  assert.equal(safeFileName("con.txt"), "_con.txt");
+  assert.equal(safeFileName("NUL"), "_NUL");
+  assert.equal(safeFileName("COM1.log"), "_COM1.log");
+  assert.equal(safeFileName("console.txt"), "console.txt");
+});
+
+test("nome seguro: tira pontos e espaços do fim, mas mantém arquivos que começam com ponto", () => {
+  assert.equal(safeFileName("foto. "), "foto");
+  assert.equal(safeFileName("relatório..."), "relatório");
+  assert.equal(safeFileName(".env"), ".env");
+});
+
+test("nome seguro: limita o tamanho", () => {
+  assert.equal(safeFileName("a".repeat(500)).length, 200);
+});

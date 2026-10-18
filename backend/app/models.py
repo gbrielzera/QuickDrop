@@ -35,6 +35,9 @@ class Room(Base):
     kdf_salt: Mapped[bytes] = mapped_column(LargeBinary)
     auth_hash: Mapped[str]
 
+    # Sala trancada: ninguém novo entra (quem já entrou continua). Só o dono tranca e destranca.
+    locked: Mapped[bool] = mapped_column(default=False, server_default="0")
+
     created_at: Mapped[datetime] = mapped_column(default=utc_now)
     expires_at: Mapped[datetime] = mapped_column(index=True)
 

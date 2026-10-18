@@ -30,7 +30,7 @@
       <div class="field" id="create-password-field" hidden>
         <label for="create-password" data-i18n="create.passwordLabel">Senha</label>
         <input type="password" id="create-password" autocomplete="new-password" aria-describedby="create-password-hint">
-        <p class="hint" id="create-password-hint" data-i18n="create.passwordHint">Mínimo de 6 caracteres. Se esquecer, ninguém consegue recuperar o conteúdo.</p>
+        <p class="hint" id="create-password-hint" data-i18n="create.passwordHint">Mínimo de 10 caracteres; uma frase longa é melhor que uma palavra. Se esquecer, ninguém consegue recuperar o conteúdo.</p>
       </div>
       <p class="error" id="create-error" role="alert"></p>
       <button class="button button--blue" type="submit" id="create-submit" data-i18n="create.submit">Criar sala</button>
@@ -45,7 +45,7 @@
     <form class="sign__body" id="join-form" novalidate>
       <div class="field">
         <label for="join-code" data-i18n="join.codeLabel">Código da sala</label>
-        <input type="text" id="join-code" placeholder="K7P3XM-HQ4T-9WZC" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" aria-describedby="join-code-hint">
+        <input type="text" id="join-code" placeholder="K7P3XM-HQ4T-9WZC-MPN2" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="30" aria-describedby="join-code-hint">
         <p class="hint" id="join-code-hint" data-i18n="join.codeHint">Digite o código completo ou escaneie o QR Code da outra tela com a câmera do celular.</p>
       </div>
       <div class="field" id="join-password-field" hidden>

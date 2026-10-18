@@ -1,10 +1,17 @@
 // Página da sala: entra na sala (pelo link, pela chave guardada ou pela senha) e mostra como convidar outros aparelhos.
 
-import { ApiError, deleteRoom, getRoom } from "./api.js";
+import { ApiError, deleteRoom, getRoom, lockRoom } from "./api.js";
 import { errorMessageKey } from "./errors.js";
 import { onLanguageChange, startLanguageSwitcher, t } from "./i18n.js";
 import { createQrCodeSvg } from "./qr.js";
-import { forgetEncryptionKey, getRoomParams, joinRoom, loadEncryptionKey } from "./room-access.js";
+import {
+  forgetEncryptionKey,
+  getRoomParams,
+  joinRoom,
+  loadEncryptionKey,
+  loadRoomSecret,
+  saveRoomSecret,
+} from "./room-access.js";
 import { buildRoomPath, formatRoomCode, readSecretFromHash } from "./room-code.js";
 import { startRoomPanels } from "./room-panels.js";
 import { connectRoomSocket } from "./socket.js";
@@ -17,7 +24,8 @@ const EXPIRY_REFRESH_MILLISECONDS = 15 * 1000;
 
 const roomCode = document.body.dataset.roomCode;
 // O segredo gerado pelo app viaja no link depois do "#". Em salas com senha própria, não existe.
-const secretFromLink = readSecretFromHash(location.hash);
+// Depois de entrar ele passa a ficar só nesta aba (veja hideSecretFromAddressBar).
+const secretFromLink = readSecretFromHash(location.hash) || loadRoomSecret(roomCode);
 
 const views = {
   loading: document.getElementById("view-loading"),
@@ -39,11 +47,14 @@ const thisDeviceStation = document.getElementById("device-this");
 const otherDeviceStation = document.getElementById("device-other");
 const closeRoomButton = document.getElementById("close-room");
 const guestNote = document.getElementById("room-guest-note");
+const lockRoomButton = document.getElementById("lock-room");
+const lockedNote = document.getElementById("room-locked-note");
 
 let expiresAt = null;
 let expiryTimer = null;
 let panelsStarted = false;
 let roomHasEnded = false;
+let roomIsLocked = false;
 let devicesOnline = 0;
 let isConnected = false;
 
@@ -90,6 +101,36 @@ function renderExpiry() {
 }
 
 // ---------- sala pronta ----------
+
+// O link com o segredo fica no histórico do navegador (e é sincronizado com a conta da pessoa).
+// Depois de entrar, guardamos o segredo só nesta aba e deixamos o endereço sem ele.
+function hideSecretFromAddressBar() {
+  if (!secretFromLink || !location.hash) {
+    return;
+  }
+  if (saveRoomSecret(roomCode, secretFromLink)) {
+    history.replaceState(null, "", location.pathname);
+  }
+}
+
+function renderLockState(isLocked) {
+  roomIsLocked = isLocked;
+  const buttonKey = isLocked ? "room.unlock" : "room.lock";
+  lockRoomButton.dataset.i18n = buttonKey;
+  lockRoomButton.textContent = t(buttonKey);
+  lockedNote.hidden = !isLocked;
+}
+
+async function toggleRoomLock() {
+  const status = document.getElementById("room-action-status");
+  clearMessage(status);
+  try {
+    const room = await runWithBusyButton(lockRoomButton, "room.locking", () => lockRoom(roomCode, !roomIsLocked));
+    renderLockState(room.is_locked);
+  } catch (error) {
+    showMessage(status, errorMessageKey(error));
+  }
+}
 
 function renderShareOptions() {
   const shareUrl = location.origin + buildRoomPath(roomCode, secretFromLink);
@@ -187,8 +228,11 @@ async function showRoom() {
   expiresAt = new Date(room.expires_at).getTime();
   // Só quem criou a sala vê o botão de encerrar; os convidados veem uma explicação.
   closeRoomButton.hidden = !room.is_owner;
+  lockRoomButton.hidden = !room.is_owner;
   guestNote.hidden = room.is_owner;
+  renderLockState(room.is_locked);
   renderShareOptions();
+  hideSecretFromAddressBar();
   renderExpiry();
   expiryTimer = setInterval(renderExpiry, EXPIRY_REFRESH_MILLISECONDS);
   showOnly("ready");
@@ -267,6 +311,7 @@ async function start() {
   startLanguageSwitcher();
   onLanguageChange(() => {
     if (expiresAt) {
+      renderLockState(roomIsLocked);
       renderExpiry();
       renderShareOptions();
       renderPresence();
@@ -274,6 +319,7 @@ async function start() {
   });
   passwordForm.addEventListener("submit", handlePasswordSubmit);
   setUpConfirmButton(closeRoomButton, "room.closeConfirm", closeRoom);
+  lockRoomButton.addEventListener("click", toggleRoomLock);
   linkInput.addEventListener("focus", () => linkInput.select());
   setUpCopyButton(document.getElementById("copy-link"), () => linkInput.value, copyStatus);
   setUpCopyButton(document.getElementById("copy-code"), () => codeText.textContent, copyStatus);

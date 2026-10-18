@@ -26,6 +26,7 @@ async def lifespan(app: FastAPI):
     app.state.session_maker = create_session_maker(engine)
     app.state.connections = ConnectionManager()
     app.state.rate_limits = create_rate_limits(settings)
+    app.state.upload_lock = asyncio.Lock()
 
     await delete_expired_rooms(app)  # limpa o que expirou enquanto o servidor estava desligado
     cleanup_task = asyncio.create_task(run_cleanup_loop(app, settings.cleanup_interval_minutes))
@@ -41,7 +42,10 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     """Monta o app: API, páginas do frontend e arquivos estáticos (CSS e JS)."""
     settings = get_settings()
-    app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)
+    # A documentação automática da API só existe no desenvolvimento: em produção não ajuda ninguém além de
+    # quem procura pontos de ataque.
+    docs_urls = {} if settings.debug else {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan, **docs_urls)
     app.add_middleware(SecurityHeadersMiddleware, hsts_enabled=settings.cookie_secure)
 
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")

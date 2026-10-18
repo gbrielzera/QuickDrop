@@ -4,7 +4,7 @@ Começamos com SQLite (um arquivo só, sem instalar nada). Para usar PostgreSQL 
 basta trocar DATABASE_URL no .env.
 """
 
-from sqlalchemy import event
+from sqlalchemy import event, inspect, text
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -34,6 +34,16 @@ def create_session_maker(engine: AsyncEngine) -> async_sessionmaker:
 
 
 async def create_tables(engine: AsyncEngine) -> None:
-    """Cria as tabelas que ainda não existem."""
+    """Cria as tabelas que ainda não existem e acrescenta as colunas que bancos antigos não têm."""
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
+        await _add_locked_column_if_missing(connection)
+
+
+async def _add_locked_column_if_missing(connection) -> None:
+    # O create_all não altera tabelas que já existem: bancos antigos não têm a coluna "locked".
+    column_names = await connection.run_sync(
+        lambda sync_connection: [column["name"] for column in inspect(sync_connection).get_columns("rooms")]
+    )
+    if "locked" not in column_names:
+        await connection.execute(text("ALTER TABLE rooms ADD COLUMN locked BOOLEAN NOT NULL DEFAULT FALSE"))

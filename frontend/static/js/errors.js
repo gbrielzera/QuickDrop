@@ -17,6 +17,7 @@ const SERVER_FULL = "server_full";
 const TEXT_TOO_LARGE = "text_too_large";
 const CLIP_TOO_LARGE = "clip_too_large";
 const CLIPS_FULL = "clips_full";
+const ROOM_LOCKED = "room_locked";
 
 // Cada código de tamanho que o servidor informa tem a sua mensagem.
 const MESSAGE_KEY_BY_LIMIT_CODE = {
@@ -32,7 +33,7 @@ const MESSAGE_KEY_BY_LIMIT_CODE = {
 export function errorMessageKey(error) {
   if (error instanceof ApiError) {
     if (error.status === HTTP_UNAUTHORIZED) return "error.passwordWrong";
-    if (error.status === HTTP_FORBIDDEN) return "error.notOwner";
+    if (error.status === HTTP_FORBIDDEN) return error.code === ROOM_LOCKED ? "error.roomLocked" : "error.notOwner";
     if (error.status === HTTP_NOT_FOUND) return "error.roomMissing";
     if (error.status === HTTP_TOO_MANY_REQUESTS) return "error.tooManyAttempts";
     if (error.status === HTTP_SERVICE_UNAVAILABLE || error.status === HTTP_INSUFFICIENT_STORAGE) {

@@ -72,8 +72,13 @@ class RoomResponse(BaseModel):
     code: str
     has_password: bool
     expires_at: datetime
-    # Só o dono (quem criou a sala) pode encerrá-la; a tela usa isto para mostrar o botão.
+    # Só o dono (quem criou a sala) pode encerrá-la e trancá-la; a tela usa isto para mostrar os botões.
     is_owner: bool
+    is_locked: bool
+
+
+class LockRoomRequest(BaseModel):
+    locked: bool
 
 
 class FileResponse(BaseModel):

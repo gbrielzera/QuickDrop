@@ -14,8 +14,8 @@ import {
 import { splitTimeLeft } from "../static/js/time-left.js";
 
 test("lê o código completo com hífens, espaços e minúsculas", () => {
-  assert.deepEqual(parseRoomCodeInput("k7p3xm-hq4t-9wzc"), { code: "K7P3XM", secret: "HQ4T9WZC" });
-  assert.deepEqual(parseRoomCodeInput("  K7P3XM HQ4T 9WZC "), { code: "K7P3XM", secret: "HQ4T9WZC" });
+  assert.deepEqual(parseRoomCodeInput("k7p3xm-hq4t-9wzc-mpn2"), { code: "K7P3XM", secret: "HQ4T9WZCMPN2" });
+  assert.deepEqual(parseRoomCodeInput("  K7P3XM HQ4T 9WZC MPN2 "), { code: "K7P3XM", secret: "HQ4T9WZCMPN2" });
 });
 
 test("lê só o código da sala, sem segredo", () => {
@@ -31,23 +31,23 @@ test("valida o código da sala e o segredo", () => {
   assert.equal(isValidRoomCode("K7P3XM"), true);
   assert.equal(isValidRoomCode("K7P3X"), false);
   assert.equal(isValidRoomCode("K7P3XO"), false); // "O" não existe no alfabeto
-  assert.equal(isValidSecret("HQ4T9WZC"), true);
-  assert.equal(isValidSecret("HQ4T9WZ"), false);
-  assert.equal(isValidSecret("HQ4T9WZ1"), false); // "1" não existe no alfabeto
+  assert.equal(isValidSecret("HQ4T9WZCMPN2"), true);
+  assert.equal(isValidSecret("HQ4T9WZCMPN"), false);
+  assert.equal(isValidSecret("HQ4T9WZCMPN1"), false); // "1" não existe no alfabeto
 });
 
 test("monta o código para digitar", () => {
-  assert.equal(formatRoomCode("K7P3XM", "HQ4T9WZC"), "K7P3XM-HQ4T-9WZC");
+  assert.equal(formatRoomCode("K7P3XM", "HQ4T9WZCMPN2"), "K7P3XM-HQ4T-9WZC-MPN2");
   assert.equal(formatRoomCode("K7P3XM", ""), "K7P3XM");
 });
 
 test("monta o caminho da sala com o segredo depois do #", () => {
-  assert.equal(buildRoomPath("K7P3XM", "HQ4T9WZC"), "/r/K7P3XM#k=HQ4T9WZC");
+  assert.equal(buildRoomPath("K7P3XM", "HQ4T9WZCMPN2"), "/r/K7P3XM#k=HQ4T9WZCMPN2");
   assert.equal(buildRoomPath("K7P3XM", ""), "/r/K7P3XM");
 });
 
 test("lê o segredo do fragmento da URL", () => {
-  assert.equal(readSecretFromHash("#k=hq4t9wzc"), "HQ4T9WZC");
+  assert.equal(readSecretFromHash("#k=hq4t9wzcmpn2"), "HQ4T9WZCMPN2");
   assert.equal(readSecretFromHash(""), "");
   assert.equal(readSecretFromHash("#outra=coisa"), "");
 });

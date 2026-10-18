@@ -20,17 +20,19 @@ from app.schemas import (
     CreateRoomRequest,
     CreateRoomResponse,
     JoinRoomRequest,
+    LockRoomRequest,
     RoomParamsResponse,
     RoomResponse,
 )
 from app.security import hash_auth_key, verify_auth_key
-from app.session import is_room_owner, set_owner_cookie, set_session_cookie
+from app.session import has_session_for_room, is_room_owner, set_owner_cookie, set_session_cookie
 
 router = APIRouter(prefix="/api/rooms", tags=["salas"])
 
 # Código que o navegador entende para avisar que o servidor atingiu o limite de salas.
 SERVER_FULL = "server_full"
 NOT_OWNER = "not_owner"
+ROOM_LOCKED = "room_locked"
 
 
 async def _get_active_room_or_404(db: AsyncSession, room_code: str) -> Room:
@@ -83,6 +85,10 @@ async def join_room(
     count_attempt(limits.lookups, address)
     room = await _get_active_room_or_404(db, code)
 
+    # Sala trancada: só entra de novo quem já tinha entrado (por exemplo, depois de recarregar a página).
+    if room.locked and not has_session_for_room(request.cookies, room):
+        raise HTTPException(status_code=403, detail=ROOM_LOCKED)
+
     # Quem errou a senha várias vezes espera um pouco, mesmo que a próxima tentativa esteja certa.
     failed_joins_key = f"{address}:{code}"
     block_if_over_limit(limits.failed_joins, failed_joins_key)
@@ -98,6 +104,17 @@ async def join_room(
 @router.get("/{code}")
 async def get_room(room: CurrentRoom, request: Request) -> RoomResponse:
     """Dados da sala. Só quem já entrou consegue ver."""
+    return _to_room_response(room, request)
+
+
+@router.put("/{code}/lock")
+async def lock_room(body: LockRoomRequest, room: CurrentRoom, request: Request, db: Database) -> RoomResponse:
+    """Tranca ou destranca a sala. Só o dono pode."""
+    if not is_room_owner(request.cookies, room):
+        raise HTTPException(status_code=403, detail=NOT_OWNER)
+    room.locked = body.locked
+    db.add(room)
+    await db.commit()
     return _to_room_response(room, request)
 
 
@@ -119,4 +136,5 @@ def _to_room_response(room: Room, request: Request) -> RoomResponse:
         has_password=room.has_password,
         expires_at=room.expires_at_utc,
         is_owner=is_room_owner(request.cookies, room),
+        is_locked=room.locked,
     )
