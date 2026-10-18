@@ -197,6 +197,14 @@ Cantos de 6px (`rounded.md`) em placas, campos, botões, QR e seletor; 4px em et
 ### Navigation
 - Barra do topo: círculo azul com glifo e marca em 800 à esquerda; seletor PT / EN à direita, botões de 44px, o ativo (`aria-pressed`) preenchido de tinta.
 
+### Arquivos, texto e clips
+- **Área de soltar:** contorno tracejado de 3px (cai no azul ao arrastar um arquivo por cima), botão azul de largura limitada. A fila de envio mostra nome, tamanho e uma barra de 1.25rem com contorno de 3px, preenchida de amarelo (o que está em trânsito).
+- **Lista de arquivos e de clips:** itens separados por linha de 3px; nome em 800, tamanho em tom suave com números tabulares; ações em botões de contorno de 44px de altura. Excluir pede confirmação: o primeiro clique troca o texto por "Confirmar exclusão" em vermelho (`danger`) por 4 segundos.
+- **Campo de texto (textarea):** mesmo contorno, raio e foco dos campos de uma linha; só estica na vertical. O texto de um clip aparece num bloco `ground` com rolagem a partir de 9rem.
+- **Aviso de conflito do texto:** caixa com contorno de `danger` de 3px, duas ações de contorno ("Usar a do outro aparelho", "Manter a minha"). Amarelo não é usado aqui: não é tempo nem trânsito.
+- **Navegação da sala:** três âncoras de 44px com a aparência de botão de contorno (Arquivos, Texto, Convidar).
+- **Linhas de estado:** parágrafos com `role="status"` em 700; `status--error` muda a cor para `danger`.
+
 ### Diagrama da rota (assinatura)
 Três estações (aparelho de origem, sala com código e tempo restante, aparelho de destino) sobre uma linha azul-depois-verde, pontos de 56px. A cápsula amarela "arquivo" percorre a linha uma vez ao carregar (2.4s, `cubic-bezier(0.16, 1, 0.3, 1)`) e para entre a origem e a sala; sob `prefers-reduced-motion` não anima, e na versão vertical (sob 760px) fica oculta. É a única animação autoral do sistema.
 

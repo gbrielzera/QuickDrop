@@ -1,6 +1,7 @@
 // Troca de idioma (português e inglês).
 //
 // No HTML, um elemento com data-i18n="chave" tem o texto trocado pela tradução.
+// Se o texto tiver valores, como "{textSize}", eles ficam em data-i18n-values (um JSON).
 // Também funcionam data-i18n-placeholder e data-i18n-aria-label.
 
 import { messages } from "./messages.js";
@@ -43,7 +44,8 @@ function translateAttribute(root, attributeName, targetAttribute) {
 /** Troca os textos marcados com data-i18n dentro de `root`. */
 export function applyTranslations(root = document) {
   for (const element of root.querySelectorAll("[data-i18n]")) {
-    element.textContent = t(element.dataset.i18n);
+    const values = element.dataset.i18nValues ? JSON.parse(element.dataset.i18nValues) : {};
+    element.textContent = t(element.dataset.i18n, values);
   }
   translateAttribute(root, "data-i18n-placeholder", "placeholder");
   translateAttribute(root, "data-i18n-aria-label", "aria-label");

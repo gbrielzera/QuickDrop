@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BACKEND_DIR.parent / "frontend"
+BYTES_PER_KILOBYTE = 1024
 BYTES_PER_MEGABYTE = 1024 * 1024
 
 
@@ -29,6 +30,11 @@ class Settings(BaseSettings):
     max_file_size_mb: int = 100
     max_room_size_mb: int = 500
 
+    # Limites do texto compartilhado e dos clips (textos colados), em KB, antes de criptografar.
+    max_text_size_kb: int = 1024
+    max_clip_size_kb: int = 64
+    max_clips_per_room: int = 200
+
     # Texto separado por vírgulas para ficar fácil de escrever no .env
     allowed_ttl_hours: str = "1,12,24,48"
     default_ttl_hours: int = 12
@@ -48,6 +54,14 @@ class Settings(BaseSettings):
     @property
     def max_room_size_bytes(self) -> int:
         return self.max_room_size_mb * BYTES_PER_MEGABYTE
+
+    @property
+    def max_text_size_bytes(self) -> int:
+        return self.max_text_size_kb * BYTES_PER_KILOBYTE
+
+    @property
+    def max_clip_size_bytes(self) -> int:
+        return self.max_clip_size_kb * BYTES_PER_KILOBYTE
 
     @model_validator(mode="after")
     def check_default_ttl_is_an_option(self) -> "Settings":

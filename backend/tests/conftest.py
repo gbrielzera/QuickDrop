@@ -47,3 +47,9 @@ def small_limits_client(tmp_path, monkeypatch):
     yield from start_test_client(
         tmp_path, monkeypatch, debug=False, MAX_FILE_SIZE_MB="2", MAX_ROOM_SIZE_MB="3"
     )
+
+
+@pytest.fixture
+def few_clips_client(tmp_path, monkeypatch):
+    """Cliente de teste em que cada sala comporta só 2 clips."""
+    yield from start_test_client(tmp_path, monkeypatch, debug=False, MAX_CLIPS_PER_ROOM="2")

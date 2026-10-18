@@ -6,11 +6,9 @@ import { errorMessageKey } from "./errors.js";
 import { formatFileSize } from "./file-size.js";
 import { fetchDecryptedFile, readFileEntry, saveBlobAsFile } from "./file-transfer.js";
 import { getLanguage, onLanguageChange, t } from "./i18n.js";
-import { clearMessage, runWithBusyButton, showMessage } from "./ui.js";
+import { clearMessage, runWithBusyButton, setUpConfirmButton, showMessage } from "./ui.js";
 
 const HTTP_NOT_FOUND = 404;
-// Excluir pede uma segunda confirmação; se a pessoa não confirmar, o botão volta ao normal.
-const DELETE_CONFIRMATION_MILLISECONDS = 4000;
 
 /** Chave de tradução do erro de uma ação sobre um arquivo (baixar ou excluir). */
 function fileErrorKey(error) {
@@ -91,7 +89,7 @@ export function startFileList({ roomCode, getEncryptionKey }) {
     async function remove(button) {
       clearMessage(statusElement);
       try {
-        await runWithBusyButton(button, "files.deleting", () => deleteFile(roomCode, entry.id));
+        await runWithBusyButton(button, "action.deleting", () => deleteFile(roomCode, entry.id));
         removeRow();
       } catch (error) {
         if (error instanceof ApiError && error.status === HTTP_NOT_FOUND) {
@@ -114,28 +112,10 @@ export function startFileList({ roomCode, getEncryptionKey }) {
 
     const deleteButton = createElement("button", {
       className: "button button--outline button--small",
-      i18nKey: "files.delete",
+      i18nKey: "action.delete",
       attributes: { type: "button" },
     });
-    let confirmationTimer = null;
-    deleteButton.addEventListener("click", () => {
-      if (confirmationTimer === null) {
-        deleteButton.dataset.i18n = "files.deleteConfirm";
-        deleteButton.textContent = t("files.deleteConfirm");
-        deleteButton.classList.add("button--danger");
-        confirmationTimer = setTimeout(() => {
-          confirmationTimer = null;
-          deleteButton.dataset.i18n = "files.delete";
-          deleteButton.textContent = t("files.delete");
-          deleteButton.classList.remove("button--danger");
-        }, DELETE_CONFIRMATION_MILLISECONDS);
-        return;
-      }
-      clearTimeout(confirmationTimer);
-      confirmationTimer = null;
-      deleteButton.classList.remove("button--danger");
-      remove(deleteButton);
-    });
+    setUpConfirmButton(deleteButton, "action.deleteConfirm", remove);
     actions.append(deleteButton);
 
     row.render();

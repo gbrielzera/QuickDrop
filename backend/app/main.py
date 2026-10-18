@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import FRONTEND_DIR, get_settings
 from app.database import create_engine, create_session_maker, create_tables
 from app.realtime import ConnectionManager
-from app.routers import files, pages, rooms, ws
+from app.routers import clips, files, pages, rooms, text, ws
 
 
 @asynccontextmanager
@@ -36,6 +36,8 @@ def create_app() -> FastAPI:
     app.include_router(pages.router)
     app.include_router(rooms.router)
     app.include_router(files.router)
+    app.include_router(text.router)
+    app.include_router(clips.router)
     app.include_router(ws.router)
     if settings.debug:
         app.include_router(pages.dev_router)

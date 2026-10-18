@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse as DiskFileResponse
 
 from app import file_service, storage
 from app.config import BYTES_PER_MEGABYTE, get_settings
-from app.dependencies import Connections, CurrentRoom, Database, FileId
+from app.dependencies import Connections, CurrentRoom, Database, ItemId
 from app.encoding import from_base64url, to_base64url
 from app.models import StoredFile
 from app.schemas import FileResponse
@@ -106,7 +106,7 @@ async def upload_file(
 
 
 @router.get("/{file_id}")
-async def download_file(file_id: FileId, room: CurrentRoom, db: Database) -> DiskFileResponse:
+async def download_file(file_id: ItemId, room: CurrentRoom, db: Database) -> DiskFileResponse:
     """Entrega o arquivo criptografado. Quem descriptografa (e dá o nome de volta) é o navegador."""
     stored_file = await file_service.find_file(db, room.id, file_id)
     path = storage.file_path(room.id, file_id)
@@ -127,7 +127,7 @@ async def download_file(file_id: FileId, room: CurrentRoom, db: Database) -> Dis
 
 @router.delete("/{file_id}", status_code=204)
 async def delete_room_file(
-    file_id: FileId, room: CurrentRoom, db: Database, connections: Connections
+    file_id: ItemId, room: CurrentRoom, db: Database, connections: Connections
 ) -> Response:
     """Apaga um arquivo da sala (do disco e do banco)."""
     stored_file = await file_service.find_file(db, room.id, file_id)

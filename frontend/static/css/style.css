@@ -794,6 +794,102 @@ input:focus-visible {
   text-underline-offset: 0.2em;
 }
 
+/* ---------- texto e clips ---------- */
+
+textarea {
+  display: block;
+  width: 100%;
+  min-height: 6rem;
+  padding: 0.875rem 1rem;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.125rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+textarea::placeholder {
+  color: var(--placeholder);
+  opacity: 1;
+}
+
+textarea:hover,
+textarea:focus-visible {
+  border-color: var(--ink);
+}
+
+.shared-text {
+  min-height: 16rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.jump .button {
+  padding: 0 1rem;
+}
+
+.signs {
+  scroll-margin-top: 1rem;
+}
+
+.conflict {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: var(--stroke) solid var(--danger);
+  border-radius: var(--radius);
+}
+
+.clip-list {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clip {
+  display: grid;
+  gap: 0.625rem;
+  padding-top: 1rem;
+  border-top: var(--stroke) solid var(--outline);
+}
+
+.clip__text {
+  max-height: 9rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  overflow: auto;
+  border-radius: var(--radius);
+  background: var(--ground);
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.status--error {
+  color: var(--danger);
+}
+
 /* ---------- celular ---------- */
 
 @media (max-width: 760px) {

@@ -2,21 +2,27 @@
 
 /**
  * Erro devolvido pelo servidor.
- * `status` é o código HTTP (404, 401...). `code` é o motivo em texto quando o servidor informa
- * (por exemplo "file_too_large" e "room_full").
+ * - status: o código HTTP (404, 401...).
+ * - detail: o que o servidor explicou: um código em texto (ex.: "file_too_large") ou um objeto
+ *   (ex.: o conflito do texto, com o texto atual dentro).
+ * - code: o código em texto, quando houver.
  */
 export class ApiError extends Error {
-  constructor(status, code = "") {
+  constructor(status, detail = "") {
     super(`O servidor respondeu ${status}`);
     this.status = status;
-    this.code = code;
+    this.detail = detail;
+    this.code = typeof detail === "string" ? detail : (detail?.code ?? "");
   }
 }
 
-async function readErrorCode(response) {
+function readDetailFromBody(body) {
+  return body && typeof body === "object" && "detail" in body ? body.detail : "";
+}
+
+async function readErrorDetail(response) {
   try {
-    const body = await response.json();
-    return typeof body.detail === "string" ? body.detail : "";
+    return readDetailFromBody(await response.json());
   } catch {
     return "";
   }
@@ -30,7 +36,7 @@ async function request(method, path, body) {
     credentials: "same-origin",
   });
   if (!response.ok) {
-    throw new ApiError(response.status, await readErrorCode(response));
+    throw new ApiError(response.status, await readErrorDetail(response));
   }
   return response.status === 204 ? null : response.json();
 }
@@ -72,7 +78,7 @@ export function deleteFile(code, fileId) {
 export async function downloadFile(code, fileId) {
   const response = await fetch(`/api/rooms/${code}/files/${fileId}`, { credentials: "same-origin" });
   if (!response.ok) {
-    throw new ApiError(response.status, await readErrorCode(response));
+    throw new ApiError(response.status, await readErrorDetail(response));
   }
   return response.blob();
 }
@@ -108,9 +114,33 @@ export function uploadFile(code, encryptedBlob, encryptedMeta, onProgress) {
 
 function readDetailFromText(responseText) {
   try {
-    const body = JSON.parse(responseText);
-    return typeof body.detail === "string" ? body.detail : "";
+    return readDetailFromBody(JSON.parse(responseText));
   } catch {
     return "";
   }
+}
+
+// ---------- texto compartilhado ----------
+
+export function getText(code) {
+  return request("GET", `/api/rooms/${code}/text`);
+}
+
+/** Salva o texto (já criptografado). Lança ApiError(409) se outro aparelho alterou antes. */
+export function putText(code, ciphertext, baseVersion) {
+  return request("PUT", `/api/rooms/${code}/text`, { ciphertext, base_version: baseVersion });
+}
+
+// ---------- clips ----------
+
+export function listClips(code) {
+  return request("GET", `/api/rooms/${code}/clips`);
+}
+
+export function createClip(code, ciphertext) {
+  return request("POST", `/api/rooms/${code}/clips`, { ciphertext });
+}
+
+export function deleteClip(code, clipId) {
+  return request("DELETE", `/api/rooms/${code}/clips/${clipId}`);
 }

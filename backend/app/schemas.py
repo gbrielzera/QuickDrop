@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, field_validator
+from pydantic import AfterValidator, BaseModel, Field, field_validator
 
 from app.config import get_settings
 from app.encoding import from_base64url
@@ -23,7 +23,14 @@ def _must_decode_to(expected_bytes: int):
     return check
 
 
+def _must_be_base64url(text: str) -> str:
+    """O texto precisa ser base64url válido (de qualquer tamanho)."""
+    from_base64url(text)
+    return text
+
+
 Salt = Annotated[str, AfterValidator(_must_decode_to(SALT_BYTES))]
+Base64Text = Annotated[str, AfterValidator(_must_be_base64url)]
 AuthKey = Annotated[str, AfterValidator(_must_decode_to(AUTH_KEY_BYTES))]
 
 
@@ -73,4 +80,28 @@ class FileResponse(BaseModel):
     id: str
     encrypted_meta: str
     size_bytes: int
+    created_at: datetime
+
+
+class UpdateTextRequest(BaseModel):
+    """Novo texto compartilhado (já criptografado) e a versão em que ele se baseou."""
+
+    ciphertext: Base64Text
+    base_version: int = Field(ge=0)
+
+
+class TextResponse(BaseModel):
+    """O texto compartilhado criptografado e a versão atual. `ciphertext` vazio = ninguém escreveu ainda."""
+
+    ciphertext: str
+    version: int
+
+
+class CreateClipRequest(BaseModel):
+    ciphertext: Base64Text
+
+
+class ClipResponse(BaseModel):
+    id: str
+    ciphertext: str
     created_at: datetime

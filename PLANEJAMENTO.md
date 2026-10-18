@@ -122,7 +122,7 @@ O `localStorage` fica **dentro do navegador de cada dispositivo**. O celular nã
 4. O PC recebe o evento e adiciona o arquivo na lista instantaneamente.
 
 ### Fluxo: editar o texto
-1. Usuário digita no PC; após ~300 ms sem digitar (*debounce*), o navegador envia pelo WebSocket: `{"type": "text_update", "content": "...", "base_version": 12}`.
+1. Usuário digita no PC; após ~600 ms sem digitar (*debounce*), o navegador criptografa e envia `PUT /api/rooms/{code}/text` com `base_version: 12`.
 2. O servidor salva, incrementa a versão para 13 e repassa para os outros dispositivos.
 3. O celular atualiza o editor (preservando a posição do cursor quando possível).
 
@@ -270,9 +270,10 @@ Disco: `storage/{room_id}/{file_id}`. Apagar a sala = apagar a pasta inteira + r
 | `POST` | `/api/rooms/{code}/files` | Upload de **um arquivo já criptografado**: o corpo da requisição é o arquivo (lido em streaming, sem `python-multipart`) e o cabeçalho `X-File-Meta` leva o nome, tipo e tamanho originais, criptografados. Erro `413` com `file_too_large` ou `room_full` |
 | `GET` | `/api/rooms/{code}/files/{file_id}` | Download do `.bin` criptografado (o navegador descriptografa) |
 | `DELETE` | `/api/rooms/{code}/files/{file_id}` | Exclui arquivo |
-| `GET` | `/api/rooms/{code}/text` | Texto criptografado atual + versão (para carga inicial) |
+| `GET` | `/api/rooms/{code}/text` | Texto criptografado atual + versão (`ciphertext` vazio e versão 0 enquanto ninguém escreveu) |
+| `PUT` | `/api/rooms/{code}/text` | Salva o texto `{ciphertext, base_version}`. Só aceita se `base_version` for a versão atual; senão `409` com `{"code": "text_conflict", "current": {ciphertext, version}}`. `413` com `text_too_large` |
 | `GET` | `/api/rooms/{code}/clips` | Lista clips (criptografados) |
-| `POST` | `/api/rooms/{code}/clips` | Cria clip `{ciphertext}` |
+| `POST` | `/api/rooms/{code}/clips` | Cria clip `{ciphertext}`. `413` com `clip_too_large` ou `clips_full` |
 | `DELETE` | `/api/rooms/{code}/clips/{clip_id}` | Exclui clip |
 
 Campos binários (`ciphertext`, `kdf_salt`, `encrypted_meta`, `auth_key`) trafegam em JSON como **base64url**.
@@ -293,11 +294,10 @@ Autenticado pelo cookie. Mensagens em JSON com campo `type`:
 
 **Cliente → servidor**
 ```json
-{"type": "text_update", "ciphertext": "...", "base_version": 12}
 {"type": "ping"}                       (o servidor responde {"type": "pong"})
 ```
 
-Não existe mensagem `init`: ao abrir (e ao reabrir) a conexão, o navegador recarrega o estado pela API REST, que já é a fonte da verdade. A conexão só avisa o que muda.
+O texto e os clips são **gravados pela API REST** (`PUT /text`, `POST /clips`), que valida, guarda e então avisa os aparelhos pelo WebSocket. Assim todo erro (conflito, tamanho, sessão) chega como resposta HTTP normal. Não existe mensagem `init`: ao abrir (e ao reabrir) a conexão, o navegador recarrega o estado pela API REST, que já é a fonte da verdade. A conexão só avisa o que muda.
 
 O servidor só repassa esses campos; ele não consegue ler o conteúdo.
 
@@ -489,13 +489,18 @@ Vem antes de tudo porque todas as outras partes dependem dela.
 - [ ] **Teste de verdade:** PC + celular na mesma rede Wi-Fi (com o celular que apaga a tela)
 - Fica para depois: nomes dos aparelhos (hoje só a contagem), e o aviso `room_closed` ao expirar (Fase 6)
 
-### Fase 5: Editor de texto e clips (2 dias)
-- [ ] Modelos `RoomText` (com versão) e `Clip`
-- [ ] Mensagem `text_update` → salva → `text_updated` para os outros
-- [ ] Debounce, indicador de sincronização, aviso de conflito
-- [ ] Botões copiar/limpar (com fallback de cópia para HTTP na rede local)
-- [ ] Rotas de clips + eventos `clip_added` / `clip_deleted`
-- [ ] Ctrl+V de texto fora do editor → vira clip
+### Fase 5: Editor de texto e clips (2 dias) ✅
+- [x] Modelos `RoomText` (com versão) e `Clip`; o texto é criado vazio (versão 0) na primeira consulta
+- [x] `PUT /text` com versão: a conferência e a troca são uma única instrução do banco, então duas edições ao mesmo tempo nunca passam as duas; quem perde recebe `409` com o texto atual
+- [x] Avisos ao vivo `text_updated`, `clip_added` e `clip_deleted`
+- [x] Editor: salva ~600 ms depois de parar de digitar, mostra "Salvando... / Sincronizado", salva também quando a aba vai para o fundo, copiar tudo e limpar (com confirmação), mantém o cursor quando chega texto de outro aparelho
+- [x] Conflito: se chega texto de outro aparelho enquanto há alterações suas, aparece um aviso com "Usar a do outro aparelho" ou "Manter a minha"; o eco do próprio salvamento é reconhecido e não gera aviso
+- [x] Clips: caixa para colar e guardar, lista com o mais novo no alto, copiar e excluir (com confirmação), e **Ctrl+V fora de qualquer campo vira clip**; limites de 64 KB por clip e 200 por sala
+- [x] Limites: texto de 1 MB (antes de criptografar); mensagens de erro com o tamanho, em português e inglês
+- [x] Navegação rápida na sala (Arquivos, Texto, Convidar) para o celular
+- [x] 95 testes no backend e 42 no frontend
+- [x] Verificado no navegador com duas abas: texto nos dois sentidos, conflito provocado (a escolha "Manter a minha" chegou ao outro aparelho), clips ao vivo, Ctrl+V global, exclusão com confirmação, limite de 64 KB; no banco não aparece nenhum texto original
+- Fica para depois: edição simultânea sem conflito (CRDT/Yjs), se algum dia for preciso
 
 ### Fase 6: Expiração e robustez (1 dia)
 - [ ] Tarefa de limpeza no `lifespan` do FastAPI (loop asyncio a cada N minutos)

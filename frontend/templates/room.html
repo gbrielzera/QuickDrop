@@ -2,7 +2,7 @@
 {% from "_icons.html" import icon %}
 
 {% block title %}{{ room_code }} · {{ app_name }}{% endblock %}
-{% block body_attributes %}data-room-code="{{ room_code }}" data-max-file-bytes="{{ max_file_bytes }}" data-max-room-bytes="{{ max_room_bytes }}"{% endblock %}
+{% block body_attributes %}data-room-code="{{ room_code }}" data-max-file-bytes="{{ max_file_bytes }}" data-max-room-bytes="{{ max_room_bytes }}" data-max-text-bytes="{{ max_text_bytes }}" data-max-clip-bytes="{{ max_clip_bytes }}"{% endblock %}
 
 {% block content %}
 <p class="lead" id="view-loading" role="status" data-i18n="room.loading">Entrando na sala...</p>
@@ -35,7 +35,13 @@
     </h1>
     <span class="tag tag--large" data-expiry></span>
   </div>
-  <div class="signs">
+  <nav class="jump" aria-label="Ir para uma parte da sala" data-i18n-aria-label="nav.label">
+    <a class="button button--outline button--small" href="#files-section" data-i18n="nav.files">Arquivos</a>
+    <a class="button button--outline button--small" href="#text-section" data-i18n="nav.text">Texto</a>
+    <a class="button button--outline button--small" href="#invite" data-i18n="nav.invite">Convidar</a>
+  </nav>
+
+  <div class="signs" id="files-section">
     <section class="sign sign--blue" aria-labelledby="send-title">
       <h2 class="sign__band" id="send-title">
         <span class="roundel">{{ icon("upload") }}</span>
@@ -64,6 +70,47 @@
         </p>
         <ul class="file-list" id="file-list"></ul>
         <p class="error" id="files-status" role="status"></p>
+      </div>
+    </section>
+  </div>
+
+  <div class="signs" id="text-section">
+    <section class="sign sign--blue" aria-labelledby="text-title">
+      <h2 class="sign__band" id="text-title">
+        <span class="roundel">{{ icon("text") }}</span>
+        <span data-i18n="text.title">Texto compartilhado</span>
+      </h2>
+      <div class="sign__body">
+        <label class="visually-hidden" for="shared-text" data-i18n="text.title">Texto compartilhado</label>
+        <textarea class="shared-text" id="shared-text" autocomplete="off" data-i18n-placeholder="text.placeholder" placeholder="Escreva ou cole aqui. O que você digitar aparece nos outros aparelhos."></textarea>
+        <p class="status" id="text-status" role="status"></p>
+        <div class="conflict" id="text-conflict" hidden>
+          <p data-i18n="text.conflictMessage">Outro aparelho alterou o texto enquanto você escrevia. Qual versão você quer?</p>
+          <div class="file__actions">
+            <button class="button button--outline button--small" type="button" id="use-theirs" data-i18n="text.useTheirs">Usar a do outro aparelho</button>
+            <button class="button button--outline button--small" type="button" id="keep-mine" data-i18n="text.keepMine">Manter a minha</button>
+          </div>
+        </div>
+        <div class="file__actions">
+          <button class="button button--outline button--small" type="button" id="copy-text" data-i18n="text.copy">Copiar tudo</button>
+          <button class="button button--outline button--small" type="button" id="clear-text" data-i18n="text.clear">Limpar</button>
+        </div>
+        <p class="status" id="text-copy-status" role="status"></p>
+      </div>
+    </section>
+
+    <section class="sign sign--green" aria-labelledby="clips-title">
+      <h2 class="sign__band" id="clips-title">
+        <span class="roundel">{{ icon("clips") }}</span>
+        <span data-i18n="clips.title">Clips</span>
+      </h2>
+      <div class="sign__body">
+        <label class="visually-hidden" for="clip-input" data-i18n="clips.title">Clips</label>
+        <textarea class="clip-input" id="clip-input" autocomplete="off" data-i18n-placeholder="clips.placeholder" placeholder="Cole ou digite um texto para guardar"></textarea>
+        <button class="button button--green" type="button" id="save-clip" data-i18n="clips.save">Guardar clip</button>
+        <p class="error" id="clips-status" role="status"></p>
+        <p class="empty" id="clips-empty" data-i18n="clips.empty">Nenhum clip ainda. Cole um texto aqui, ou em qualquer lugar da página com Ctrl+V.</p>
+        <ul class="clip-list" id="clip-list"></ul>
       </div>
     </section>
   </div>

@@ -37,6 +37,8 @@ async def room_page(code: RoomCode, request: Request) -> HTMLResponse:
         # O JavaScript usa estes limites para avisar antes de enviar um arquivo grande demais.
         "max_file_bytes": settings.max_file_size_bytes,
         "max_room_bytes": settings.max_room_size_bytes,
+        "max_text_bytes": settings.max_text_size_bytes,
+        "max_clip_bytes": settings.max_clip_size_bytes,
     }
     return templates.TemplateResponse(request, "room.html", page_data)
 

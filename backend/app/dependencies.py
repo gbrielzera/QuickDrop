@@ -18,8 +18,8 @@ UUID_PATTERN = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 # Código da sala na URL, já validado (6 caracteres do alfabeto permitido).
 RoomCode = Annotated[str, Path(pattern=ROOM_CODE_PATTERN)]
 
-# Id de arquivo na URL: um UUID (o servidor é quem cria os ids).
-FileId = Annotated[str, Path(pattern=UUID_PATTERN)]
+# Id de arquivo ou de clip na URL: um UUID (o servidor é quem cria os ids).
+ItemId = Annotated[str, Path(pattern=UUID_PATTERN)]
 
 
 async def get_db(connection: HTTPConnection) -> AsyncIterator[AsyncSession]:
