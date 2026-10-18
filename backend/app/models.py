@@ -64,23 +64,35 @@ class StoredFile(Base):
         return with_utc_timezone(self.created_at)
 
 
-class RoomText(Base):
-    """O texto compartilhado da sala (um por sala), guardado criptografado."""
+class EncryptedDocument(Base):
+    """Base dos textos compartilhados da sala (texto e código): um de cada por sala, criptografado."""
 
-    __tablename__ = "room_texts"
+    __abstract__ = True
 
     room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True)
-    # Vazio enquanto ninguém escreveu nada. O servidor não consegue ler o texto.
+    # Vazio enquanto ninguém escreveu nada. O servidor não consegue ler o conteúdo.
     ciphertext: Mapped[bytes] = mapped_column(LargeBinary, default=b"")
-    # Sobe 1 a cada alteração. Serve para perceber que outro aparelho mudou o texto antes de nós.
+    # Sobe 1 a cada alteração. Serve para perceber que outro aparelho mudou o conteúdo antes de nós.
     version: Mapped[int] = mapped_column(default=0)
     updated_at: Mapped[datetime] = mapped_column(default=utc_now)
 
 
-class Clip(Base):
-    """Um clip: um texto colado na sala, guardado criptografado."""
+class RoomText(EncryptedDocument):
+    """O texto compartilhado da sala."""
 
-    __tablename__ = "clips"
+    __tablename__ = "room_texts"
+
+
+class SourceCode(EncryptedDocument):
+    """O código compartilhado da sala (mesmo funcionamento do texto, mas mostrado em fonte monoespaçada)."""
+
+    __tablename__ = "room_source_code"
+
+
+class EncryptedClip(Base):
+    """Base dos clips (textos colados na sala), guardados criptografados."""
+
+    __abstract__ = True
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), index=True)
@@ -90,3 +102,15 @@ class Clip(Base):
     @property
     def created_at_utc(self) -> datetime:
         return with_utc_timezone(self.created_at)
+
+
+class Clip(EncryptedClip):
+    """Um clip de texto."""
+
+    __tablename__ = "clips"
+
+
+class CodeClip(EncryptedClip):
+    """Um bloco de código guardado na sala."""
+
+    __tablename__ = "code_clips"

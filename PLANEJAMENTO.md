@@ -273,6 +273,8 @@ Disco: `storage/{room_id}/{file_id}`. Apagar a sala = apagar a pasta inteira + r
 | `GET` | `/api/rooms/{code}/text` | Texto criptografado atual + versão (`ciphertext` vazio e versão 0 enquanto ninguém escreveu) |
 | `PUT` | `/api/rooms/{code}/text` | Salva o texto `{ciphertext, base_version}`. Só aceita se `base_version` for a versão atual; senão `409` com `{"code": "text_conflict", "current": {ciphertext, version}}`. `413` com `text_too_large` |
 | `GET` | `/api/rooms/{code}/clips` | Lista clips (criptografados) |
+| `GET` / `PUT` | `/api/rooms/{code}/source` | O **código compartilhado**: igual ao `/text` (versão, `409` em conflito), em outra tabela |
+| `GET` / `POST` / `DELETE` | `/api/rooms/{code}/code-clips[/{id}]` | Os **blocos de código**: iguais aos clips, em outra tabela e com limite maior (256 KB cada) |
 | `POST` | `/api/rooms/{code}/clips` | Cria clip `{ciphertext}`. `413` com `clip_too_large` ou `clips_full` |
 | `DELETE` | `/api/rooms/{code}/clips/{clip_id}` | Exclui clip |
 
@@ -288,6 +290,9 @@ Autenticado pelo cookie. Mensagens em JSON com campo `type`:
 {"type": "text_updated",  "ciphertext": "...", "version": 13}
 {"type": "clip_added",    "clip": {"id": "...", "ciphertext": "..."}}
 {"type": "clip_deleted",  "clip_id": "..."}
+{"type": "source_updated", "ciphertext": "...", "version": 4}
+{"type": "code_clip_added",   "clip": {...}}
+{"type": "code_clip_deleted", "clip_id": "..."}
 {"type": "presence",      "online": 2}
 {"type": "room_closed",   "reason": "expired"}
 ```
@@ -522,6 +527,18 @@ Vem antes de tudo porque todas as outras partes dependem dela.
 - [x] Verificado no navegador: imagem colada virou arquivo, a imagem apareceu decifrada (120x80), o SVG não ganhou botão "Ver", o zip tinha os 3 arquivos em ordem, o service worker registrou com escopo `/` e a página "Sem conexão" apareceu com o servidor desligado
 - Não feito: "Compartilhar com…" do Android (share target). Exige escolher para qual sala o conteúdo vai e tratar arquivos por um service worker; fica como ideia futura
 - Ícones: gerados por script com a biblioteca Pillow (um "Q" desenhado com formas simples, sem imagem de terceiros)
+
+### Extra (pedido depois da Fase 7): código compartilhado e blocos de código ✅
+Para passar trechos de código sem perder a formatação, a sala ganhou um editor de código e uma lista de blocos de código, ao lado dos de texto.
+- [x] **Campo de código** (`/source`, ao vivo, com conflito por versão, igual ao texto): fonte monoespaçada do sistema, sem quebra de linha (rola para o lado), tabulação de 4 colunas, **sem ligaduras** (o `=>` aparece como dois caracteres, exatamente o que será copiado) e sem autocorreção, corretor ou maiúscula automática (no celular o teclado trocava aspas retas por curvas, o que quebra o código)
+- [x] **Tab indenta e Shift+Tab tira a indentação** (4 espaços; com várias linhas selecionadas, todas). Para o teclado não ficar preso no campo: **Esc e depois Tab** move o foco. O "desfazer" (Ctrl+Z) continua funcionando
+- [x] **Blocos de código** (`/code-clips`): caixa para colar, lista com o mais novo no alto, **Copiar** que entrega exatamente o que foi guardado (tabs, espaços no fim da linha, acentos), excluir com confirmação; até 256 KB por bloco e 200 por sala, contados à parte dos clips de texto
+- [x] Colar fora de qualquer campo (Ctrl+V) continua virando **clip de texto**: o app não tem como saber se o que foi colado é código
+- [x] Sem realce de sintaxe, por decisão: exigiria uma biblioteca de terceiros e dá para acrescentar depois sem mexer no resto
+- [x] Tabelas **novas** no banco (`room_source_code`, `code_clips`): o banco existente continua funcionando sem migração
+- [x] Código reaproveitado em vez de copiado: no backend, `create_document_router` e `create_clips_router` montam as rotas do texto e do código; no frontend, `shared-editor.js` e `clips-panel.js` servem aos dois, e `room-panels.js` liga todos os painéis
+- [x] 148 testes no backend e 68 no frontend (a indentação tem testes próprios)
+- [x] Verificado no navegador com duas abas: código com tabulação, espaços no fim da linha, crases e acentos chegou idêntico ao outro aparelho; o bloco salvo apareceu ao vivo, foi copiado exatamente e excluído com confirmação; Tab, Shift+Tab e Esc+Tab se comportaram como descrito
 
 ### Fase 8: Internet
 - [ ] `Dockerfile` + `docker-compose.yml`

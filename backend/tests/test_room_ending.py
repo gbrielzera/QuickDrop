@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from starlette.websockets import WebSocketDisconnect
 
 from app.cleanup import delete_expired_rooms
-from app.models import Clip, Room, RoomText, StoredFile, utc_now
+from app.models import Clip, CodeClip, Room, RoomText, SourceCode, StoredFile, utc_now
 from tests.test_clips import create_clip
 from tests.test_files import storage_files, upload
 from tests.test_rooms import create_room, new_device
@@ -23,10 +23,12 @@ def count_rows(client, model) -> int:
 
 
 def fill_room(client, room_code: str) -> None:
-    """Coloca um arquivo, um texto e um clip na sala."""
+    """Coloca um arquivo, um texto, um clip, um código e um bloco de código na sala."""
     upload(client, room_code)
     save_text(client, room_code, encrypted_text(), base_version=0)
     create_clip(client, room_code)
+    client.put(f"/api/rooms/{room_code}/source", json={"ciphertext": encrypted_text(), "base_version": 0})
+    client.post(f"/api/rooms/{room_code}/code-clips", json={"ciphertext": encrypted_text(b"x" * 60)})
 
 
 def expire_all_rooms(monkeypatch) -> None:
@@ -46,7 +48,7 @@ def test_closing_a_room_deletes_everything_in_it(client, tmp_path):
 
     assert response.status_code == 204
     assert storage_files(tmp_path) == []
-    for model in (Room, StoredFile, RoomText, Clip):
+    for model in (Room, StoredFile, RoomText, Clip, SourceCode, CodeClip):
         assert count_rows(client, model) == 0
 
 
@@ -104,7 +106,7 @@ def test_cleanup_deletes_the_expired_rooms_with_everything_in_them(client, tmp_p
 
     assert deleted == 1
     assert storage_files(tmp_path) == []
-    for model in (Room, StoredFile, RoomText, Clip):
+    for model in (Room, StoredFile, RoomText, Clip, SourceCode, CodeClip):
         assert count_rows(client, model) == 0
 
 

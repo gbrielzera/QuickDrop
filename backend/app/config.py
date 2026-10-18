@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     # Limites do texto compartilhado e dos clips (textos colados), em KB, antes de criptografar.
     max_text_size_kb: int = 1024
     max_clip_size_kb: int = 64
+    max_code_clip_size_kb: int = 256  # blocos de código costumam ser maiores que textos
     max_clips_per_room: int = 200
 
     # De quanto em quanto tempo o servidor apaga as salas que expiraram.
@@ -70,6 +71,10 @@ class Settings(BaseSettings):
     @property
     def max_clip_size_bytes(self) -> int:
         return self.max_clip_size_kb * BYTES_PER_KILOBYTE
+
+    @property
+    def max_code_clip_size_bytes(self) -> int:
+        return self.max_code_clip_size_kb * BYTES_PER_KILOBYTE
 
     @model_validator(mode="after")
     def check_default_ttl_is_an_option(self) -> "Settings":

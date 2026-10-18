@@ -32,6 +32,8 @@
   --green: #007a5e;
   --on-green: #ffffff;
   --placeholder: #5d6874;
+  /* Só o código usa fonte monoespaçada: do sistema, sem baixar nada. */
+  --font-code: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --signal: #ffd100;
   --on-signal: #101820;
   --danger: #b3261e;
@@ -898,6 +900,40 @@ textarea:focus-visible {
 
 .status--error {
   color: var(--danger);
+}
+
+/* ---------- código ---------- */
+
+/* O código mantém a indentação: nada de quebrar linhas (rola para o lado) e a tabulação vale 4 colunas. */
+.code-field {
+  font-family: var(--font-code);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  tab-size: 4;
+  /* Sem ligaduras: "=>" aparece como dois caracteres, exatamente o que será copiado. */
+  font-variant-ligatures: none;
+  white-space: pre;
+  overflow: auto;
+  overflow-wrap: normal;
+}
+
+.shared-code {
+  min-height: 18rem;
+}
+
+.code-clip-input {
+  min-height: 9rem;
+}
+
+.clip__text--code {
+  max-height: 16rem;
+  font-family: var(--font-code);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  tab-size: 4;
+  font-variant-ligatures: none;
+  white-space: pre;
+  overflow-wrap: normal;
 }
 
 /* ---------- celular ---------- */

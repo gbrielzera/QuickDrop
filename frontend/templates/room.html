@@ -2,7 +2,7 @@
 {% from "_icons.html" import icon %}
 
 {% block title %}{{ room_code }} · {{ app_name }}{% endblock %}
-{% block body_attributes %}data-room-code="{{ room_code }}" data-max-file-bytes="{{ max_file_bytes }}" data-max-room-bytes="{{ max_room_bytes }}" data-max-text-bytes="{{ max_text_bytes }}" data-max-clip-bytes="{{ max_clip_bytes }}"{% endblock %}
+{% block body_attributes %}data-room-code="{{ room_code }}" data-max-file-bytes="{{ max_file_bytes }}" data-max-room-bytes="{{ max_room_bytes }}" data-max-text-bytes="{{ max_text_bytes }}" data-max-clip-bytes="{{ max_clip_bytes }}" data-max-code-clip-bytes="{{ max_code_clip_bytes }}"{% endblock %}
 
 {% block content %}
 <p class="lead" id="view-loading" role="status" data-i18n="room.loading">Entrando na sala...</p>
@@ -40,6 +40,7 @@
   <nav class="jump" aria-label="Ir para uma parte da sala" data-i18n-aria-label="nav.label">
     <a class="button button--outline button--small" href="#files-section" data-i18n="nav.files">Arquivos</a>
     <a class="button button--outline button--small" href="#text-section" data-i18n="nav.text">Texto</a>
+    <a class="button button--outline button--small" href="#code-section" data-i18n="nav.code">Código</a>
     <a class="button button--outline button--small" href="#invite" data-i18n="nav.invite">Convidar</a>
   </nav>
 
@@ -114,6 +115,48 @@
         <p class="error" id="clips-status" role="status"></p>
         <p class="empty" id="clips-empty" data-i18n="clips.empty">Nenhum clip ainda. Cole um texto aqui, ou em qualquer lugar da página com Ctrl+V.</p>
         <ul class="clip-list" id="clip-list"></ul>
+      </div>
+    </section>
+  </div>
+
+  <div class="signs" id="code-section">
+    <section class="sign sign--blue" aria-labelledby="code-title">
+      <h2 class="sign__band" id="code-title">
+        <span class="roundel">{{ icon("code") }}</span>
+        <span data-i18n="code.title">Código compartilhado</span>
+      </h2>
+      <div class="sign__body">
+        <label class="visually-hidden" for="shared-code" data-i18n="code.title">Código compartilhado</label>
+        <textarea class="code-field shared-code" id="shared-code" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" data-i18n-placeholder="code.placeholder" placeholder="Cole ou escreva o código aqui. A indentação é mantida."></textarea>
+        <p class="hint" data-i18n="code.tabHint">Tab indenta e Shift+Tab tira a indentação. Para sair do campo pelo teclado: Esc e depois Tab.</p>
+        <p class="status" id="code-status" role="status"></p>
+        <div class="conflict" id="code-conflict" hidden>
+          <p data-i18n="text.conflictMessage">Outro aparelho alterou o texto enquanto você escrevia. Qual versão você quer?</p>
+          <div class="file__actions">
+            <button class="button button--outline button--small" type="button" id="code-use-theirs" data-i18n="text.useTheirs">Usar a do outro aparelho</button>
+            <button class="button button--outline button--small" type="button" id="code-keep-mine" data-i18n="text.keepMine">Manter a minha</button>
+          </div>
+        </div>
+        <div class="file__actions">
+          <button class="button button--outline button--small" type="button" id="code-copy" data-i18n="text.copy">Copiar tudo</button>
+          <button class="button button--outline button--small" type="button" id="code-clear" data-i18n="text.clear">Limpar</button>
+        </div>
+        <p class="status" id="code-copy-status" role="status"></p>
+      </div>
+    </section>
+
+    <section class="sign sign--green" aria-labelledby="code-clips-title">
+      <h2 class="sign__band" id="code-clips-title">
+        <span class="roundel">{{ icon("braces") }}</span>
+        <span data-i18n="code.clipsTitle">Blocos de código</span>
+      </h2>
+      <div class="sign__body">
+        <label class="visually-hidden" for="code-clip-input" data-i18n="code.clipsTitle">Blocos de código</label>
+        <textarea class="code-field code-clip-input" id="code-clip-input" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" data-i18n-placeholder="code.clipPlaceholder" placeholder="Cole um bloco de código para guardar"></textarea>
+        <button class="button button--green" type="button" id="code-save-clip" data-i18n="code.clipSave">Guardar bloco</button>
+        <p class="error" id="code-clips-status" role="status"></p>
+        <p class="empty" id="code-clips-empty" data-i18n="code.clipsEmpty">Nenhum bloco ainda. Cole um código acima para guardar.</p>
+        <ul class="clip-list" id="code-clip-list"></ul>
       </div>
     </section>
   </div>

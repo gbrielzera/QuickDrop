@@ -147,7 +147,7 @@ Cinza-azulado quase branco com tinta azul-marinho, duas cores de linha saturadas
 
 **Display Font:** Barlow (com Segoe UI, system-ui, sans-serif)
 **Body Font:** Barlow (mesma família)
-**Label/Mono Font:** nenhuma; números usam `tabular-nums`.
+**Label/Mono Font:** nenhuma para a interface (números usam `tabular-nums`). A única exceção é o **código**, que usa a fonte monoespaçada do sistema (`ui-monospace`, Cascadia Code, SF Mono, Menlo, Consolas...), sem baixar nada, sem ligaduras e sem quebra de linha.
 
 **Character:** Barlow é condensada e de sinalização, firme em 800 nos títulos e em 500 no corpo. Hospedada localmente (500, 700, 800, licença SIL OFL), sem CDN.
 
@@ -201,6 +201,7 @@ Cantos de 6px (`rounded.md`) em placas, campos, botões, QR e seletor; 4px em et
 - **Área de soltar:** contorno tracejado de 3px (cai no azul ao arrastar um arquivo por cima), botão azul de largura limitada. A fila de envio mostra nome, tamanho e uma barra de 1.25rem com contorno de 3px, preenchida de amarelo (o que está em trânsito).
 - **Lista de arquivos e de clips:** itens separados por linha de 3px; nome em 800, tamanho em tom suave com números tabulares; ações em botões de contorno de 44px de altura. Excluir pede confirmação: o primeiro clique troca o texto por "Confirmar exclusão" em vermelho (`danger`) por 4 segundos.
 - **Pré-visualização:** a imagem aparece dentro da própria linha, com contorno de 3px, raio de 6px, fundo `ground` e altura máxima de 20rem; o botão "Ver" vira "Ocultar". "Baixar tudo (.zip)" é um botão de contorno pequeno no alto da lista.
+- **Campo e blocos de código:** mesmo contorno, raio e foco do campo de texto, com fonte monoespaçada de 0.95rem, tabulação de 4 colunas e rolagem para o lado em vez de quebrar linhas. O bloco guardado usa o mesmo estilo, com fundo `ground` e altura máxima de 16rem. Dica de teclado em texto suave logo abaixo do campo.
 - **Campo de texto (textarea):** mesmo contorno, raio e foco dos campos de uma linha; só estica na vertical. O texto de um clip aparece num bloco `ground` com rolagem a partir de 9rem.
 - **Aviso de conflito do texto:** caixa com contorno de `danger` de 3px, duas ações de contorno ("Usar a do outro aparelho", "Manter a minha"). Amarelo não é usado aqui: não é tempo nem trânsito.
 - **Encerrar sala:** botão de contorno pequeno ao lado da etiqueta de tempo, com a mesma confirmação em duas etapas ("Confirmar: apaga tudo"). Quando a sala acaba, a tela vira o aviso "Sala encerrada" (mesma coluna estreita da tela de "Sala não encontrada").
@@ -220,7 +221,7 @@ Três estações (aparelho de origem, sala com código e tempo restante, aparelh
 - **Do** manter os mesmos estados: repouso, hover (brilho ou segmento tingido), pressionado (2px para baixo), desabilitado/ocupado (60%, cursor `progress`), erro (texto `danger`).
 
 ### Don't:
-- **Don't** usar sombras, gradientes decorativos ou outra fonte além de Barlow 500/700/800.
+- **Don't** usar sombras, gradientes decorativos ou outra fonte além de Barlow 500/700/800 (exceto a fonte monoespaçada, só para código).
 - **Don't** usar o amarelo ou as cores de linha como enfeite.
 - **Don't** reunir criar e entrar num cartão único com abas, nem dar pesos diferentes aos dois.
 - **Don't** hospedar fontes ou ativos em CDN; tudo funciona sem internet.

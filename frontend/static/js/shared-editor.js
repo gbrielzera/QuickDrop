@@ -1,11 +1,11 @@
-// Editor de texto compartilhado: o que um aparelho escreve aparece nos outros, criptografado.
+// Editor compartilhado (o de texto e o de código): o que um aparelho escreve aparece nos outros, criptografado.
 //
-// Como duas pessoas podem escrever ao mesmo tempo, o servidor numera cada versão do texto.
+// Como duas pessoas podem escrever ao mesmo tempo, o servidor numera cada versão do conteúdo.
 // Cada aparelho sabe em qual versão o seu texto se baseia (`baseVersion`):
 //   - se ninguém mexeu antes, o servidor aceita e a versão sobe;
 //   - se outro aparelho salvou antes, o servidor recusa (409) e a pessoa escolhe qual texto manter.
 
-import { ApiError, getText, putText } from "./api.js";
+import { ApiError } from "./api.js";
 import { decryptText, encryptText, fromBase64Url, toBase64Url } from "./crypto.js";
 import { errorMessageKey } from "./errors.js";
 import { formatFileSize } from "./file-size.js";
@@ -17,15 +17,21 @@ const HTTP_CONFLICT = 409;
 const SAVE_DELAY_MILLISECONDS = 600;
 const RETRY_AFTER_FAILURE_MILLISECONDS = 5000;
 
-/** Devolve `{ receiveRemote, refresh }`. `maxTextBytes` é o limite de tamanho do texto. */
-export function startTextEditor({ roomCode, maxTextBytes, getEncryptionKey }) {
-  const textarea = document.getElementById("shared-text");
-  const statusElement = document.getElementById("text-status");
-  const copyStatusElement = document.getElementById("text-copy-status");
-  const conflictBox = document.getElementById("text-conflict");
-  const useTheirsButton = document.getElementById("use-theirs");
-  const keepMineButton = document.getElementById("keep-mine");
-  const clearButton = document.getElementById("clear-text");
+/**
+ * Liga um editor compartilhado. Devolve `{ receiveRemote, refresh }`.
+ * - ids: os `id` dos elementos da tela (textarea, status, copyStatus, conflict, useTheirs, keepMine,
+ *   copyButton, clearButton). Assim o mesmo código serve para o texto e para o código.
+ * - api: `{ get, put }`, as funções que falam com o servidor.
+ * - maxBytes: o limite de tamanho do conteúdo.
+ */
+export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionKey }) {
+  const textarea = document.getElementById(ids.textarea);
+  const statusElement = document.getElementById(ids.status);
+  const copyStatusElement = document.getElementById(ids.copyStatus);
+  const conflictBox = document.getElementById(ids.conflict);
+  const useTheirsButton = document.getElementById(ids.useTheirs);
+  const keepMineButton = document.getElementById(ids.keepMine);
+  const clearButton = document.getElementById(ids.clearButton);
 
   let baseVersion = 0; // versão do servidor em que o nosso texto se baseia
   let savedText = ""; // o texto que o servidor tem nessa versão
@@ -65,8 +71,8 @@ export function startTextEditor({ roomCode, maxTextBytes, getEncryptionKey }) {
       return;
     }
     const text = textarea.value;
-    if (new TextEncoder().encode(text).length > maxTextBytes) {
-      setStatus("error.textTooLarge", { textSize: formatFileSize(maxTextBytes, getLanguage()) });
+    if (new TextEncoder().encode(text).length > maxBytes) {
+      setStatus("error.textTooLarge", { textSize: formatFileSize(maxBytes, getLanguage()) });
       return;
     }
 
@@ -75,7 +81,7 @@ export function startTextEditor({ roomCode, maxTextBytes, getEncryptionKey }) {
     setStatus("text.saving");
     try {
       const encrypted = toBase64Url(encryptText(text, getEncryptionKey()));
-      const saved = await putText(roomCode, encrypted, baseVersion);
+      const saved = await api.put(roomCode, encrypted, baseVersion);
       baseVersion = saved.version;
       savedText = text;
     } catch (error) {
@@ -160,7 +166,7 @@ export function startTextEditor({ roomCode, maxTextBytes, getEncryptionKey }) {
   /** Consulta o servidor e atualiza o texto (usado ao abrir a sala e depois de reconectar). */
   async function refresh() {
     try {
-      receiveRemote(await getText(roomCode));
+      receiveRemote(await api.get(roomCode));
     } catch (error) {
       setStatus(errorMessageKey(error));
     }
@@ -184,7 +190,7 @@ export function startTextEditor({ roomCode, maxTextBytes, getEncryptionKey }) {
 
   useTheirsButton.addEventListener("click", useTheirVersion);
   keepMineButton.addEventListener("click", keepMyVersion);
-  setUpCopyButton(document.getElementById("copy-text"), () => textarea.value, copyStatusElement);
+  setUpCopyButton(document.getElementById(ids.copyButton), () => textarea.value, copyStatusElement);
   setUpConfirmButton(clearButton, "text.clearConfirm", () => {
     clearMessage(copyStatusElement);
     textarea.value = "";

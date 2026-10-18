@@ -1,7 +1,7 @@
 // Painel "Clips": textos curtos colados na sala, cada um com botão de copiar.
 // Serve para passar um link, uma senha ou um trecho de texto de um aparelho para outro.
 
-import { ApiError, createClip, deleteClip, listClips } from "./api.js";
+import { ApiError } from "./api.js";
 import { decryptText, encryptText, fromBase64Url, toBase64Url } from "./crypto.js";
 import { createElement } from "./dom.js";
 import { errorMessageKey } from "./errors.js";
@@ -22,15 +22,19 @@ function readClipEntry(storedClip, encryptionKey) {
 }
 
 /**
- * Liga o painel de clips. Devolve `{ addStoredClip, removeEntry, load }`.
- * `maxClipBytes` é o limite de tamanho de cada clip.
+ * Liga um painel de clips (o de textos ou o de blocos de código). Devolve `{ addStoredClip, removeEntry, load }`.
+ * - ids: os `id` dos elementos da tela (input, saveButton, empty, list, status).
+ * - api: `{ list, create, remove }`, as funções que falam com o servidor.
+ * - maxClipBytes: o limite de tamanho de cada clip.
+ * - isCode: true no painel de código. O clip aparece em fonte monoespaçada e, como Ctrl+V fora de um campo
+ *   não sabe se o que foi colado é texto ou código, só o painel de textos reage a ele.
  */
-export function startClipsPanel({ roomCode, maxClipBytes, getEncryptionKey }) {
-  const input = document.getElementById("clip-input");
-  const saveButton = document.getElementById("save-clip");
-  const emptyMessage = document.getElementById("clips-empty");
-  const list = document.getElementById("clip-list");
-  const statusElement = document.getElementById("clips-status");
+export function startClipsPanel({ roomCode, ids, api, maxClipBytes, getEncryptionKey, isCode = false }) {
+  const input = document.getElementById(ids.input);
+  const saveButton = document.getElementById(ids.saveButton);
+  const emptyMessage = document.getElementById(ids.empty);
+  const list = document.getElementById(ids.list);
+  const statusElement = document.getElementById(ids.status);
 
   const rowsById = new Map();
 
@@ -47,7 +51,7 @@ export function startClipsPanel({ roomCode, maxClipBytes, getEncryptionKey }) {
   // ---------- uma linha da lista ----------
 
   function createClipRow(entry) {
-    const textElement = createElement("pre", { className: "clip__text" });
+    const textElement = createElement("pre", { className: isCode ? "clip__text clip__text--code" : "clip__text" });
     const rowStatus = createElement("p", { className: "status", attributes: { role: "status" } });
     const actions = createElement("div", { className: "file__actions" });
     const element = createElement("li", { className: "clip" }, [textElement, actions, rowStatus]);
@@ -77,7 +81,7 @@ export function startClipsPanel({ roomCode, maxClipBytes, getEncryptionKey }) {
       rowStatus.classList.remove("status--error");
       clearMessage(rowStatus);
       try {
-        await runWithBusyButton(button, "action.deleting", () => deleteClip(roomCode, entry.id));
+        await runWithBusyButton(button, "action.deleting", () => api.remove(roomCode, entry.id));
         removeRow();
       } catch (error) {
         if (error instanceof ApiError && error.status === HTTP_NOT_FOUND) {
@@ -124,7 +128,7 @@ export function startClipsPanel({ roomCode, maxClipBytes, getEncryptionKey }) {
 
   async function load() {
     try {
-      const storedClips = await listClips(roomCode);
+      const storedClips = await api.list(roomCode);
       const entries = storedClips.map((storedClip) => readClipEntry(storedClip, getEncryptionKey()));
       // Reconcilia com o servidor: some o que foi apagado enquanto estávamos sem conexão e entra o que chegou.
       const idsOnServer = new Set(entries.map((entry) => entry.id));
@@ -151,7 +155,7 @@ export function startClipsPanel({ roomCode, maxClipBytes, getEncryptionKey }) {
     }
     try {
       const encrypted = toBase64Url(encryptText(text, getEncryptionKey()));
-      const storedClip = await createClip(roomCode, encrypted);
+      const storedClip = await api.create(roomCode, encrypted);
       addStoredClip(storedClip);
       return true;
     } catch (error) {
@@ -171,18 +175,20 @@ export function startClipsPanel({ roomCode, maxClipBytes, getEncryptionKey }) {
     }
   });
 
-  // Ctrl+V fora de qualquer campo vira um clip na hora.
-  document.addEventListener("paste", (event) => {
-    if (event.target.closest("input, textarea, [contenteditable]")) {
-      return;
-    }
-    const pastedText = event.clipboardData?.getData("text/plain") ?? "";
-    if (pastedText.trim() === "") {
-      return;
-    }
-    event.preventDefault();
-    saveClip(pastedText);
-  });
+  // Ctrl+V fora de qualquer campo vira um clip de texto na hora.
+  if (!isCode) {
+    document.addEventListener("paste", (event) => {
+      if (event.target.closest("input, textarea, [contenteditable]")) {
+        return;
+      }
+      const pastedText = event.clipboardData?.getData("text/plain") ?? "";
+      if (pastedText.trim() === "") {
+        return;
+      }
+      event.preventDefault();
+      saveClip(pastedText);
+    });
+  }
 
   onLanguageChange(() => {
     for (const row of rowsById.values()) {

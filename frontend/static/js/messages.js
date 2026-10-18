@@ -67,6 +67,7 @@ export const messages = {
     "nav.label": "Ir para uma parte da sala",
     "nav.files": "Arquivos",
     "nav.text": "Texto",
+    "nav.code": "Código",
     "nav.invite": "Convidar",
 
     "text.title": "Texto compartilhado",
@@ -81,6 +82,14 @@ export const messages = {
     "text.conflictMessage": "Outro aparelho alterou o texto enquanto você escrevia. Qual versão você quer?",
     "text.useTheirs": "Usar a do outro aparelho",
     "text.keepMine": "Manter a minha",
+
+    "code.title": "Código compartilhado",
+    "code.placeholder": "Cole ou escreva o código aqui. A indentação é mantida.",
+    "code.tabHint": "Tab indenta e Shift+Tab tira a indentação. Para sair do campo pelo teclado: Esc e depois Tab.",
+    "code.clipsTitle": "Blocos de código",
+    "code.clipPlaceholder": "Cole um bloco de código para guardar",
+    "code.clipSave": "Guardar bloco",
+    "code.clipsEmpty": "Nenhum bloco ainda. Cole um código acima para guardar.",
 
     "clips.title": "Clips",
     "clips.placeholder": "Cole ou digite um texto para guardar",
@@ -206,6 +215,7 @@ export const messages = {
     "nav.label": "Jump to a part of the room",
     "nav.files": "Files",
     "nav.text": "Text",
+    "nav.code": "Code",
     "nav.invite": "Invite",
 
     "text.title": "Shared text",
@@ -220,6 +230,14 @@ export const messages = {
     "text.conflictMessage": "Another device changed the text while you were writing. Which version do you want?",
     "text.useTheirs": "Use the other device's",
     "text.keepMine": "Keep mine",
+
+    "code.title": "Shared code",
+    "code.placeholder": "Paste or write the code here. Indentation is kept.",
+    "code.tabHint": "Tab indents and Shift+Tab removes indentation. To leave the field with the keyboard: Esc, then Tab.",
+    "code.clipsTitle": "Code blocks",
+    "code.clipPlaceholder": "Paste a code block to keep",
+    "code.clipSave": "Save block",
+    "code.clipsEmpty": "No blocks yet. Paste some code above to keep it.",
 
     "clips.title": "Clips",
     "clips.placeholder": "Paste or type a text to keep",

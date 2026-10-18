@@ -6,13 +6,9 @@ import { onLanguageChange, startLanguageSwitcher, t } from "./i18n.js";
 import { createQrCodeSvg } from "./qr.js";
 import { forgetEncryptionKey, getRoomParams, joinRoom, loadEncryptionKey } from "./room-access.js";
 import { buildRoomPath, formatRoomCode, readSecretFromHash } from "./room-code.js";
-import { splitTimeLeft } from "./time-left.js";
-import { startClipsPanel } from "./clips-panel.js";
-import { startFileList } from "./file-list.js";
-import { readFileEntry } from "./file-transfer.js";
+import { startRoomPanels } from "./room-panels.js";
 import { connectRoomSocket } from "./socket.js";
-import { startTextEditor } from "./text-editor.js";
-import { startUploadPanel } from "./upload-panel.js";
+import { splitTimeLeft } from "./time-left.js";
 import { clearMessage, runWithBusyButton, setUpConfirmButton, setUpCopyButton, showMessage } from "./ui.js";
 
 const HTTP_UNAUTHORIZED = 401;
@@ -143,27 +139,17 @@ async function shouldKeepReconnecting() {
   }
 }
 
-// Recebe os avisos do servidor e repassa cada um para a parte da tela que cuida dele.
-function startRealtime({ fileList, textEditor, clipsPanel }) {
-  const getEncryptionKey = () => loadEncryptionKey(roomCode);
-
+// Recebe os avisos do servidor. Presença e fim da sala são tratados aqui; o resto vai para os painéis.
+function startRealtime(panels) {
   function handleMessage(message) {
     if (message.type === "presence") {
       devicesOnline = message.online;
       renderPresence();
-    } else if (message.type === "file_added") {
-      fileList.addEntry(readFileEntry(message.file, getEncryptionKey()));
-    } else if (message.type === "file_deleted") {
-      fileList.removeEntry(message.file_id);
-    } else if (message.type === "text_updated") {
-      textEditor.receiveRemote(message);
-    } else if (message.type === "clip_added") {
-      clipsPanel.addStoredClip(message.clip);
-    } else if (message.type === "clip_deleted") {
-      clipsPanel.removeEntry(message.clip_id);
     } else if (message.type === "room_closed") {
       const messageKey = message.reason === "expired" ? "room.endedExpired" : "room.endedClosed";
       showRoomEnded("room.endedTitle", messageKey);
+    } else {
+      panels.handleMessage(message);
     }
   }
 
@@ -173,10 +159,7 @@ function startRealtime({ fileList, textEditor, clipsPanel }) {
     onOpen: () => {
       isConnected = true;
       renderPresence();
-      // Pode ter havido mudanças enquanto estávamos sem conexão: confere tudo de novo.
-      fileList.load();
-      clipsPanel.load();
-      textEditor.refresh();
+      panels.loadAll(); // pode ter havido mudanças enquanto estávamos sem conexão
     },
     onClose: () => {
       isConnected = false;
@@ -186,35 +169,15 @@ function startRealtime({ fileList, textEditor, clipsPanel }) {
   });
 }
 
-// Liga os painéis de arquivos, texto e clips, e o tempo real (uma vez só por página).
+// Liga os painéis da sala e o tempo real (uma vez só por página).
 function startPanels() {
   if (panelsStarted) {
     return;
   }
   panelsStarted = true;
-  const getEncryptionKey = () => loadEncryptionKey(roomCode);
-  const fileList = startFileList({ roomCode, getEncryptionKey });
-  startUploadPanel({
-    roomCode,
-    maxFileBytes: Number(document.body.dataset.maxFileBytes),
-    maxRoomBytes: Number(document.body.dataset.maxRoomBytes),
-    getEncryptionKey,
-    onFileSent: fileList.addEntry,
-  });
-  const textEditor = startTextEditor({
-    roomCode,
-    maxTextBytes: Number(document.body.dataset.maxTextBytes),
-    getEncryptionKey,
-  });
-  const clipsPanel = startClipsPanel({
-    roomCode,
-    maxClipBytes: Number(document.body.dataset.maxClipBytes),
-    getEncryptionKey,
-  });
-  fileList.load();
-  clipsPanel.load();
-  textEditor.refresh();
-  startRealtime({ fileList, textEditor, clipsPanel });
+  const panels = startRoomPanels({ roomCode, getEncryptionKey: () => loadEncryptionKey(roomCode) });
+  panels.loadAll();
+  startRealtime(panels);
 }
 
 async function showRoom() {

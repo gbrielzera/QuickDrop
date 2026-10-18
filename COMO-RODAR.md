@@ -163,6 +163,7 @@ O QuickDrop pode ser instalado na tela inicial, como um app. O navegador só ofe
 
 - **Cole um print com Ctrl+V** em qualquer lugar da sala: ele é enviado na hora.
 - **Ctrl+V com texto** (fora dos campos) guarda um clip.
+- **Código:** o campo "Código compartilhado" mantém a indentação (Tab indenta, Shift+Tab tira; Esc e depois Tab sai do campo) e "Blocos de código" guarda trechos para copiar exatamente como foram colados.
 - **Ver** mostra uma imagem na própria lista; **Baixar tudo (.zip)** junta todos os arquivos da sala num zip.
 
 ## Rodar os testes
@@ -204,6 +205,7 @@ Para **começar do zero**, pare o servidor (Ctrl + C), apague o arquivo `quickdr
 | `Address already in use` / porta ocupada | Outro programa usa a porta 8000. Use outra: `uvicorn app.main:app --reload --port 8001` |
 | O celular não abre o endereço | Veja a seção **"O celular não consegue abrir"** logo abaixo |
 | A página abre sem estilo ou sem funcionar | Recarregue com **Ctrl + F5** para limpar o cache |
+| Depois de atualizar o projeto, uma tela abre antiga ou um botão novo não aparece | O navegador guardou arquivos de uma versão anterior. Recarregue **sem usar o cache**: Ctrl + F5 no PC; no celular, feche a aba e abra de novo ou limpe os dados do site |
 | "Sem conexão com o servidor. Tente de novo." | O servidor parou ou reiniciou. Olhe a janela do terminal onde ele roda: se mostra um erro, ele caiu; se a janela foi fechada, ele parou. Inicie de novo; as páginas abertas reconectam sozinhas em até 30 segundos. Com `--reload`, qualquer arquivo salvo reinicia o servidor |
 | "Muitas tentativas. Espere um minuto..." | O limite de tentativas foi atingido (senha errada várias vezes, ou muitas consultas/salas criadas do mesmo aparelho). Espere o tempo indicado; para desenvolvimento, dá para aumentar `RATE_LIMIT_*` no `.env` |
 | "Sala não encontrada ou expirada" | A sala expirou ou foi criada em outro banco de dados; crie uma nova |

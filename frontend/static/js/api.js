@@ -136,6 +136,31 @@ export function putText(code, ciphertext, baseVersion) {
   return request("PUT", `/api/rooms/${code}/text`, { ciphertext, base_version: baseVersion });
 }
 
+// ---------- código compartilhado ----------
+
+export function getSource(code) {
+  return request("GET", `/api/rooms/${code}/source`);
+}
+
+/** Salva o código (já criptografado). Lança ApiError(409) se outro aparelho alterou antes. */
+export function putSource(code, ciphertext, baseVersion) {
+  return request("PUT", `/api/rooms/${code}/source`, { ciphertext, base_version: baseVersion });
+}
+
+// ---------- blocos de código ----------
+
+export function listCodeClips(code) {
+  return request("GET", `/api/rooms/${code}/code-clips`);
+}
+
+export function createCodeClip(code, ciphertext) {
+  return request("POST", `/api/rooms/${code}/code-clips`, { ciphertext });
+}
+
+export function deleteCodeClip(code, clipId) {
+  return request("DELETE", `/api/rooms/${code}/code-clips/${clipId}`);
+}
+
 // ---------- clips ----------
 
 export function listClips(code) {
