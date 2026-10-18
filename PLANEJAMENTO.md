@@ -540,7 +540,7 @@ Para passar trechos de código sem perder a formatação, a sala ganhou um edito
 - [x] 148 testes no backend e 68 no frontend (a indentação tem testes próprios)
 - [x] Verificado no navegador com duas abas: código com tabulação, espaços no fim da linha, crases e acentos chegou idêntico ao outro aparelho; o bloco salvo apareceu ao vivo, foi copiado exatamente e excluído com confirmação; Tab, Shift+Tab e Esc+Tab se comportaram como descrito
 
-### Fase 8: Internet (8a e 8b prontas e testadas no Docker; falta o servidor, 8c e 8d)
+### Fase 8: Internet (no ar em https://quickdrop-syoti.mexicocentral.cloudapp.azure.com; falta o teste com o celular na 4G)
 Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always Free** (uma VM Ubuntu de verdade, ligada 24 h) com **Docker + Caddy** e um endereço grátis do **DuckDNS**.
 
 **8a. Preparar o app para a internet (no PC, com testes)**
@@ -571,6 +571,8 @@ Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always
 - [ ] Teste com **celular no 4G** e PC em outra rede: sala, arquivo de 100 MB, texto ao vivo, celular com a tela apagada e voltando
 - [ ] Argon2id no celular abaixo de ~1 s (pendência da Fase 1)
 - [ ] Atualizar o app depois: `git pull && docker compose up -d --build` (descrito no `DEPLOY.md`)
+
+**Resultado do servidor (Azure for Students, em vez da Oracle):** a Oracle recusou os cartões; a Microsoft liberou o crédito de estudante, mas só em 5 regiões. VM `Standard_B2ats_v2` no **México Central**, Ubuntu 24.04, Docker + Caddy, endereço do próprio Azure. Conferido pela internet: certificado Let's Encrypt válido, redirecionamento 80 para 443, HSTS, IP real do visitante nos registros (o `--proxy-headers` funciona), sala criada, arquivo de 20 MB enviado e baixado, sala encerrada. Pendente: teste com celular na 4G, arquivo de 100 MB, Argon2id no celular e tela apagada.
 
 **Fora desta fase, de propósito:** domínio pago, CDN, backup (as salas duram no máximo 48 h), deploy automático pelo GitHub, vários servidores.
 

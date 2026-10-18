@@ -14,6 +14,18 @@ Internet ──► Caddy (HTTPS, portas 80/443) ──► app QuickDrop (porta 8
 
 Tudo roda em dois contêineres Docker, definidos em `docker-compose.yml`.
 
+## Alternativa: Azure for Students (foi o que usamos)
+
+A Oracle recusou os cartões, então o servidor real está no **Azure for Students** (US$ 100 de crédito por 12 meses, sem cartão, com e-mail de faculdade). Os passos 5 a 8 deste guia valem igual; mudam só a criação da máquina:
+
+- Crédito: o Azure não avisa quando está acabando, só envia um e-mail quando acaba (e então a VM é desligada, sem cobrança, porque não há cartão). Confira em **Assinaturas → Azure for Students → Custo atual**.
+- A assinatura só deixa criar máquinas em **Chile Central, Canadá Central, México Central, Itália Norte e Espanha Central** (política de regiões). Brazil South não é permitido e, de qualquer forma, custa cerca de US$ 70 por mês.
+- Escolha: **México Central**, tamanho `Standard_B2ats_v2` (2 vCPU, 1 GiB), disco SSD Standard de 30 GB e IP público fixo. Custo estimado: uns US$ 14 por mês no total, ou seja, o crédito dura cerca de 7 meses.
+- O endereço vem de graça do próprio Azure (`NOME.mexicocentral.cloudapp.azure.com`), então **não precisa do DuckDNS**.
+- O Azure abre só as portas que você pedir: SSH (22), HTTP (80) e HTTPS (443). Não existe o segundo firewall do Ubuntu da Oracle.
+- Com só 1 GiB de memória, a máquina ganhou 2 GB de swap antes de construir a imagem.
+- Criação por linha de comando (Azure CLI): `az group create`, `az vm create --image Canonical:ubuntu-24_04-lts:server:latest --size Standard_B2ats_v2 --public-ip-address-dns-name NOME ...` e `az vm open-port` para as portas 80 e 443.
+
 ## Antes de começar
 
 - Uma conta no **GitHub** (já tem) e o código do projeto enviado para lá (`git push`).
