@@ -540,7 +540,7 @@ Para passar trechos de código sem perder a formatação, a sala ganhou um edito
 - [x] 148 testes no backend e 68 no frontend (a indentação tem testes próprios)
 - [x] Verificado no navegador com duas abas: código com tabulação, espaços no fim da linha, crases e acentos chegou idêntico ao outro aparelho; o bloco salvo apareceu ao vivo, foi copiado exatamente e excluído com confirmação; Tab, Shift+Tab e Esc+Tab se comportaram como descrito
 
-### Fase 8: Internet (8a e 8b prontas; falta o servidor, 8c e 8d)
+### Fase 8: Internet (8a e 8b prontas e testadas no Docker; falta o servidor, 8c e 8d)
 Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always Free** (uma VM Ubuntu de verdade, ligada 24 h) com **Docker + Caddy** e um endereço grátis do **DuckDNS**.
 
 **8a. Preparar o app para a internet (no PC, com testes)**
@@ -556,7 +556,7 @@ Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always
 - [x] `Caddyfile`: HTTPS automático (Let's Encrypt), `request_body max_size 110MB`, WebSocket passa sem configuração extra
 - [x] **Volume persistente** `quickdrop-data` com o banco SQLite e a pasta `storage/` (sobrevive a atualizações). Continua SQLite: um único servidor não precisa de PostgreSQL
 - [x] `.env` de produção fora do Git: `SECRET_KEY` nova, `DEBUG=false` (desliga `/dev/crypto`), `COOKIE_SECURE=true` (liga também o HSTS)
-- [ ] Testar o `docker compose up` no PC antes de subir: **não foi possível**, o Docker não está instalado no PC. A primeira subida real será no servidor, com `docker compose logs` para diagnosticar
+- [x] Testado com `docker compose up` no PC (`DOMAIN=localhost`): imagem construída, app saudável e rodando sem privilégios, HTTPS e redirecionamento 80→443 pelo Caddy, cookie `Secure` e HSTS, `/sobre` com o contato, arquivo de 100 MB enviado com sucesso e um de 111 MB recusado pelo Caddy (413), WebSocket por `wss://` entregando a presença, arquivos preservados depois de `docker compose down` e `up` (volume persistente)
 
 **8c. Servidor (feito por você, seguindo o `DEPLOY.md`, que já está escrito)**
 - [ ] Criar a conta na Oracle Cloud, região **São Paulo** ou **Vinhedo** (a região de origem não pode ser trocada depois e os recursos grátis só existem nela)
