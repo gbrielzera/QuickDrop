@@ -1,7 +1,7 @@
 // Toda a criptografia do QuickDrop fica neste arquivo.
 // Nenhum outro arquivo do frontend mexe em chaves: eles só chamam estas funções.
 //
-// Resumo do esquema (detalhes na seção 6.1 do PLANEJAMENTO.md):
+// Resumo do esquema (detalhes na seção 6.1 do docs/PLANEJAMENTO.md):
 //   senha + salt --Argon2id--> chave-mestra --> authKey (vai ao servidor, prova que sabe a senha)
 //                                           \-> encryptionKey (nunca sai do navegador)
 

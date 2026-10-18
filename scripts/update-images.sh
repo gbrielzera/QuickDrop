@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Atualiza as imagens base do QuickDrop (Python e Caddy) sem mexer no código do projeto.
-# Roda toda semana no servidor (veja "Manutenção de segurança" no DEPLOY.md). Mudanças no código
+# Roda toda semana no servidor (veja "Manutenção de segurança" em docs/DEPLOY.md). Mudanças no código
 # continuam sendo publicadas à mão, com git pull, depois de testadas.
 set -euo pipefail
 

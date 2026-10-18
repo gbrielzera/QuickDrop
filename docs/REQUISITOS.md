@@ -311,7 +311,7 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 
 ## 8. Critérios de aceitação
 
-Resumo dos cenários que definem se o produto está **aceito**. Todos têm testes automatizados ou verificação registrada no [`PLANEJAMENTO.md`](../PLANEJAMENTO.md), exceto os marcados como pendentes.
+Resumo dos cenários que definem se o produto está **aceito**. Todos têm testes automatizados ou verificação registrada no [`PLANEJAMENTO.md`](PLANEJAMENTO.md), exceto os marcados como pendentes.
 
 | # | Cenário | Resultado esperado |
 |---|---|---|

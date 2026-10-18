@@ -37,7 +37,7 @@ Apresentar **a visão do QuickDrop**: por que existe, para quem, o que promete, 
 O sistema inteiro: o site (frontend), o servidor (backend), a criptografia no navegador, a hospedagem e as rotinas de operação.
 
 ### 1.3 Referências
-[`PRODUCT.md`](../PRODUCT.md) (propósito e princípios), [`PLANEJAMENTO.md`](../PLANEJAMENTO.md) (decisões e histórico por fase), [`DESIGN.md`](../DESIGN.md) (sistema visual), [`DEPLOY.md`](../DEPLOY.md) (operação), [`COMO-RODAR.md`](../COMO-RODAR.md) (uso local).
+[`PRODUCT.md`](../PRODUCT.md) (propósito e princípios), [`PLANEJAMENTO.md`](PLANEJAMENTO.md) (decisões e histórico por fase), [`DESIGN.md`](../DESIGN.md) (sistema visual), [`DEPLOY.md`](DEPLOY.md) (operação), [`COMO-RODAR.md`](COMO-RODAR.md) (uso local).
 
 ---
 
@@ -577,4 +577,4 @@ flowchart TB
 
 ---
 
-*Este documento descreve a visão do produto. As decisões e o histórico de cada fase estão no [`PLANEJAMENTO.md`](../PLANEJAMENTO.md); os requisitos verificáveis, no [Documento de Requisitos](REQUISITOS.md).*
+*Este documento descreve a visão do produto. As decisões e o histórico de cada fase estão no [`PLANEJAMENTO.md`](PLANEJAMENTO.md); os requisitos verificáveis, no [Documento de Requisitos](REQUISITOS.md).*

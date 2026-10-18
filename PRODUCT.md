@@ -42,7 +42,7 @@ Nome: QuickDrop. Voz direta e tranquilizadora: explicar segurança sem jargão, 
 
 ## Evidence on Hand
 
-Não há depoimentos, clientes, métricas nem imagens. Existe apenas o planejamento técnico em `PLANEJAMENTO.md` e um esqueleto de página inicial. Nada disso deve ser apresentado como prova social; não inventar números de usuários, velocidade ou avaliações.
+Não há depoimentos, clientes, métricas nem imagens. Existe apenas o planejamento técnico em `docs/PLANEJAMENTO.md` e um esqueleto de página inicial. Nada disso deve ser apresentado como prova social; não inventar números de usuários, velocidade ou avaliações.
 
 ## Product Principles
 

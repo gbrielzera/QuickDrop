@@ -1,6 +1,6 @@
 # Regras do projeto QuickDrop
 
-O planejamento completo está em `PLANEJAMENTO.md`. Siga estas regras em todo o código.
+O planejamento completo está em `docs/PLANEJAMENTO.md`. Siga estas regras em todo o código.
 
 ## 1. Clean code, sempre
 
