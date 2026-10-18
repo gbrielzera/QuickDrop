@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     rate_limit_lookups_per_minute: int = 30  # consultas e entradas por endereço IP
     rate_limit_failed_joins_per_minute: int = 5  # senhas erradas por IP e sala
     rate_limit_room_creations_per_hour: int = 20  # salas criadas por IP
+    rate_limit_api_per_minute: int = 600  # pedidos à API por IP (teto geral, bem acima do uso normal)
+    rate_limit_uploads_per_hour: int = 120  # arquivos enviados por IP
 
     # Texto separado por vírgulas para ficar fácil de escrever no .env
     allowed_ttl_hours: str = "1,12,24,48"

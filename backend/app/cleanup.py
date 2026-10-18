@@ -6,6 +6,7 @@ import logging
 from fastapi import FastAPI
 
 from app import room_service
+from app.security_events import security_events
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ async def run_cleanup_loop(app: FastAPI, interval_minutes: int) -> None:
         try:
             await delete_expired_rooms(app)
             app.state.rate_limits.forget_idle_keys()
+            security_events.log_summary_if_due()
         except Exception:
             # Uma falha não pode derrubar a limpeza das próximas vezes.
             logger.exception("Falha ao limpar as salas expiradas")

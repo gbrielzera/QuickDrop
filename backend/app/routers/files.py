@@ -13,9 +13,10 @@ from starlette.requests import ClientDisconnect
 
 from app import file_service, storage
 from app.config import BYTES_PER_MEGABYTE, get_settings
-from app.dependencies import Connections, CurrentRoom, Database, ItemId, UploadLock
+from app.dependencies import Connections, CurrentRoom, Database, ItemId, Limits, UploadLock
 from app.encoding import from_base64url, to_base64url
 from app.models import StoredFile
+from app.rate_limit import client_address, count_attempt
 from app.schemas import FileResponse
 
 router = APIRouter(prefix="/api/rooms/{code}/files", tags=["arquivos"])
@@ -81,6 +82,7 @@ async def upload_file(
     room: CurrentRoom,
     db: Database,
     connections: Connections,
+    limits: Limits,
     upload_lock: UploadLock,
     x_file_meta: Annotated[str, Header()],
 ) -> FileResponse:
@@ -88,6 +90,7 @@ async def upload_file(
 
     O cabeçalho `X-File-Meta` leva o nome, o tipo e o tamanho originais, também criptografados.
     """
+    count_attempt(limits.uploads, client_address(request))
     encrypted_meta = _read_encrypted_meta(x_file_meta)
 
     settings = get_settings()

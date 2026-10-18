@@ -1,0 +1,19 @@
+# Confere de 15 em 15 minutos se o QuickDrop está no ar. Se falhar, o GitHub manda um e-mail
+# (para quem editou este arquivo por último) avisando que a verificação falhou.
+name: Verificação do site
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Conferir que o QuickDrop responde
+        run: |
+          # --fail: erro HTTP (5xx etc.) vira falha. O certificado inválido ou vencido também falha.
+          curl --fail --silent --show-error --max-time 20 --retry 2 --retry-delay 15 --retry-all-errors \
+            https://quickdrop-syoti.mexicocentral.cloudapp.azure.com/api/health | grep -q '"status":"ok"'

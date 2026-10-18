@@ -25,6 +25,7 @@ from app.schemas import (
     RoomResponse,
 )
 from app.security import hash_auth_key, verify_auth_key
+from app.security_events import FAILED_JOIN, LOCKED_JOIN, NOT_OWNER_ATTEMPT, security_events
 from app.session import has_session_for_room, is_room_owner, set_owner_cookie, set_session_cookie
 
 router = APIRouter(prefix="/api/rooms", tags=["salas"])
@@ -87,6 +88,7 @@ async def join_room(
 
     # Sala trancada: só entra de novo quem já tinha entrado (por exemplo, depois de recarregar a página).
     if room.locked and not has_session_for_room(request.cookies, room):
+        security_events.record(LOCKED_JOIN)
         raise HTTPException(status_code=403, detail=ROOM_LOCKED)
 
     # Quem errou a senha várias vezes espera um pouco, mesmo que a próxima tentativa esteja certa.
@@ -94,6 +96,7 @@ async def join_room(
     block_if_over_limit(limits.failed_joins, failed_joins_key)
     if not await verify_auth_key(body.auth_key, room.auth_hash):
         limits.failed_joins.record(failed_joins_key)
+        security_events.record(FAILED_JOIN)
         raise HTTPException(status_code=401, detail="Senha incorreta.")
     limits.failed_joins.reset(failed_joins_key)
 
@@ -110,8 +113,7 @@ async def get_room(room: CurrentRoom, request: Request) -> RoomResponse:
 @router.put("/{code}/lock")
 async def lock_room(body: LockRoomRequest, room: CurrentRoom, request: Request, db: Database) -> RoomResponse:
     """Tranca ou destranca a sala. Só o dono pode."""
-    if not is_room_owner(request.cookies, room):
-        raise HTTPException(status_code=403, detail=NOT_OWNER)
+    _require_owner(request, room)
     room.locked = body.locked
     db.add(room)
     await db.commit()
@@ -124,10 +126,16 @@ async def close_room(room: CurrentRoom, request: Request, db: Database, connecti
 
     Só o dono (o navegador que criou a sala) pode encerrá-la; os convidados não.
     """
-    if not is_room_owner(request.cookies, room):
-        raise HTTPException(status_code=403, detail=NOT_OWNER)
+    _require_owner(request, room)
     await end_room(db, connections, room, reason=REASON_CLOSED)
     return Response(status_code=204)
+
+
+def _require_owner(request: Request, room: Room) -> None:
+    """Recusa (403) quem não é o dono da sala e anota a tentativa, sem registrar quem foi."""
+    if not is_room_owner(request.cookies, room):
+        security_events.record(NOT_OWNER_ATTEMPT)
+        raise HTTPException(status_code=403, detail=NOT_OWNER)
 
 
 def _to_room_response(room: Room, request: Request) -> RoomResponse:

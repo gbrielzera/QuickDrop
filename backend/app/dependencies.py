@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import HTTPConnection
 
 from app.models import Room
-from app.rate_limit import RateLimits
+from app.rate_limit import RateLimits, client_address, count_attempt
 from app.realtime import ConnectionManager
 from app.room_service import find_active_room
 from app.security import ROOM_CODE_PATTERN
@@ -38,6 +38,13 @@ async def get_connections(connection: HTTPConnection) -> ConnectionManager:
 async def get_rate_limits(connection: HTTPConnection) -> RateLimits:
     """Entrega os limites de tentativas."""
     return connection.app.state.rate_limits
+
+
+async def limit_api_requests(
+    request: Request, limits: Annotated[RateLimits, Depends(get_rate_limits)]
+) -> None:
+    """Teto geral de pedidos à API por endereço IP, além dos limites mais específicos de cada rota."""
+    count_attempt(limits.api_requests, client_address(request))
 
 
 async def get_upload_lock(connection: HTTPConnection) -> asyncio.Lock:

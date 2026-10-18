@@ -3,12 +3,13 @@
 import asyncio
 from contextlib import asynccontextmanager, suppress
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.cleanup import delete_expired_rooms, run_cleanup_loop
 from app.config import FRONTEND_DIR, get_settings
 from app.database import create_engine, create_session_maker, create_tables
+from app.dependencies import limit_api_requests
 from app.rate_limit import create_rate_limits
 from app.realtime import ConnectionManager
 from app.routers import clips, documents, files, pages, rooms, ws
@@ -50,12 +51,14 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
     app.include_router(pages.router)
-    app.include_router(rooms.router)
-    app.include_router(files.router)
-    app.include_router(documents.text_router)
-    app.include_router(documents.source_router)
-    app.include_router(clips.text_clips_router)
-    app.include_router(clips.code_clips_router)
+    # Todas as rotas da API (menos /api/health, que o monitoramento consulta) respeitam o teto geral por IP.
+    api_limit = [Depends(limit_api_requests)]
+    app.include_router(rooms.router, dependencies=api_limit)
+    app.include_router(files.router, dependencies=api_limit)
+    app.include_router(documents.text_router, dependencies=api_limit)
+    app.include_router(documents.source_router, dependencies=api_limit)
+    app.include_router(clips.text_clips_router, dependencies=api_limit)
+    app.include_router(clips.code_clips_router, dependencies=api_limit)
     app.include_router(ws.router)
     if settings.debug:
         app.include_router(pages.dev_router)

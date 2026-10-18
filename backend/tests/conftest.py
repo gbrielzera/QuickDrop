@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from app.config import get_settings  # noqa: E402
 from app.main import create_app  # noqa: E402
+from app.security_events import security_events  # noqa: E402
 
 
 def start_test_client(tmp_path, monkeypatch, debug: bool, **extra_settings: str):
@@ -27,6 +28,12 @@ def start_test_client(tmp_path, monkeypatch, debug: bool, **extra_settings: str)
         yield test_client
 
     get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def clean_security_events():
+    """Cada teste começa sem eventos de segurança anotados."""
+    security_events.reset()
 
 
 @pytest.fixture

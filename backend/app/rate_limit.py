@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from fastapi import HTTPException, Request
 
 from app.config import Settings
+from app.security_events import RATE_LIMITED, security_events
 
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
@@ -73,9 +74,17 @@ class RateLimits:
     lookups: RateLimiter  # consultas ao código de uma sala (por IP)
     failed_joins: RateLimiter  # senhas erradas numa sala (por IP e sala)
     room_creations: RateLimiter  # salas criadas (por IP)
+    api_requests: RateLimiter  # teto geral de pedidos à API (por IP)
+    uploads: RateLimiter  # arquivos enviados (por IP)
 
     def forget_idle_keys(self) -> None:
-        for limiter in (self.lookups, self.failed_joins, self.room_creations):
+        for limiter in (
+            self.lookups,
+            self.failed_joins,
+            self.room_creations,
+            self.api_requests,
+            self.uploads,
+        ):
             limiter.forget_idle_keys()
 
 
@@ -85,6 +94,8 @@ def create_rate_limits(settings: Settings) -> RateLimits:
         lookups=RateLimiter(settings.rate_limit_lookups_per_minute, SECONDS_PER_MINUTE),
         failed_joins=RateLimiter(settings.rate_limit_failed_joins_per_minute, SECONDS_PER_MINUTE),
         room_creations=RateLimiter(settings.rate_limit_room_creations_per_hour, SECONDS_PER_HOUR),
+        api_requests=RateLimiter(settings.rate_limit_api_per_minute, SECONDS_PER_MINUTE),
+        uploads=RateLimiter(settings.rate_limit_uploads_per_hour, SECONDS_PER_HOUR),
     )
 
 
@@ -99,6 +110,7 @@ def client_address(request: Request) -> str:
 def block_if_over_limit(limiter: RateLimiter, key: str) -> None:
     """Responde 429 (muitas tentativas) se a chave já chegou ao limite."""
     if limiter.is_blocked(key):
+        security_events.record(RATE_LIMITED)
         retry_after = str(limiter.seconds_until_free(key))
         raise HTTPException(status_code=429, detail=TOO_MANY_ATTEMPTS, headers={"Retry-After": retry_after})
 

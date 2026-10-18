@@ -1,0 +1,19 @@
+# Uma vez por mês, confere se há versão nova das bibliotecas copiadas para frontend/static/js/vendor
+# (o Dependabot não enxerga arquivos copiados à mão). Se houver, a verificação falha e o GitHub avisa.
+name: Versões das bibliotecas copiadas
+
+on:
+  schedule:
+    - cron: "0 12 1 * *"
+  workflow_dispatch:
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/check-vendor-versions.mjs
