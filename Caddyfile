@@ -1,0 +1,12 @@
+# O Caddy recebe os acessos da internet, cuida do HTTPS (certificado Let's Encrypt automático)
+# e repassa para o app. WebSocket funciona sem configuração extra.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Arquivo de 100 MB + o acréscimo da criptografia. O app confere o limite exato.
+	request_body {
+		max_size 110MB
+	}
+
+	reverse_proxy app:8000
+}

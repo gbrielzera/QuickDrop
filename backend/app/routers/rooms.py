@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.dependencies import Connections, CurrentRoom, Database, Limits, RoomCode
 from app.encoding import from_base64url, to_base64url
 from app.models import Room
@@ -10,6 +11,7 @@ from app.rate_limit import block_if_over_limit, client_address, count_attempt
 from app.room_service import (
     REASON_CLOSED,
     RoomCodeUnavailableError,
+    count_active_rooms,
     create_room,
     end_room,
     find_active_room,
@@ -26,6 +28,9 @@ from app.session import set_session_cookie
 
 router = APIRouter(prefix="/api/rooms", tags=["salas"])
 
+# Código que o navegador entende para avisar que o servidor atingiu o limite de salas.
+SERVER_FULL = "server_full"
+
 
 async def _get_active_room_or_404(db: AsyncSession, room_code: str) -> Room:
     room = await find_active_room(db, room_code)
@@ -40,6 +45,8 @@ async def create_new_room(
 ) -> CreateRoomResponse:
     """Cria uma sala. Quem cria já entra nela (recebe o cookie de sessão)."""
     count_attempt(limits.room_creations, client_address(request))
+    if await count_active_rooms(db) >= get_settings().max_active_rooms:
+        raise HTTPException(status_code=503, detail=SERVER_FULL)
     try:
         room = await create_room(
             db,

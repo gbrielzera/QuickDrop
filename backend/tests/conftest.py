@@ -72,3 +72,11 @@ def strict_limits_client(tmp_path, monkeypatch):
 def https_client(tmp_path, monkeypatch):
     """Cliente de teste configurado como se o site estivesse em HTTPS."""
     yield from start_test_client(tmp_path, monkeypatch, debug=False, COOKIE_SECURE="true")
+
+
+@pytest.fixture
+def small_server_client(tmp_path, monkeypatch):
+    """Cliente de teste de um servidor pequeno: 2 MB de arquivos no total e no máximo 2 salas ativas."""
+    yield from start_test_client(
+        tmp_path, monkeypatch, debug=False, MAX_TOTAL_STORAGE_MB="2", MAX_ACTIVE_ROOMS="2"
+    )

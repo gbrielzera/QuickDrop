@@ -1,0 +1,36 @@
+# Sobe o QuickDrop na internet: o app e o Caddy (HTTPS automático).
+# Configurações ficam no arquivo .env desta pasta (copie de .env.production.example).
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DEBUG: "false"
+      COOKIE_SECURE: "true"
+      DATABASE_URL: sqlite+aiosqlite:////data/quickdrop.db
+      STORAGE_DIR: /data/storage
+    volumes:
+      - quickdrop-data:/data
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  quickdrop-data:
+  caddy-data:
+  caddy-config:

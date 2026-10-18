@@ -46,6 +46,14 @@ async def web_manifest() -> FileResponse:
     )
 
 
+@router.get("/sobre", response_class=HTMLResponse)
+async def about(request: Request) -> HTMLResponse:
+    """Página que explica o que o servidor guarda e como denunciar abuso."""
+    settings = get_settings()
+    page_data = {"app_name": settings.app_name, "contact_email": settings.contact_email}
+    return templates.TemplateResponse(request, "about.html", page_data)
+
+
 @router.get("/r/{code}", response_class=HTMLResponse)
 async def room_page(code: RoomCode, request: Request) -> HTMLResponse:
     """Página de uma sala. O navegador entra na sala e mostra o conteúdo (tudo é descriptografado lá)."""

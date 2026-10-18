@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     max_code_clip_size_kb: int = 256  # blocos de código costumam ser maiores que textos
     max_clips_per_room: int = 200
 
+    # Contato para denúncias de abuso, mostrado na página /sobre (vazio: a página só orienta).
+    contact_email: str = ""
+
+    # Limites do servidor inteiro. Sem eles, poucas pessoas encheriam o disco de uma hospedagem grátis.
+    max_total_storage_mb: int = 30 * 1024  # soma dos arquivos de todas as salas
+    max_active_rooms: int = 500
+
     # De quanto em quanto tempo o servidor apaga as salas que expiraram.
     cleanup_interval_minutes: int = 5
 
@@ -63,6 +70,10 @@ class Settings(BaseSettings):
     @property
     def max_room_size_bytes(self) -> int:
         return self.max_room_size_mb * BYTES_PER_MEGABYTE
+
+    @property
+    def max_total_storage_bytes(self) -> int:
+        return self.max_total_storage_mb * BYTES_PER_MEGABYTE
 
     @property
     def max_text_size_bytes(self) -> int:

@@ -5,11 +5,14 @@ import { ApiError } from "./api.js";
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_NOT_FOUND = 404;
 const HTTP_PAYLOAD_TOO_LARGE = 413;
+const HTTP_SERVICE_UNAVAILABLE = 503;
+const HTTP_INSUFFICIENT_STORAGE = 507;
 const HTTP_TOO_MANY_REQUESTS = 429;
 
 // Códigos que o servidor informa quando recusa um arquivo por tamanho.
 const FILE_TOO_LARGE = "file_too_large";
 const ROOM_FULL = "room_full";
+const SERVER_FULL = "server_full";
 const TEXT_TOO_LARGE = "text_too_large";
 const CLIP_TOO_LARGE = "clip_too_large";
 const CLIPS_FULL = "clips_full";
@@ -17,6 +20,7 @@ const CLIPS_FULL = "clips_full";
 // Cada código de tamanho que o servidor informa tem a sua mensagem.
 const MESSAGE_KEY_BY_LIMIT_CODE = {
   [ROOM_FULL]: "error.roomFull",
+  [SERVER_FULL]: "error.serverFull",
   [FILE_TOO_LARGE]: "error.fileTooLarge",
   [TEXT_TOO_LARGE]: "error.textTooLarge",
   [CLIP_TOO_LARGE]: "error.clipTooLarge",
@@ -29,6 +33,9 @@ export function errorMessageKey(error) {
     if (error.status === HTTP_UNAUTHORIZED) return "error.passwordWrong";
     if (error.status === HTTP_NOT_FOUND) return "error.roomMissing";
     if (error.status === HTTP_TOO_MANY_REQUESTS) return "error.tooManyAttempts";
+    if (error.status === HTTP_SERVICE_UNAVAILABLE || error.status === HTTP_INSUFFICIENT_STORAGE) {
+      return MESSAGE_KEY_BY_LIMIT_CODE[error.code] ?? "error.generic";
+    }
     if (error.status === HTTP_PAYLOAD_TOO_LARGE) return MESSAGE_KEY_BY_LIMIT_CODE[error.code] ?? "error.generic";
     return "error.generic";
   }

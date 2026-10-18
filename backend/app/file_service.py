@@ -27,6 +27,12 @@ async def total_size_of_room(db: AsyncSession, room_id: str) -> int:
     return result.scalar_one()
 
 
+async def total_size_of_all_files(db: AsyncSession) -> int:
+    """Soma do tamanho dos arquivos de todas as salas, em bytes."""
+    result = await db.execute(select(func.coalesce(func.sum(StoredFile.size_bytes), 0)))
+    return result.scalar_one()
+
+
 async def save_file_record(
     db: AsyncSession, room_id: str, file_id: str, encrypted_meta: bytes, size_bytes: int
 ) -> StoredFile:

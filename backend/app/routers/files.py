@@ -32,6 +32,9 @@ MAX_META_BYTES = 4096
 # Códigos que o navegador entende para mostrar a mensagem certa.
 FILE_TOO_LARGE = "file_too_large"
 ROOM_FULL = "room_full"
+SERVER_FULL = "server_full"
+
+HTTP_INSUFFICIENT_STORAGE = 507
 
 
 def _to_file_response(stored_file: StoredFile) -> FileResponse:
@@ -80,19 +83,30 @@ async def upload_file(
     room_is_the_limit = room_space_left_bytes < file_limit_bytes
     max_bytes = room_space_left_bytes if room_is_the_limit else file_limit_bytes
     limit_error = ROOM_FULL if room_is_the_limit else FILE_TOO_LARGE
+    limit_status = 413
     if max_bytes <= 0:
         raise HTTPException(status_code=413, detail=ROOM_FULL)
+
+    # O disco do servidor inteiro também tem limite, além do de cada sala.
+    server_used_bytes = await file_service.total_size_of_all_files(db)
+    server_space_left_bytes = settings.max_total_storage_bytes - server_used_bytes
+    if server_space_left_bytes < max_bytes:
+        max_bytes = server_space_left_bytes
+        limit_error = SERVER_FULL
+        limit_status = HTTP_INSUFFICIENT_STORAGE
+    if max_bytes <= 0:
+        raise HTTPException(status_code=limit_status, detail=SERVER_FULL)
 
     # Se o navegador avisou o tamanho antes de enviar, recusamos sem nem começar a gravar.
     declared_size = request.headers.get("content-length")
     if declared_size and declared_size.isdigit() and int(declared_size) > max_bytes:
-        raise HTTPException(status_code=413, detail=limit_error)
+        raise HTTPException(status_code=limit_status, detail=limit_error)
 
     file_id = str(uuid4())
     try:
         size_bytes = await storage.save_upload(room.id, file_id, request.stream(), max_bytes)
     except storage.FileTooLargeError as error:
-        raise HTTPException(status_code=413, detail=limit_error) from error
+        raise HTTPException(status_code=limit_status, detail=limit_error) from error
     except ClientDisconnect as error:
         # O aparelho desistiu no meio do envio (comum no celular, quando a tela apaga ou o Wi-Fi cai).
         # O arquivo parcial já foi apagado por save_upload; ninguém está esperando resposta.

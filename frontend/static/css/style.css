@@ -186,6 +186,16 @@ h1 {
 
 /* ---------- páginas ---------- */
 
+.page-footer {
+  padding: 0 var(--gutter) 2rem;
+  font-size: 0.9rem;
+}
+
+.about-section {
+  max-width: 40rem;
+  margin-top: 1.75rem;
+}
+
 .page {
   padding: clamp(1.5rem, 4vw, 3rem) var(--gutter) 3rem;
 }

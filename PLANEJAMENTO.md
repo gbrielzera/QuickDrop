@@ -540,11 +540,39 @@ Para passar trechos de código sem perder a formatação, a sala ganhou um edito
 - [x] 148 testes no backend e 68 no frontend (a indentação tem testes próprios)
 - [x] Verificado no navegador com duas abas: código com tabulação, espaços no fim da linha, crases e acentos chegou idêntico ao outro aparelho; o bloco salvo apareceu ao vivo, foi copiado exatamente e excluído com confirmação; Tab, Shift+Tab e Esc+Tab se comportaram como descrito
 
-### Fase 8: Internet
-- [ ] `Dockerfile` + `docker-compose.yml`
-- [ ] VPS com Caddy (HTTPS automático), `COOKIE_SECURE=true`
-- [ ] Volume persistente para `storage/` e o banco (ou trocar para S3/R2 e PostgreSQL)
-- [ ] Revisar limites globais (máximo de salas ativas, espaço total em disco)
+### Fase 8: Internet (8a e 8b prontas; falta o servidor, 8c e 8d)
+Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always Free** (uma VM Ubuntu de verdade, ligada 24 h) com **Docker + Caddy** e um endereço grátis do **DuckDNS**.
+
+**8a. Preparar o app para a internet (no PC, com testes)**
+- [x] **IP verdadeiro atrás do Caddy**: iniciar o Uvicorn com `--proxy-headers --forwarded-allow-ips=<IP do Caddy>`. Sem isso, todos os visitantes parecem ter o IP do Caddy e o limite de tentativas bloquearia todo mundo junto
+- [x] **Limite global de disco** (`MAX_TOTAL_STORAGE_GB`, ex.: 30): sem ele, uma pessoa criando 20 salas por hora com 500 MB cada enche o disco grátis em poucas horas. Ao passar do limite, o envio responde `507` com mensagem clara ("O servidor está cheio agora")
+- [x] **Limite de salas ativas** (`MAX_ACTIVE_ROOMS`, ex.: 500), pelo mesmo motivo
+- [x] Página `/sobre` curta: o que o QuickDrop guarda (nada legível), por quanto tempo, e um contato para denúncia de abuso. Como tudo é criptografado, a única resposta possível a uma denúncia é encerrar a sala
+- [x] Testes para os limites globais (157 testes no backend) e conferência do IP vindo do proxy com o Uvicorn de verdade: 30 consultas de um IP e a 31ª bloqueada, enquanto outro IP seguia livre; `/sobre` com testes próprios
+
+**8b. Empacotar**
+- [x] `Dockerfile` (Python slim, usuário sem privilégios, **1 worker** do Uvicorn: as conexões em tempo real e os limites de tentativas ficam na memória do processo)
+- [x] `docker-compose.yml` com dois serviços: `app` (só visível dentro do Docker) e `caddy` (portas 80 e 443)
+- [x] `Caddyfile`: HTTPS automático (Let's Encrypt), `request_body max_size 110MB`, WebSocket passa sem configuração extra
+- [x] **Volume persistente** `quickdrop-data` com o banco SQLite e a pasta `storage/` (sobrevive a atualizações). Continua SQLite: um único servidor não precisa de PostgreSQL
+- [x] `.env` de produção fora do Git: `SECRET_KEY` nova, `DEBUG=false` (desliga `/dev/crypto`), `COOKIE_SECURE=true` (liga também o HSTS)
+- [ ] Testar o `docker compose up` no PC antes de subir: **não foi possível**, o Docker não está instalado no PC. A primeira subida real será no servidor, com `docker compose logs` para diagnosticar
+
+**8c. Servidor (feito por você, seguindo o `DEPLOY.md`, que já está escrito)**
+- [ ] Criar a conta na Oracle Cloud, região **São Paulo** ou **Vinhedo** (a região de origem não pode ser trocada depois e os recursos grátis só existem nela)
+- [ ] Criar a VM **Ampere A1** (1 OCPU e 6 GB já sobram; o limite grátis é 2 OCPU e 12 GB) com Ubuntu e disco de 50 GB
+- [ ] Abrir as portas 80 e 443 em **dois lugares**: na "Security List" da Oracle e no firewall do próprio Ubuntu (a imagem da Oracle vem com `iptables` bloqueando; é o erro mais comum)
+- [ ] Criar o subdomínio no DuckDNS (ex.: `quickdrop-gabriel.duckdns.org`) apontando para o IP público da VM
+- [ ] Instalar Docker, clonar o repositório, criar o `.env`, `docker compose up -d`
+- [ ] SSH só com chave, atualizações de segurança automáticas (`unattended-upgrades`)
+
+**8d. Conferir na internet**
+- [ ] Cadeado do HTTPS, nota dos cabeçalhos de segurança, cookie com `Secure`
+- [ ] Teste com **celular no 4G** e PC em outra rede: sala, arquivo de 100 MB, texto ao vivo, celular com a tela apagada e voltando
+- [ ] Argon2id no celular abaixo de ~1 s (pendência da Fase 1)
+- [ ] Atualizar o app depois: `git pull && docker compose up -d --build` (descrito no `DEPLOY.md`)
+
+**Fora desta fase, de propósito:** domínio pago, CDN, backup (as salas duram no máximo 48 h), deploy automático pelo GitHub, vários servidores.
 
 **Total estimado do MVP (fases 0 a 6):** cerca de 2 a 3 semanas em ritmo de estudo. A criptografia acrescenta uns 3 a 4 dias em relação ao plano original.
 
@@ -559,6 +587,28 @@ Para passar trechos de código sem perder a formatação, a sala ganhou um edito
 | **PaaS** (Railway, Render, Fly.io) | Deploy pelo GitHub | Fácil, HTTPS pronto | Em planos grátis o **disco costuma ser apagado** a cada deploy/reinício: precisa de volume persistente ou S3/R2 |
 
 **Decidido:** desenvolver e usar na **rede local** primeiro. Depois, para acessar de qualquer lugar, subir numa VPS com Docker + Caddy (Fase 8).
+
+### 14.1 Hospedagem grátis (pesquisa de outubro de 2026)
+
+O QuickDrop precisa de quatro coisas que eliminam a maioria das opções grátis: **ficar ligado** (WebSocket aberto e a limpeza das salas a cada 5 min), **disco que não some** (arquivos e banco), **envios de até ~101 MB** (100 MB mais a criptografia) e **muito tráfego de saída** (cada arquivo é baixado por outro aparelho).
+
+| Opção | Ligado 24 h | Disco persistente | Envio de 100 MB | Veredito |
+|---|---|---|---|---|
+| **Oracle Cloud Always Free** (VM ARM, 2 OCPU / 12 GB, 200 GB de disco, 10 TB de saída/mês) | Sim | Sim | Sim | ✅ **Escolhida** |
+| Google Cloud e2-micro | Sim | Sim (30 GB) | Sim | ❌ só 1 GB de saída grátis por mês e só nos EUA |
+| Render (grátis) | Dorme após 15 min | Não | Sim | ❌ derruba o tempo real e apaga os arquivos |
+| Fly.io, Railway, Koyeb | Só teste ou crédito de US$ 1 | — | — | ❌ não têm mais plano grátis de verdade |
+| Hugging Face Spaces | Dorme | Não (pago) | Sim | ❌ e não é feito para isso |
+| **PC de casa + Cloudflare Tunnel** | Só com o PC ligado | Sim (o seu) | **Não**: o plano grátis corta envios acima de 100 MB (erro 413) | ⚠️ só serviria baixando o limite para ~95 MB |
+| **PC de casa + Tailscale Funnel** | Só com o PC ligado | Sim | Sim | ⚠️ **plano B** sem cartão; endereço `*.ts.net` com HTTPS pronto |
+
+**Cuidados com a Oracle:**
+- Pede **cartão de crédito só para verificar** a identidade; no plano "Always Free" não há cobrança. Não ativar recursos fora da lista grátis.
+- Em junho de 2026 a Oracle **reduziu** a cota ARM de 4 OCPU/24 GB para 2 OCPU/12 GB, sem aviso. Ainda sobra muito para o QuickDrop, mas mostra que as regras podem mudar: o Docker deixa a mudança para outro servidor simples.
+- A Oracle pode **recuperar VMs grátis paradas** (uso de CPU muito baixo por dias). O tráfego normal e a limpeza periódica ajudam; se acontecer, recriar a VM leva uns 20 minutos com o guia.
+- Às vezes a região está **sem capacidade ARM** ("Out of capacity"): tentar de novo mais tarde ou usar a VM AMD micro grátis (1 GB de RAM, também serve).
+
+**Endereço grátis:** o **DuckDNS** dá um subdomínio (`algo.duckdns.org`) que aponta para o IP da VM, e o Caddy consegue o certificado HTTPS para ele sozinho. Um domínio próprio (~R$ 40/ano) pode substituir depois sem mexer no código.
 
 **Cuidados da fase local (HTTP via IP):**
 - `navigator.clipboard` e `crypto.subtle` só funcionam em **HTTPS ou localhost**. Por isso a criptografia usa a libsodium.js (funciona em HTTP) e o botão copiar terá fallback com `document.execCommand('copy')`.

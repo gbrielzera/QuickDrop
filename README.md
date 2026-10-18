@@ -6,6 +6,7 @@ Transferência de arquivos e textos entre dispositivos em tempo real, com cripto
 - Regras do projeto: [CLAUDE.md](CLAUDE.md)
 - Sistema visual: [DESIGN.md](DESIGN.md) e [PRODUCT.md](PRODUCT.md)
 - **Como rodar no seu computador, passo a passo: [COMO-RODAR.md](COMO-RODAR.md)**
+- **Como colocar na internet (grátis): [DEPLOY.md](DEPLOY.md)**
 
 ## Estrutura
 

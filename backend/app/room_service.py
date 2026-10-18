@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import storage
@@ -26,6 +26,12 @@ async def find_active_room(db: AsyncSession, room_code: str) -> Room | None:
     query = select(Room).where(Room.code == room_code, Room.expires_at > utc_now())
     result = await db.execute(query)
     return result.scalar_one_or_none()
+
+
+async def count_active_rooms(db: AsyncSession) -> int:
+    """Quantas salas ainda não expiraram."""
+    result = await db.execute(select(func.count(Room.id)).where(Room.expires_at > utc_now()))
+    return result.scalar_one()
 
 
 async def _room_code_is_taken(db: AsyncSession, room_code: str) -> bool:

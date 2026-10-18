@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre · {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1 data-i18n="about.title">Sobre o QuickDrop</h1>
+<p class="lead" data-i18n="about.intro">O QuickDrop passa arquivos, textos e códigos entre seus aparelhos, sem conta e sem anúncios.</p>
+
+<section class="about-section">
+  <h2 data-i18n="about.keepsTitle">O que o servidor guarda</h2>
+  <p data-i18n="about.keeps">Só dados embaralhados: arquivos, textos, códigos e nomes de arquivo chegam criptografados e o servidor não tem a chave. A chave fica no link (depois do #) ou na senha, que nunca saem do seu aparelho.</p>
+</section>
+
+<section class="about-section">
+  <h2 data-i18n="about.timeTitle">Por quanto tempo</h2>
+  <p data-i18n="about.time">Até a sala expirar (1, 12, 24 ou 48 horas) ou até alguém encerrá-la. Depois disso tudo é apagado de verdade.</p>
+</section>
+
+<section class="about-section">
+  <h2 data-i18n="about.abuseTitle">Abuso e denúncias</h2>
+  {% if contact_email %}
+  <p><span data-i18n="about.abuse">Como o conteúdo é ilegível para o servidor, a única providência possível é encerrar a sala. Para denunciar, envie o código da sala para</span> <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+  {% else %}
+  <p data-i18n="about.abuseNoContact">Para denunciar, envie o código da sala a quem hospeda este site.</p>
+  {% endif %}
+</section>
+
+<p><a href="/" data-i18n="about.back">Voltar ao início</a></p>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='js/about.js') }}"></script>
+{% endblock %}
