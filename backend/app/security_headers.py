@@ -60,3 +60,7 @@ class SecurityHeadersMiddleware:
         if path.startswith("/api/"):
             # As respostas da API têm dados da sala: nada de guardá-las em cache.
             headers.setdefault("Cache-Control", "no-store")
+        elif path.startswith("/static/"):
+            # Sem isto o navegador pode reaproveitar por horas um JavaScript antigo depois de uma atualização.
+            # "no-cache" deixa guardar, mas pergunta ao servidor se mudou (e ele responde 304 se não mudou).
+            headers.setdefault("Cache-Control", "no-cache")

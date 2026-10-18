@@ -511,12 +511,17 @@ Vem antes de tudo porque todas as outras partes dependem dela.
 - [x] Verificado no navegador: com a CSP ligada nada quebrou (WebAssembly, WebSocket, QR Code, cópia, upload); encerrar numa aba mostra "Sala encerrada" na outra e esvazia o disco; o bloqueio por excesso de tentativas aparece em português
 - Não feito: SRI nos scripts (os scripts são do próprio servidor, a CSP já impede código de fora; SRI só agregaria algo se um dia vierem de CDN). Atrás de um proxy (Fase 8), iniciar o servidor com `--proxy-headers` para o limite enxergar o IP verdadeiro
 
-### Fase 7: Polimento (contínuo)
-- [ ] Colar imagem (Ctrl+V) → upload
-- [ ] Pré-visualização de imagens
-- [ ] Download em `.zip`
-- [ ] Tema escuro
-- [ ] PWA
+### Fase 7: Polimento ✅
+- [x] **Colar imagem com Ctrl+V** em qualquer lugar da sala vira envio; prints (que chegam como "image.png") ganham o nome `captura-AAAAMMDD-HHMMSS.png`; arquivos copiados do computador mantêm o nome; texto colado continua virando clip
+- [x] **Pré-visualização de imagens** na lista ("Ver" / "Ocultar"): baixa e descriptografa só quando a pessoa pede, mostra na própria linha e libera a memória ao ocultar. Só PNG, JPEG, GIF, WebP, AVIF e BMP de até 20 MB; **SVG e HTML nunca** (podem conter script)
+- [x] **Baixar tudo em .zip**: zip criado no navegador, sem biblioteca e sem compressão (fotos, PDFs e vídeos já são comprimidos), com nomes em UTF-8, nomes repetidos numerados e a data de cada arquivo; aparece com 2 ou mais arquivos. Conferido com o `zipfile` do Python (soma de verificação de cada arquivo confere)
+- [x] **Tema escuro**: já existia desde a Fase 2 (segue o aparelho)
+- [x] **PWA instalável**: manifesto, ícones (um "Q" branco sobre azul de linha com cauda amarela, incluindo versão "maskable" para Android e ícone da Apple), cor da barra do navegador clara e escura, e service worker que só mostra uma página de "sem conexão" quando o servidor não responde. De propósito não guarda salas, arquivos nem API em cache
+- [x] Arquivos de `/static` agora são revalidados a cada uso (`Cache-Control: no-cache` + `ETag`): sem isso, o navegador reaproveitava JavaScript antigo depois de uma atualização
+- [x] 132 testes no backend e 57 no frontend
+- [x] Verificado no navegador: imagem colada virou arquivo, a imagem apareceu decifrada (120x80), o SVG não ganhou botão "Ver", o zip tinha os 3 arquivos em ordem, o service worker registrou com escopo `/` e a página "Sem conexão" apareceu com o servidor desligado
+- Não feito: "Compartilhar com…" do Android (share target). Exige escolher para qual sala o conteúdo vai e tratar arquivos por um service worker; fica como ideia futura
+- Ícones: gerados por script com a biblioteca Pillow (um "Q" desenhado com formas simples, sem imagem de terceiros)
 
 ### Fase 8: Internet
 - [ ] `Dockerfile` + `docker-compose.yml`

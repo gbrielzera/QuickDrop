@@ -11,6 +11,7 @@ import {
   toBase64Url,
 } from "./crypto.js";
 import { safeFileName } from "./file-size.js";
+import { createZip, uniqueNames } from "./zip.js";
 
 const REVOKE_URL_AFTER_MILLISECONDS = 60 * 1000;
 
@@ -54,6 +55,21 @@ export async function fetchDecryptedFile({ roomCode, entry, encryptionKey, onSta
   onStage("decrypting");
   const decryptedBlob = await decryptFile(encryptedBlob, encryptionKey);
   return new Blob([decryptedBlob], { type: entry.type });
+}
+
+/**
+ * Baixa e descriptografa vários arquivos e os junta num .zip. `onProgress` recebe (número do arquivo, total)
+ * a cada arquivo que começa a ser baixado.
+ */
+export async function buildZipOfEntries({ roomCode, entries, encryptionKey, onProgress }) {
+  const files = [];
+  for (const [index, entry] of entries.entries()) {
+    onProgress(index + 1, entries.length);
+    const blob = await fetchDecryptedFile({ roomCode, entry, encryptionKey, onStage: () => {} });
+    files.push({ name: safeFileName(entry.name), blob, date: entry.createdAt });
+  }
+  const names = uniqueNames(files.map((file) => file.name));
+  return createZip(files.map((file, index) => ({ ...file, name: names[index] })));
 }
 
 /** Salva o arquivo no aparelho, como se fosse um download comum. */

@@ -145,6 +145,16 @@ No navegador do celular, digite `http://192.168.0.15:8000` (troque pelo seu IP).
 
 ---
 
+## Instalar como app no celular (opcional)
+
+O QuickDrop pode ser instalado na tela inicial, como um app. O navegador só oferece isso quando o site está em **HTTPS** (ou em `localhost`), então na rede local por `http://192.168...` a opção não aparece; ela passa a funcionar quando o projeto for hospedado na internet. Para ver funcionando no PC: abra http://localhost:8000 no Chrome ou Edge e procure o ícone de instalar na barra de endereço.
+
+## Dicas de uso
+
+- **Cole um print com Ctrl+V** em qualquer lugar da sala: ele é enviado na hora.
+- **Ctrl+V com texto** (fora dos campos) guarda um clip.
+- **Ver** mostra uma imagem na própria lista; **Baixar tudo (.zip)** junta todos os arquivos da sala num zip.
+
 ## Rodar os testes
 
 Com o ambiente virtual ativado, dentro de `backend`:

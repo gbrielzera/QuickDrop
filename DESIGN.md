@@ -200,6 +200,7 @@ Cantos de 6px (`rounded.md`) em placas, campos, botões, QR e seletor; 4px em et
 ### Arquivos, texto e clips
 - **Área de soltar:** contorno tracejado de 3px (cai no azul ao arrastar um arquivo por cima), botão azul de largura limitada. A fila de envio mostra nome, tamanho e uma barra de 1.25rem com contorno de 3px, preenchida de amarelo (o que está em trânsito).
 - **Lista de arquivos e de clips:** itens separados por linha de 3px; nome em 800, tamanho em tom suave com números tabulares; ações em botões de contorno de 44px de altura. Excluir pede confirmação: o primeiro clique troca o texto por "Confirmar exclusão" em vermelho (`danger`) por 4 segundos.
+- **Pré-visualização:** a imagem aparece dentro da própria linha, com contorno de 3px, raio de 6px, fundo `ground` e altura máxima de 20rem; o botão "Ver" vira "Ocultar". "Baixar tudo (.zip)" é um botão de contorno pequeno no alto da lista.
 - **Campo de texto (textarea):** mesmo contorno, raio e foco dos campos de uma linha; só estica na vertical. O texto de um clip aparece num bloco `ground` com rolagem a partir de 9rem.
 - **Aviso de conflito do texto:** caixa com contorno de `danger` de 3px, duas ações de contorno ("Usar a do outro aparelho", "Manter a minha"). Amarelo não é usado aqui: não é tempo nem trânsito.
 - **Encerrar sala:** botão de contorno pequeno ao lado da etiqueta de tempo, com a mesma confirmação em duas etapas ("Confirmar: apaga tudo"). Quando a sala acaba, a tela vira o aviso "Sala encerrada" (mesma coluna estreita da tela de "Sala não encontrada").

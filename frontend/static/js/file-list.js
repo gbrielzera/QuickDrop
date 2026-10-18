@@ -1,14 +1,18 @@
-// Painel "Na sala": a lista de arquivos, com baixar e excluir.
+// Painel "Na sala": a lista de arquivos, com ver (imagens), baixar, baixar tudo em .zip e excluir.
 
 import { ApiError, deleteFile, listFiles } from "./api.js";
 import { createElement } from "./dom.js";
 import { errorMessageKey } from "./errors.js";
 import { formatFileSize } from "./file-size.js";
-import { fetchDecryptedFile, readFileEntry, saveBlobAsFile } from "./file-transfer.js";
+import { buildZipOfEntries, fetchDecryptedFile, readFileEntry, saveBlobAsFile } from "./file-transfer.js";
+import { isPreviewableImage } from "./file-types.js";
 import { getLanguage, onLanguageChange, t } from "./i18n.js";
+import { setUpPreviewButton } from "./image-preview.js";
 import { clearMessage, runWithBusyButton, setUpConfirmButton, showMessage } from "./ui.js";
 
 const HTTP_NOT_FOUND = 404;
+// O botão "Baixar tudo" só faz sentido com mais de um arquivo.
+const MIN_FILES_FOR_ZIP = 2;
 
 /** Chave de tradução do erro de uma ação sobre um arquivo (baixar ou excluir). */
 function fileErrorKey(error) {
@@ -25,11 +29,17 @@ export function startFileList({ roomCode, getEncryptionKey }) {
   const list = document.getElementById("file-list");
   const emptyMessage = document.getElementById("files-empty");
   const listStatus = document.getElementById("files-status");
+  const downloadAllButton = document.getElementById("download-all");
 
   const rowsById = new Map();
 
+  function readableEntries() {
+    return [...rowsById.values()].map((row) => row.entry).filter((entry) => entry.readable);
+  }
+
   function showEmptyMessageWhenNoFiles() {
     emptyMessage.hidden = rowsById.size > 0;
+    downloadAllButton.hidden = readableEntries().length < MIN_FILES_FOR_ZIP;
   }
 
   // Tira da lista um arquivo que foi apagado (por este ou por outro aparelho).
@@ -50,8 +60,11 @@ export function startFileList({ roomCode, getEncryptionKey }) {
       statusElement,
     ]);
 
+    let preview = null;
+
     const row = {
       element,
+      entry,
       remove: removeRow,
       render() {
         nameElement.textContent = entry.readable ? entry.name : t("files.unreadableName");
@@ -60,6 +73,7 @@ export function startFileList({ roomCode, getEncryptionKey }) {
     };
 
     function removeRow() {
+      preview?.close(); // libera a memória da imagem
       element.remove();
       rowsById.delete(entry.id);
       showEmptyMessageWhenNoFiles();
@@ -110,6 +124,23 @@ export function startFileList({ roomCode, getEncryptionKey }) {
       actions.append(downloadButton);
     }
 
+    if (entry.readable && isPreviewableImage(entry.type, entry.size)) {
+      const previewButton = createElement("button", {
+        className: "button button--outline button--small",
+        i18nKey: "files.view",
+        attributes: { type: "button" },
+      });
+      preview = setUpPreviewButton({
+        button: previewButton,
+        container: element,
+        imageName: entry.name,
+        loadBlob: () =>
+          fetchDecryptedFile({ roomCode, entry, encryptionKey: getEncryptionKey(), onStage: () => {} }),
+        onError: (error) => showMessage(statusElement, fileErrorKey(error)),
+      });
+      actions.prepend(previewButton);
+    }
+
     const deleteButton = createElement("button", {
       className: "button button--outline button--small",
       i18nKey: "action.delete",
@@ -154,6 +185,26 @@ export function startFileList({ roomCode, getEncryptionKey }) {
     }
     showEmptyMessageWhenNoFiles();
   }
+
+  async function downloadAll(button) {
+    clearMessage(listStatus);
+    try {
+      const zipBlob = await runWithBusyButton(button, "files.zipping", () =>
+        buildZipOfEntries({
+          roomCode,
+          entries: readableEntries(),
+          encryptionKey: getEncryptionKey(),
+          onProgress: (current, total) => showMessage(listStatus, "files.zipProgress", { current, total }),
+        }),
+      );
+      saveBlobAsFile(zipBlob, `quickdrop-${roomCode}.zip`);
+      clearMessage(listStatus);
+    } catch (error) {
+      showMessage(listStatus, fileErrorKey(error));
+    }
+  }
+
+  downloadAllButton.addEventListener("click", () => downloadAll(downloadAllButton));
 
   onLanguageChange(() => {
     for (const row of rowsById.values()) {

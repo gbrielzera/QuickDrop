@@ -3,6 +3,7 @@
 import { createElement } from "./dom.js";
 import { errorMessageKey } from "./errors.js";
 import { formatFileSize } from "./file-size.js";
+import { pastedFileName } from "./file-types.js";
 import { sendFile } from "./file-transfer.js";
 import { getLanguage, onLanguageChange, t } from "./i18n.js";
 
@@ -151,6 +152,17 @@ export function startUploadPanel({ roomCode, maxFileBytes, maxRoomBytes, getEncr
     event.preventDefault();
     dropzone.classList.remove("dropzone--active");
     queueFiles(Array.from(event.dataTransfer.files));
+  });
+  // Ctrl+V com uma imagem (um print, por exemplo) ou arquivos copiados envia na hora.
+  // Texto colado não passa por aqui: quem cuida dele é o painel de clips.
+  document.addEventListener("paste", (event) => {
+    const pastedFiles = Array.from(event.clipboardData?.files ?? []);
+    if (pastedFiles.length === 0) {
+      return;
+    }
+    event.preventDefault();
+    const now = new Date();
+    queueFiles(pastedFiles.map((file) => new File([file], pastedFileName(file, now), { type: file.type })));
   });
   // Arquivo solto fora da área não pode fazer o navegador abri-lo e sair da sala.
   window.addEventListener("dragover", (event) => event.preventDefault());

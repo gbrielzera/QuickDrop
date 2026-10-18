@@ -764,6 +764,16 @@ input:focus-visible {
   background: var(--signal);
 }
 
+.file__preview {
+  display: block;
+  max-width: 100%;
+  max-height: 20rem;
+  object-fit: contain;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius);
+  background: var(--ground);
+}
+
 .file__actions {
   display: flex;
   flex-wrap: wrap;

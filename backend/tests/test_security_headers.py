@@ -38,9 +38,17 @@ def test_api_responses_are_never_cached(client):
     assert client.get("/api/health").headers["cache-control"] == "no-store"
 
 
-def test_pages_and_static_files_can_be_cached(client):
+def test_static_files_are_revalidated_so_an_update_is_never_missed(client):
+    first = client.get("/static/css/style.css")
+
+    assert first.headers["cache-control"] == "no-cache"
+    # Com o "etag" o navegador pergunta se mudou e recebe 304 (sem baixar de novo) quando não mudou.
+    second = client.get("/static/css/style.css", headers={"if-none-match": first.headers["etag"]})
+    assert second.status_code == 304
+
+
+def test_pages_have_no_cache_header_of_their_own(client):
     assert "cache-control" not in client.get("/").headers
-    assert "cache-control" not in client.get("/static/css/style.css").headers
 
 
 def test_the_download_keeps_its_own_no_store_header(client):

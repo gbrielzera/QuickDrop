@@ -1,7 +1,7 @@
 """Rotas que entregam as páginas HTML do frontend."""
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import FRONTEND_DIR, get_settings
@@ -25,6 +25,25 @@ async def index(request: Request) -> HTMLResponse:
         "default_ttl": settings.default_ttl_hours,
     }
     return templates.TemplateResponse(request, "index.html", page_data)
+
+
+# O service worker precisa ser servido da raiz do site: o endereço dele define até onde ele pode atuar.
+@router.get("/service-worker.js")
+async def service_worker() -> FileResponse:
+    """O service worker do app instalável. Sem cache, para uma versão nova valer logo."""
+    return FileResponse(
+        FRONTEND_DIR / "static" / "service-worker.js",
+        media_type="text/javascript",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+@router.get("/manifest.webmanifest")
+async def web_manifest() -> FileResponse:
+    """O manifesto que descreve o app para o navegador (nome, ícones, cores)."""
+    return FileResponse(
+        FRONTEND_DIR / "static" / "manifest.webmanifest", media_type="application/manifest+json"
+    )
 
 
 @router.get("/r/{code}", response_class=HTMLResponse)
