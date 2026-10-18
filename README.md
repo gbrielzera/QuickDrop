@@ -5,6 +5,7 @@ Transferência de arquivos e textos entre dispositivos em tempo real, com cripto
 - Planejamento completo: [PLANEJAMENTO.md](PLANEJAMENTO.md)
 - **Visão do produto, com diagramas: [docs/VISAO.md](docs/VISAO.md)**
 - **Requisitos funcionais e não funcionais: [docs/REQUISITOS.md](docs/REQUISITOS.md)**
+- Os dois documentos também em Word: [docs/VISAO.docx](docs/VISAO.docx) e [docs/REQUISITOS.docx](docs/REQUISITOS.docx) (gerados a partir dos `.md`; edite o `.md` e gere de novo)
 - Regras do projeto: [CLAUDE.md](CLAUDE.md)
 - Sistema visual: [DESIGN.md](DESIGN.md) e [PRODUCT.md](PRODUCT.md)
 - **Como rodar no seu computador, passo a passo: [COMO-RODAR.md](COMO-RODAR.md)**

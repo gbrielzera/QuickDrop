@@ -138,25 +138,21 @@ Os diagramas abaixo estão em [Mermaid](https://mermaid.js.org): o GitHub os des
 Quem usa o QuickDrop e com quais serviços externos ele conversa.
 
 ```mermaid
-flowchart LR
-    pessoaA["Pessoa<br/>(PC)"]
-    pessoaB["Pessoa<br/>(celular)"]
+flowchart TB
+    pessoaA["Pessoa (PC)"]
+    pessoaB["Pessoa (celular)"]
     admin["Administrador"]
-
-    subgraph quickdrop["QuickDrop"]
-        sistema["Site de salas temporárias<br/>com criptografia de ponta a ponta"]
-    end
-
-    letsencrypt["Let's Encrypt<br/>(certificado HTTPS)"]
-    azure["Microsoft Azure<br/>(hospedagem e alerta de crédito)"]
-    github["GitHub<br/>(código, verificações e<br/>sugestões de atualização)"]
+    sistema["QuickDrop<br/>site de salas temporárias com<br/>criptografia de ponta a ponta"]
+    letsencrypt["Let's Encrypt<br/>certificado HTTPS"]
+    azure["Microsoft Azure<br/>hospedagem e alerta de crédito"]
+    github["GitHub<br/>código, verificações e<br/>sugestões de atualização"]
 
     pessoaA -->|"cria sala, envia e recebe"| sistema
     pessoaB -->|"entra por QR Code ou código"| sistema
     admin -->|"publica versões e acompanha"| sistema
     sistema -->|"pede certificado"| letsencrypt
     sistema -.->|"roda em"| azure
-    github -->|"confere se está no ar<br/>a cada 15 min"| sistema
+    github -->|"confere se está no ar<br/>a cada 15 minutos"| sistema
     admin -->|"envia o código"| github
 ```
 
@@ -218,28 +214,22 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     autonumber
-    actor A as Dono (PC)
-    participant NA as Navegador do dono
+    participant NA as Navegador do dono (PC)
     participant S as Servidor
-    participant NB as Navegador do convidado
-    actor B as Convidado (celular)
+    participant NB as Navegador do convidado (celular)
 
-    A->>NA: Criar sala (12 h)
     NA->>NA: Gera segredo e salt<br/>Argon2id: authKey e chave de criptografia
     NA->>S: POST /api/rooms (salt, authKey, validade)
-    S->>S: Guarda hash da authKey<br/>cria sala e código de 6 caracteres
+    S->>S: Guarda o hash da authKey<br/>cria a sala e o código de 6 caracteres
     S-->>NA: Código + cookies (participante e dono)
-    NA-->>A: Mostra QR Code com /r/CODIGO#k=SEGREDO
-
-    B->>NB: Lê o QR Code
-    Note over NB: O #k=SEGREDO fica só no navegador
+    NA->>NB: QR Code com /r/CODIGO#35;k=SEGREDO<br/>(o segredo não passa pelo servidor)
     NB->>S: GET /params (consulta o salt)
     S-->>NB: salt
     NB->>NB: Argon2id: authKey e chave de criptografia
     NB->>S: POST /join (authKey)
-    S->>S: Confere o hash (e se a sala não está trancada)
+    S->>S: Confere o hash e se a sala não está trancada
     S-->>NB: Cookie de participante
-    NB->>S: WebSocket (cookie + origem conferidos)
+    NB->>S: WebSocket (cookie e origem conferidos)
     S-->>NA: presence: 2 aparelhos
     S-->>NB: presence: 2 aparelhos
 ```
@@ -249,26 +239,23 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-    actor A as Pessoa (aparelho 1)
     participant NA as Navegador 1
     participant S as Servidor
     participant D as Disco e banco
     participant NB as Navegador 2
 
-    A->>NA: Solta o arquivo (até 100 MB)
-    NA->>NA: Confere tamanho e espaço da sala
-    NA->>NA: Cifra em blocos de 1 MB<br/>e cifra nome, tipo e tamanho
-    NA->>S: POST /files (corpo cifrado + metadados cifrados)
-    S->>S: Limites de IP, sala e servidor
+    NA->>NA: Confere o tamanho (100 MB) e o espaço da sala
+    NA->>NA: Cifra o arquivo em blocos de 1 MB<br/>e cifra nome, tipo e tamanho
+    NA->>S: POST /files (corpo e metadados cifrados)
+    S->>S: Confere os limites de IP, sala e servidor
     S->>D: Grava com nome UUID
     S->>S: Reconfere o espaço, um envio por vez
     S->>D: Registra o arquivo cifrado
     S-->>NA: 201 Criado
     S-->>NB: WebSocket: file_added
-    NB->>S: GET /files/ID (quando a pessoa pedir)
-    S-->>NB: Bytes cifrados (download como anexo)
+    NB->>S: GET /files/ID (quando a pessoa baixa)
+    S-->>NB: Bytes cifrados (como anexo)
     NB->>NB: Decifra e confere se não foi alterado
-    NB-->>A: Entrega o arquivo original
 ```
 
 ### 6.6 Edição do texto compartilhado com conflito
@@ -408,38 +395,45 @@ flowchart LR
 ```mermaid
 flowchart TB
     internet(("Internet"))
-    admin(["Administrador"])
-
-    subgraph github["GitHub"]
-        repo["Repositório<br/>(código público)"]
-        uptime["Verificação do site<br/>a cada 15 min"]
-        dependabot["Dependabot e verificação<br/>mensal das bibliotecas"]
-    end
-
-    subgraph azure["Azure for Students (México Central)"]
+    subgraph azure["Azure (México Central)"]
         nsg["Regras de rede<br/>80 e 443: todos<br/>22: só o administrador"]
-        subgraph vm["VM Ubuntu 24.04 (1 vCPU, 1 GiB)"]
+        subgraph vm["VM Ubuntu 24.04"]
             subgraph docker["Docker Compose"]
                 caddy["caddy:2<br/>HTTPS e cabeçalhos"]
                 app["app (Python 3.14)<br/>1 processo, sem privilégios"]
             end
-            vol[("Volume quickdrop-data<br/>banco + arquivos")]
-            cron["cron semanal:<br/>atualiza as imagens"]
+            vol[("Volume quickdrop-data<br/>banco e arquivos")]
+            cron["cron semanal<br/>atualiza as imagens"]
             apt["atualizações de segurança<br/>e reinício às 04:00"]
         end
-        orcamento["Orçamento do crédito<br/>aviso em 60% e 85%"]
     end
-
     internet --> nsg --> caddy --> app --> vol
-    uptime -->|"/api/health"| internet
-    repo -.->|"git pull (manual)"| vm
-    dependabot -.-> repo
     cron -.-> docker
-    orcamento -.->|"e-mail"| admin
-    admin -->|"envia o código"| repo
 ```
 
-### 6.11 Camadas de segurança
+### 6.11 Operação e alertas
+
+```mermaid
+flowchart TB
+    admin(["Administrador"])
+    subgraph github["GitHub"]
+        repo["Repositório<br/>(código público)"]
+        uptime["Verificação do site<br/>a cada 15 minutos"]
+        dependabot["Dependabot e verificação<br/>mensal das bibliotecas"]
+    end
+    site["QuickDrop (produção)"]
+    vm["VM no Azure"]
+    orcamento["Orçamento do Azure<br/>aviso em 60% e 85% do crédito"]
+
+    admin -->|"envia o código"| repo
+    repo -.->|"git pull (manual)"| vm
+    dependabot -->|"sugere atualizações"| repo
+    uptime -->|"consulta /api/health"| site
+    uptime -.->|"se falhar: e-mail"| admin
+    orcamento -.->|"e-mail"| admin
+```
+
+### 6.12 Camadas de segurança
 
 ```mermaid
 flowchart TB
@@ -560,17 +554,20 @@ O produto **ainda não tem usuários além do autor**, então não há números 
 ### 13.1 Fases concluídas
 
 ```mermaid
-flowchart LR
-    f0["Fase 0<br/>Base do projeto"] --> f1["Fase 1<br/>Criptografia<br/>no navegador"]
-    f1 --> f2["Fase 2<br/>Salas"]
-    f2 --> f3["Fase 3<br/>Arquivos<br/>cifrados"]
-    f3 --> f4["Fase 4<br/>Tempo real"]
-    f4 --> f5["Fase 5<br/>Texto<br/>e clips"]
-    f5 --> f6["Fase 6<br/>Expiração<br/>e segurança"]
-    f6 --> f7["Fase 7<br/>Imagens, zip<br/>e PWA"]
-    f7 --> ex["Extra<br/>Código"]
-    ex --> f8["Fase 8<br/>Internet"]
-    f8 --> seg["Extra<br/>Dono, revisão de<br/>segurança e operação"]
+flowchart TB
+    subgraph linha1["Base e conteúdo"]
+        direction LR
+        f0["Fase 0<br/>Base do projeto"] --> f1["Fase 1<br/>Criptografia"] --> f2["Fase 2<br/>Salas"] --> f3["Fase 3<br/>Arquivos cifrados"]
+    end
+    subgraph linha2["Tempo real e segurança"]
+        direction LR
+        f4["Fase 4<br/>Tempo real"] --> f5["Fase 5<br/>Texto e clips"] --> f6["Fase 6<br/>Expiração e segurança"] --> f7["Fase 7<br/>Imagens, zip e PWA"]
+    end
+    subgraph linha3["Extras e publicação"]
+        direction LR
+        ex["Extra<br/>Código"] --> f8["Fase 8<br/>Internet"] --> seg["Extra<br/>Dono, segurança e operação"]
+    end
+    linha1 --> linha2 --> linha3
 ```
 
 ### 13.2 O que falta
