@@ -121,7 +121,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ipconfig
 ```
 
-Procure o **"Endereço IPv4"** do seu Wi-Fi (algo como `192.168.0.15`).
+Procure o **"Endereço IPv4"** do adaptador **Wi-Fi** (algo como `192.168.0.15`; o seu será outro). Anote também o **"Gateway Padrão"** (o endereço do roteador, geralmente termina em `.1`): ele ajuda a diagnosticar problemas mais abaixo.
 
 ### 3. Libere a porta no Firewall do Windows
 
@@ -131,7 +131,15 @@ Abra o PowerShell **como administrador** (botão direito no PowerShell, "Executa
 New-NetFirewallRule -DisplayName "QuickDrop (desenvolvimento)" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow -Profile Private
 ```
 
-Se o Windows perguntar, deixe a rede do Wi-Fi como **Particular** (não "Pública"). Para remover a regra depois:
+Essa regra só vale para redes marcadas como **Particular**. Confira como o Windows classificou o seu Wi-Fi:
+
+```powershell
+Get-NetConnectionProfile
+```
+
+Se aparecer `NetworkCategory : Public`, você tem duas opções: mudar a rede para Particular (Configurações > Rede e Internet > Wi-Fi > propriedades da rede > "Particular") ou criar a regra para as duas categorias, trocando `-Profile Private` por `-Profile Private,Public` no comando acima. (Em Wi-Fi de lugares públicos, prefira não deixar a regra ativa: remova-a depois.)
+
+Para remover a regra depois:
 
 ```powershell
 Remove-NetFirewallRule -DisplayName "QuickDrop (desenvolvimento)"
@@ -139,7 +147,7 @@ Remove-NetFirewallRule -DisplayName "QuickDrop (desenvolvimento)"
 
 ### 4. Abra no celular
 
-No navegador do celular, digite `http://192.168.0.15:8000` (troque pelo seu IP). Ou, melhor: crie a sala no PC e **aponte a câmera do celular para o QR Code**. Se o QR Code mostrar `localhost`, abra o QuickDrop no PC pelo IP (`http://192.168.0.15:8000`), assim o QR Code já leva o endereço certo.
+No navegador do celular, digite `http://SEU-IP:8000`, usando o IP que você anotou no passo 2 (**não** o `192.168.0.15` dos exemplos). Ou, melhor: crie a sala no PC e **aponte a câmera do celular para o QR Code**. Se o QR Code mostrar `localhost`, abra o QuickDrop no PC pelo IP (`http://SEU-IP:8000`), assim o QR Code já leva o endereço certo.
 
 > Na rede local o endereço é `http://` (sem HTTPS). A criptografia do QuickDrop funciona normalmente assim. A única diferença é o botão "Copiar", que usa um método alternativo.
 
@@ -192,10 +200,26 @@ Para **começar do zero**, pare o servidor (Ctrl + C), apague o arquivo `quickdr
 | `pydantic ... secret_key Field required` ao iniciar | Falta a `SECRET_KEY` no `backend\.env` (passos 6 e 7) |
 | `No module named ...` | O ambiente virtual não está ativo (passo 4) ou faltou o `pip install` (passo 5) |
 | `Address already in use` / porta ocupada | Outro programa usa a porta 8000. Use outra: `uvicorn app.main:app --reload --port 8001` |
-| O celular não abre o endereço | Confira: mesmo Wi-Fi, servidor iniciado com `--host 0.0.0.0`, regra do Firewall criada, e que a rede não é "Pública" nem de visitantes (essas redes isolam os aparelhos entre si) |
+| O celular não abre o endereço | Veja a seção **"O celular não consegue abrir"** logo abaixo |
 | A página abre sem estilo ou sem funcionar | Recarregue com **Ctrl + F5** para limpar o cache |
 | "Muitas tentativas. Espere um minuto..." | O limite de tentativas foi atingido (senha errada várias vezes, ou muitas consultas/salas criadas do mesmo aparelho). Espere o tempo indicado; para desenvolvimento, dá para aumentar `RATE_LIMIT_*` no `.env` |
 | "Sala não encontrada ou expirada" | A sala expirou ou foi criada em outro banco de dados; crie uma nova |
+
+## O celular não consegue abrir (conexão recusada ou demora)
+
+Faça os testes nesta ordem; o primeiro que falhar mostra o problema.
+
+1. **No próprio PC, abra `http://SEU-IP:8000`** (o IP do passo 2, não `localhost`).
+   - Se der **"conexão recusada"**: o servidor não foi iniciado com `--host 0.0.0.0`. Pare (Ctrl + C) e inicie de novo com o comando da seção "Testar com o celular". Com só `uvicorn app.main:app --reload`, ele aceita apenas o próprio PC.
+   - Se abrir normalmente: o servidor está certo, e o problema está entre o celular e o PC. Siga para o teste 2.
+2. **No celular, abra `http://ENDERECO-DO-ROTEADOR`** (o "Gateway Padrão" do `ipconfig`, ex.: `http://192.168.0.1`).
+   - Se **nem o roteador abre**: o celular não está na mesma rede do PC. Desligue os **dados móveis**, confira se é o mesmo nome de Wi-Fi (muitos roteadores têm uma rede 2,4 GHz e outra 5 GHz, ou um repetidor, que ficam separados) e desative VPN ou "DNS privado" no celular.
+   - Se o roteador abre: a rede é a mesma. Siga para o teste 3.
+3. **Confira o endereço digitado no celular.** Deve ser exatamente `http://SEU-IP:8000`: com `http://` no começo, o IP **do seu PC** e `:8000` no final.
+4. **Firewall do Windows**: veja o passo 3 da seção "Testar com o celular", principalmente a classificação da rede (Particular ou Pública).
+5. **Isolamento de clientes (AP isolation)**: roteadores, repetidores e Wi-Fi de visitantes têm uma opção que impede os aparelhos de conversarem entre si. Se os testes 1 a 4 estão certos e ainda não abre, procure essa opção no painel do roteador e desative. Uma alternativa rápida para testar: ligue o **hotspot (roteador portátil) do celular**, conecte o PC nele, rode `ipconfig` de novo e use o novo IP.
+
+---
 
 ## Resumo rápido (depois da primeira vez)
 
