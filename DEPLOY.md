@@ -170,6 +170,24 @@ Os arquivos e o banco ficam no volume e não se perdem. As salas ativas continua
 
 - **Auditar as dependências do Python** (no PC, em `backend/`): `pip install pip-audit` e `pip-audit -r requirements.txt`.
 
+## O que roda sozinho (patch management e alertas)
+
+| O quê | Quando | Onde fica |
+|---|---|---|
+| Atualizações de segurança do Ubuntu | Diariamente; se precisar reiniciar, reinicia às 04:00 | `/etc/apt/apt.conf.d/52quickdrop-reboot` |
+| Atualização das imagens do Docker (Python e Caddy) | Domingo, 04:30 | `crontab -l`; registro em `~/quickdrop-update.log` |
+| Verificação de que o site responde | A cada 15 minutos | GitHub Actions (`uptime.yml`); falha = e-mail do GitHub |
+| Versões das bibliotecas copiadas (`vendor/`) | Dia 1 de cada mês | GitHub Actions (`vendor-versions.yml`) |
+| Sugestões de atualização de dependências | Semanal | Dependabot (aba *Pull requests* do GitHub) |
+| Aviso do crédito do Azure | Ao gastar 60% e 85% dos US$ 100 | Orçamento `quickdrop-credito`; e-mail da conta |
+
+Confira de vez em quando:
+
+- No GitHub, aba **Actions**: as verificações devem estar verdes. Se o repositório ficar 60 dias sem nenhuma atividade, o GitHub desativa os agendamentos; basta reativar na própria aba.
+- Em *GitHub → Settings → Notifications*, deixe ligado o aviso por e-mail de **Actions** com falha.
+- No servidor, resumo dos eventos de segurança (só contagens, sem IP): `docker compose logs app | grep Resumo`.
+- Se alguma imagem nova quebrar o site, o registro `~/quickdrop-update.log` mostra a mensagem "ATENÇÃO"; para voltar, `docker compose up -d --build` com o código anterior.
+
 ## Comandos úteis
 
 | Para quê | Comando |

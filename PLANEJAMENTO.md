@@ -566,6 +566,15 @@ Análise feita como revisão de um especialista, com as correções abaixo. Cada
 - Não resolvido, por natureza: a criptografia de ponta a ponta numa página web depende de confiar no JavaScript que o servidor entrega; se o servidor for invadido, ele pode entregar código malicioso. Por isso o endurecimento do servidor (SSH restrito, atualizações automáticas, contêiner sem privilégios) importa tanto
 - 180 testes no backend e 72 no frontend; imagem Docker testada localmente (cabeçalhos, `/docs` 404, sem registros de acesso, WebSocket de 10 KB derrubado)
 
+### Extra: monitoramento, limites e atualizações automáticas ✅
+Resposta à lista de 20 tópicos de segurança (HTTPS, hash, rate limit, logs, dependências, patch management, monitoramento...). Itens que não se aplicam, de propósito: MFA (não há contas) e backup (as salas são temporárias e cifradas; o único arquivo a guardar é o `.env`).
+- [x] **Monitoramento**: o GitHub Actions confere `/api/health` de 15 em 15 minutos (`.github/workflows/uptime.yml`); se falhar (site fora, erro HTTP ou certificado inválido), o GitHub manda e-mail. Limite conhecido: o GitHub desativa agendamentos de repositórios públicos parados por 60 dias; e a execução pode atrasar alguns minutos. Alerta do crédito do Azure: orçamento `quickdrop-credito` de US$ 100 com aviso por e-mail em 60% e 85% (o Azure pode demorar até 1 dia para calcular)
+- [x] **Teto geral de pedidos**: 600 por minuto por IP em toda a API (menos `/api/health`) e 120 uploads por hora por IP, além dos limites específicos que já existiam. Os contadores ficam na memória e zeram quando o servidor reinicia (só acontece nas atualizações; ninguém de fora consegue provocar isso)
+- [x] **Eventos de segurança sem dados pessoais**: o servidor só conta quantas vezes houve senha errada, entrada em sala trancada, ação de dono feita por convidado e pedido recusado por limite. De hora em hora, se houve algo, escreve uma linha de resumo, nunca IP nem código de sala. Para ver: `docker compose logs app | grep Resumo`
+- [x] **Dependências e patch management** (processo): o Dependabot sugere atualizações das bibliotecas Python, das imagens Docker e do GitHub Actions toda semana (`.github/dependabot.yml`); uma verificação mensal compara as bibliotecas copiadas à mão (`vendor/`) com as últimas do npm. No servidor: atualizações de segurança do Ubuntu automáticas, com reinício às 04:00 quando necessário; imagens base do Docker atualizadas todo domingo às 04:30 (`scripts/update-images.sh`, agendado no cron). Mudanças de código continuam sendo publicadas à mão, depois de testadas
+- [x] 190 testes no backend (10 novos)
+- Não feito, por decisão: contadores de limite persistentes entre reinícios; gerenciador de segredos; Alembic
+
 ### Fase 8: Internet (no ar em https://quickdrop-syoti.mexicocentral.cloudapp.azure.com; celular na 4G funcionou)
 Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always Free** (uma VM Ubuntu de verdade, ligada 24 h) com **Docker + Caddy** e um endereço grátis do **DuckDNS**.
 
