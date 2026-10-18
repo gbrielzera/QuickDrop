@@ -282,7 +282,6 @@ Autenticado pelo cookie. Mensagens em JSON com campo `type`:
 
 **Servidor → cliente**
 ```json
-{"type": "init",          "text": {"ciphertext": "...", "version": 12}, "files": [...], "clips": [...], "online": 2}
 {"type": "file_added",    "file": {"id": "...", "encrypted_meta": "...", "size_bytes": 204800, "created_at": "..."}}
 {"type": "file_deleted",  "file_id": "..."}
 {"type": "text_updated",  "ciphertext": "...", "version": 13}
@@ -295,12 +294,14 @@ Autenticado pelo cookie. Mensagens em JSON com campo `type`:
 **Cliente → servidor**
 ```json
 {"type": "text_update", "ciphertext": "...", "base_version": 12}
-{"type": "ping"}
+{"type": "ping"}                       (o servidor responde {"type": "pong"})
 ```
+
+Não existe mensagem `init`: ao abrir (e ao reabrir) a conexão, o navegador recarrega o estado pela API REST, que já é a fonte da verdade. A conexão só avisa o que muda.
 
 O servidor só repassa esses campos; ele não consegue ler o conteúdo.
 
-O cliente deve **reconectar sozinho** se a conexão cair (backoff: 1s, 2s, 4s… até 30s) e pedir o estado atual ao reconectar. Isso é essencial no celular, que derruba conexões quando a tela apaga.
+O cliente **reconecta sozinho** se a conexão cair (backoff: 1s, 2s, 4s… até 30s) e recarrega o estado atual ao reconectar. Isso é essencial no celular, que derruba conexões quando a tela apaga.
 
 ---
 
@@ -477,13 +478,16 @@ Vem antes de tudo porque todas as outras partes dependem dela.
 - [x] Verificado no navegador com dois "aparelhos": arquivo de texto, binário de 2,5 MB com extensão rara e arquivo vazio voltaram idênticos; no disco só há bytes embaralhados
 - Fica para a Fase 4: a lista dos outros aparelhos só atualiza ao recarregar a página (o tempo real chega com o WebSocket)
 
-### Fase 4: Tempo real (2 dias)
-- [ ] `ConnectionManager` (entrar/sair da sala, broadcast)
-- [ ] Endpoint WebSocket autenticado; evento `init`
-- [ ] Rotas de upload/exclusão disparam `file_added` / `file_deleted`
-- [ ] `socket.js` com reconexão automática
-- [ ] Presença (dispositivos online)
-- [ ] **Teste de verdade:** PC + celular na mesma rede Wi-Fi
+### Fase 4: Tempo real (2 dias) ✅
+- [x] `ConnectionManager` na memória (sala → conexões), com aviso a todos quando alguém entra ou sai; conexão que falha ao enviar é descartada sem derrubar as outras
+- [x] Endpoint WebSocket `/ws/rooms/{code}`: só entra quem tem o cookie da sala; recusa páginas de outros sites (cabeçalho `Origin`), sala inexistente e mensagem que não é JSON
+- [x] Upload e exclusão de arquivo avisam todos os aparelhos da sala (`file_added`, `file_deleted`)
+- [x] `socket.js` com reconexão automática (1s, 2s, 4s… até 30s) e `ping` a cada 25s; ao reconectar a lista é reconciliada com o servidor
+- [x] Presença: o diagrama da rota mostra "Conectado" (ponto verde) quando há outro aparelho, e "Sem conexão. Reconectando..." quando este aparelho cai
+- [x] 73 testes no backend (16 de tempo real, incluindo acesso negado) e 42 no frontend
+- [x] Verificado no navegador com duas abas: envio e exclusão aparecem no outro aparelho sem recarregar, presença sobe e desce, e depois de reiniciar o servidor a aba reconectou sozinha e mostrou um arquivo enviado durante a queda
+- [ ] **Teste de verdade:** PC + celular na mesma rede Wi-Fi (com o celular que apaga a tela)
+- Fica para depois: nomes dos aparelhos (hoje só a contagem), e o aviso `room_closed` ao expirar (Fase 6)
 
 ### Fase 5: Editor de texto e clips (2 dias)
 - [ ] Modelos `RoomText` (com versão) e `Clip`

@@ -4,63 +4,22 @@ Transferência de arquivos e textos entre dispositivos em tempo real, com cripto
 
 - Planejamento completo: [PLANEJAMENTO.md](PLANEJAMENTO.md)
 - Regras do projeto: [CLAUDE.md](CLAUDE.md)
+- Sistema visual: [DESIGN.md](DESIGN.md) e [PRODUCT.md](PRODUCT.md)
+- **Como rodar no seu computador, passo a passo: [COMO-RODAR.md](COMO-RODAR.md)**
 
 ## Estrutura
 
 ```
-backend/    Python / FastAPI
-frontend/   HTML (Jinja2), CSS e JavaScript
+backend/    Python / FastAPI (API, WebSocket, banco, armazenamento, testes)
+frontend/   HTML (Jinja2), CSS e JavaScript (inclui a criptografia)
 ```
 
-## Como rodar (Windows / PowerShell)
-
-Todos os comandos são executados dentro da pasta `backend/`:
+## Resumo
 
 ```powershell
 cd backend
-python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
-copy .env.example .env
-```
-
-Abra o arquivo `backend/.env` e troque o valor de `SECRET_KEY` (o app não inicia sem uma chave de verdade). Para gerar uma:
-
-```powershell
-python -c "import secrets; print(secrets.token_urlsafe(48))"
-```
-
-Depois, ainda em `backend/`:
-
-```powershell
 uvicorn app.main:app --reload
 ```
 
-Abra http://localhost:8000 (documentação da API em http://localhost:8000/docs).
-
-### Acessar pelo celular na rede local
-
-```powershell
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-No celular, abra `http://IP-DO-PC:8000` (veja o IP com `ipconfig`). Se não abrir, libere a porta 8000
-no Firewall do Windows para redes privadas.
-
-## Testes e lint
-
-Backend (dentro de `backend/`):
-
-```powershell
-pytest
-ruff check .
-ruff format .
-```
-
-Frontend, criptografia (dentro de `frontend/`, precisa do Node 20 ou mais novo):
-
-```powershell
-npm test
-```
-
-Com `DEBUG=true` no `backend/.env`, a página http://localhost:8000/dev/crypto testa a criptografia no navegador.
+Abra http://localhost:8000. Na primeira vez, siga o [COMO-RODAR.md](COMO-RODAR.md) (ambiente virtual, `.env` com `SECRET_KEY`, uso pelo celular na rede local, testes e problemas comuns).

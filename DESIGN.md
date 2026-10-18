@@ -220,4 +220,4 @@ Três estações (aparelho de origem, sala com código e tempo restante, aparelh
 
 - Os rótulos estão em caixa de frase, não em caixa alta pequena como no contrato (aceito na revisão final); o painel Entrar não tem QR (o QR fica na página da sala do outro aparelho).
 - Resíduos conhecidos, não canonizados: o QR de 20rem no desktop é mais estreito que o campo de link abaixo dele; no celular o link longo é cortado dentro do campo somente leitura (dá para copiar).
-- Ideias adiadas: o diagrama reagir quando outro aparelho entra; círculos de linha nas pontas da linha.
+- Ideias adiadas: círculos de linha nas pontas da linha. (O diagrama já reage à presença: o ponto do outro aparelho fica verde quando ele está conectado, e a estação deste aparelho mostra "Sem conexão. Reconectando..." em `danger` quando a conexão cai.)

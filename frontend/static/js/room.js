@@ -8,6 +8,8 @@ import { getRoomParams, joinRoom, loadEncryptionKey } from "./room-access.js";
 import { buildRoomPath, formatRoomCode, readSecretFromHash } from "./room-code.js";
 import { splitTimeLeft } from "./time-left.js";
 import { startFileList } from "./file-list.js";
+import { readFileEntry } from "./file-transfer.js";
+import { connectRoomSocket } from "./socket.js";
 import { startUploadPanel } from "./upload-panel.js";
 import { clearMessage, runWithBusyButton, setUpCopyButton, showMessage } from "./ui.js";
 
@@ -35,10 +37,14 @@ const linkInput = document.getElementById("room-link");
 const codeText = document.getElementById("room-code-text");
 const passwordNote = document.getElementById("room-password-note");
 const copyStatus = document.getElementById("copy-status");
+const thisDeviceStation = document.getElementById("device-this");
+const otherDeviceStation = document.getElementById("device-other");
 
 let expiresAt = null;
 let expiryTimer = null;
 let filesStarted = false;
+let devicesOnline = 0;
+let isConnected = false;
 
 function showOnly(viewName) {
   for (const [name, view] of Object.entries(views)) {
@@ -77,7 +83,80 @@ function renderShareOptions() {
   passwordNote.hidden = Boolean(secretFromLink);
 }
 
-// Liga os painéis de enviar e listar arquivos (uma vez só por página).
+// ---------- tempo real: quem está conectado ----------
+
+function setStationDetail(station, messageKey, values = {}) {
+  const detail = station.querySelector(".station__detail");
+  detail.dataset.i18n = messageKey;
+  detail.textContent = t(messageKey, values);
+}
+
+// Mostra no diagrama se há outro aparelho conectado e se este aparelho está sem conexão.
+function renderPresence() {
+  const otherDevices = Math.max(devicesOnline - 1, 0);
+  otherDeviceStation.classList.toggle("station--online", otherDevices > 0);
+  if (otherDevices === 0) {
+    setStationDetail(otherDeviceStation, "route.otherDeviceDetail");
+  } else if (otherDevices === 1) {
+    setStationDetail(otherDeviceStation, "route.otherDeviceOnline");
+  } else {
+    setStationDetail(otherDeviceStation, "route.otherDevicesOnline", { count: otherDevices });
+  }
+
+  thisDeviceStation.classList.toggle("station--offline", !isConnected);
+  setStationDetail(thisDeviceStation, isConnected ? "route.thisDeviceDetail" : "route.reconnecting");
+}
+
+// A conexão caiu: antes de tentar de novo, confere se a sala ainda existe e se ainda estamos nela.
+async function shouldKeepReconnecting() {
+  try {
+    await getRoom(roomCode);
+    return true;
+  } catch (error) {
+    if (isApiError(error, HTTP_NOT_FOUND)) {
+      showOnly("missing");
+      showMessage(document.getElementById("missing-detail"), "error.roomMissing");
+      return false;
+    }
+    if (isApiError(error, HTTP_UNAUTHORIZED)) {
+      location.reload(); // a sessão acabou: recarregar refaz a entrada na sala
+      return false;
+    }
+    return true; // sem rede ou erro passageiro: tenta de novo mais tarde
+  }
+}
+
+function startRealtime(fileList) {
+  const getEncryptionKey = () => loadEncryptionKey(roomCode);
+
+  function handleMessage(message) {
+    if (message.type === "presence") {
+      devicesOnline = message.online;
+      renderPresence();
+    } else if (message.type === "file_added") {
+      fileList.addEntry(readFileEntry(message.file, getEncryptionKey()));
+    } else if (message.type === "file_deleted") {
+      fileList.removeEntry(message.file_id);
+    }
+  }
+
+  connectRoomSocket({
+    roomCode,
+    onMessage: handleMessage,
+    onOpen: () => {
+      isConnected = true;
+      renderPresence();
+      fileList.load(); // pode ter havido mudanças enquanto estávamos sem conexão
+    },
+    onClose: () => {
+      isConnected = false;
+      renderPresence();
+    },
+    shouldReconnect: shouldKeepReconnecting,
+  });
+}
+
+// Liga os painéis de arquivos e o tempo real (uma vez só por página).
 function startFiles() {
   if (filesStarted) {
     return;
@@ -93,6 +172,7 @@ function startFiles() {
     onFileSent: fileList.addEntry,
   });
   fileList.load();
+  startRealtime(fileList);
 }
 
 async function showRoom() {
@@ -168,6 +248,7 @@ async function start() {
     if (expiresAt) {
       renderExpiry();
       renderShareOptions();
+      renderPresence();
     }
   });
   passwordForm.addEventListener("submit", handlePasswordSubmit);

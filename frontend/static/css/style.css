@@ -505,6 +505,16 @@ input:focus-visible {
   background: var(--ground);
 }
 
+/* Aparelho conectado agora: o ponto da estação fica verde (verde é o destino). */
+.station--online .station__dot {
+  background: var(--green);
+}
+
+.station--offline .station__detail {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 .station__name {
   margin-top: 0.5rem;
   font-size: 1.75rem;

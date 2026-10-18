@@ -34,6 +34,9 @@ export const messages = {
     "route.thisDeviceDetail": "Você está aqui",
     "route.otherDevice": "Outro aparelho",
     "route.otherDeviceDetail": "Aguardando entrar",
+    "route.otherDeviceOnline": "Conectado",
+    "route.otherDevicesOnline": "{count} conectados",
+    "route.reconnecting": "Sem conexão. Reconectando...",
     "route.file": "arquivo",
 
     "files.sendTitle": "Enviar arquivos",
@@ -127,6 +130,9 @@ export const messages = {
     "route.thisDeviceDetail": "You are here",
     "route.otherDevice": "Other device",
     "route.otherDeviceDetail": "Waiting to join",
+    "route.otherDeviceOnline": "Connected",
+    "route.otherDevicesOnline": "{count} connected",
+    "route.reconnecting": "Offline. Reconnecting...",
     "route.file": "file",
 
     "files.sendTitle": "Send files",

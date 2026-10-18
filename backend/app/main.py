@@ -7,7 +7,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import FRONTEND_DIR, get_settings
 from app.database import create_engine, create_session_maker, create_tables
-from app.routers import files, pages, rooms
+from app.realtime import ConnectionManager
+from app.routers import files, pages, rooms, ws
 
 
 @asynccontextmanager
@@ -19,6 +20,7 @@ async def lifespan(app: FastAPI):
     engine = create_engine(settings.database_url)
     await create_tables(engine)
     app.state.session_maker = create_session_maker(engine)
+    app.state.connections = ConnectionManager()
 
     yield
 
@@ -34,6 +36,7 @@ def create_app() -> FastAPI:
     app.include_router(pages.router)
     app.include_router(rooms.router)
     app.include_router(files.router)
+    app.include_router(ws.router)
     if settings.debug:
         app.include_router(pages.dev_router)
 

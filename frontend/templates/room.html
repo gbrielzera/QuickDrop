@@ -103,9 +103,9 @@
   <p class="status" id="copy-status" role="status"></p>
 
   {% set stations = [
-    {"name_key": "route.thisDevice", "name": "Este aparelho", "detail_key": "route.thisDeviceDetail", "detail": "Você está aqui"},
+    {"id": "device-this", "name_key": "route.thisDevice", "name": "Este aparelho", "detail_key": "route.thisDeviceDetail", "detail": "Você está aqui"},
     {"name_key": "route.room", "name": "A sala", "detail": "", "detail_tag": true},
-    {"name_key": "route.otherDevice", "name": "Outro aparelho", "detail_key": "route.otherDeviceDetail", "detail": "Aguardando entrar"},
+    {"id": "device-other", "name_key": "route.otherDevice", "name": "Outro aparelho", "detail_key": "route.otherDeviceDetail", "detail": "Aguardando entrar"},
   ] %}
   {% include "_route.html" %}
 

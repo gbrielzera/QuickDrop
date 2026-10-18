@@ -1,5 +1,7 @@
 """Sessão de quem entrou numa sala: um cookie assinado, um por sala."""
 
+from collections.abc import Mapping
+
 from fastapi import Response
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
@@ -30,6 +32,12 @@ def read_session_token(token: str) -> str | None:
         return _serializer().loads(token)
     except BadSignature:
         return None
+
+
+def has_session_for_room(cookies: Mapping[str, str], room_code: str) -> bool:
+    """True se os cookies provam que este dispositivo entrou na sala."""
+    token = cookies.get(session_cookie_name(room_code))
+    return token is not None and read_session_token(token) == room_code
 
 
 def set_session_cookie(response: Response, room: Room) -> None:

@@ -20,7 +20,7 @@ function fileErrorKey(error) {
 }
 
 /**
- * Liga a lista de arquivos. Devolve `{ addEntry, load }`.
+ * Liga a lista de arquivos. Devolve `{ addEntry, removeEntry, load }`.
  * `getEncryptionKey` devolve a chave da sala.
  */
 export function startFileList({ roomCode, getEncryptionKey }) {
@@ -32,6 +32,11 @@ export function startFileList({ roomCode, getEncryptionKey }) {
 
   function showEmptyMessageWhenNoFiles() {
     emptyMessage.hidden = rowsById.size > 0;
+  }
+
+  // Tira da lista um arquivo que foi apagado (por este ou por outro aparelho).
+  function removeEntry(fileId) {
+    rowsById.get(fileId)?.remove();
   }
 
   // ---------- uma linha da lista ----------
@@ -49,6 +54,7 @@ export function startFileList({ roomCode, getEncryptionKey }) {
 
     const row = {
       element,
+      remove: removeRow,
       render() {
         nameElement.textContent = entry.readable ? entry.name : t("files.unreadableName");
         sizeElement.textContent = formatFileSize(entry.size, getLanguage());
@@ -153,6 +159,13 @@ export function startFileList({ roomCode, getEncryptionKey }) {
     try {
       const storedFiles = await listFiles(roomCode);
       const entries = storedFiles.map((storedFile) => readFileEntry(storedFile, getEncryptionKey()));
+      // Reconcilia com o servidor: some o que foi apagado enquanto estávamos sem conexão e entra o que chegou.
+      const idsOnServer = new Set(entries.map((entry) => entry.id));
+      for (const fileId of [...rowsById.keys()]) {
+        if (!idsOnServer.has(fileId)) {
+          removeEntry(fileId);
+        }
+      }
       for (const entry of entries) {
         addEntry(entry);
       }
@@ -168,5 +181,5 @@ export function startFileList({ roomCode, getEncryptionKey }) {
     }
   });
 
-  return { addEntry, load };
+  return { addEntry, removeEntry, load };
 }
