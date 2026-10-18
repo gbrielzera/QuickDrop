@@ -172,7 +172,7 @@ No `backend\.env`, deixe `DEBUG=true` e abra http://localhost:8000/dev/crypto. E
 | Salas e lista de arquivos | `backend\quickdrop.db` |
 | Arquivos enviados (criptografados) | `backend\storage\` |
 
-Para **começar do zero**, pare o servidor (Ctrl + C), apague o arquivo `quickdrop.db` e a pasta `storage` e inicie de novo. As salas expiram sozinhas no tempo escolhido, mas a limpeza automática dos arquivos antigos do disco só chega numa fase futura do projeto.
+Para **começar do zero**, pare o servidor (Ctrl + C), apague o arquivo `quickdrop.db` e a pasta `storage` e inicie de novo. As salas expiram sozinhas no tempo escolhido: o servidor apaga o que expirou ao iniciar e a cada 5 minutos (ajustável com `CLEANUP_INTERVAL_MINUTES` no `.env`). Quem estiver na sala vê o aviso "Sala encerrada". O botão **Encerrar sala** apaga tudo na hora.
 
 ## Problemas comuns
 
@@ -184,6 +184,7 @@ Para **começar do zero**, pare o servidor (Ctrl + C), apague o arquivo `quickdr
 | `Address already in use` / porta ocupada | Outro programa usa a porta 8000. Use outra: `uvicorn app.main:app --reload --port 8001` |
 | O celular não abre o endereço | Confira: mesmo Wi-Fi, servidor iniciado com `--host 0.0.0.0`, regra do Firewall criada, e que a rede não é "Pública" nem de visitantes (essas redes isolam os aparelhos entre si) |
 | A página abre sem estilo ou sem funcionar | Recarregue com **Ctrl + F5** para limpar o cache |
+| "Muitas tentativas. Espere um minuto..." | O limite de tentativas foi atingido (senha errada várias vezes, ou muitas consultas/salas criadas do mesmo aparelho). Espere o tempo indicado; para desenvolvimento, dá para aumentar `RATE_LIMIT_*` no `.env` |
 | "Sala não encontrada ou expirada" | A sala expirou ou foi criada em outro banco de dados; crie uma nova |
 
 ## Resumo rápido (depois da primeira vez)

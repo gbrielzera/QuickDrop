@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import HTTPConnection
 
 from app.models import Room
+from app.rate_limit import RateLimits
 from app.realtime import ConnectionManager
 from app.room_service import find_active_room
 from app.security import ROOM_CODE_PATTERN
@@ -33,6 +34,11 @@ async def get_connections(connection: HTTPConnection) -> ConnectionManager:
     return connection.app.state.connections
 
 
+async def get_rate_limits(connection: HTTPConnection) -> RateLimits:
+    """Entrega os limites de tentativas."""
+    return connection.app.state.rate_limits
+
+
 async def get_current_room(
     code: RoomCode,
     request: Request,
@@ -52,3 +58,4 @@ async def get_current_room(
 Database = Annotated[AsyncSession, Depends(get_db)]
 CurrentRoom = Annotated[Room, Depends(get_current_room)]
 Connections = Annotated[ConnectionManager, Depends(get_connections)]
+Limits = Annotated[RateLimits, Depends(get_rate_limits)]

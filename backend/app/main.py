@@ -1,14 +1,18 @@
 """Ponto de entrada do backend: cria o app FastAPI e liga as rotas."""
 
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from app.cleanup import delete_expired_rooms, run_cleanup_loop
 from app.config import FRONTEND_DIR, get_settings
 from app.database import create_engine, create_session_maker, create_tables
+from app.rate_limit import create_rate_limits
 from app.realtime import ConnectionManager
 from app.routers import clips, files, pages, rooms, text, ws
+from app.security_headers import SecurityHeadersMiddleware
 
 
 @asynccontextmanager
@@ -21,9 +25,16 @@ async def lifespan(app: FastAPI):
     await create_tables(engine)
     app.state.session_maker = create_session_maker(engine)
     app.state.connections = ConnectionManager()
+    app.state.rate_limits = create_rate_limits(settings)
+
+    await delete_expired_rooms(app)  # limpa o que expirou enquanto o servidor estava desligado
+    cleanup_task = asyncio.create_task(run_cleanup_loop(app, settings.cleanup_interval_minutes))
 
     yield
 
+    cleanup_task.cancel()
+    with suppress(asyncio.CancelledError):
+        await cleanup_task
     await engine.dispose()
 
 
@@ -31,6 +42,7 @@ def create_app() -> FastAPI:
     """Monta o app: API, páginas do frontend e arquivos estáticos (CSS e JS)."""
     settings = get_settings()
     app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)
+    app.add_middleware(SecurityHeadersMiddleware, hsts_enabled=settings.cookie_secure)
 
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
     app.include_router(pages.router)

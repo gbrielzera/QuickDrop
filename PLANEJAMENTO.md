@@ -401,7 +401,6 @@ aiofiles               # escrita/leitura de arquivo assíncrona
 argon2-cffi            # hash do auth_key (o servidor nunca vê a senha)
 itsdangerous           # cookie de sessão assinado
 pydantic-settings      # configuração via .env
-slowapi                # rate limit no /params e no /join
 
 # desenvolvimento
 pytest
@@ -502,12 +501,15 @@ Vem antes de tudo porque todas as outras partes dependem dela.
 - [x] Verificado no navegador com duas abas: texto nos dois sentidos, conflito provocado (a escolha "Manter a minha" chegou ao outro aparelho), clips ao vivo, Ctrl+V global, exclusão com confirmação, limite de 64 KB; no banco não aparece nenhum texto original
 - Fica para depois: edição simultânea sem conflito (CRDT/Yjs), se algum dia for preciso
 
-### Fase 6: Expiração e robustez (1 dia)
-- [ ] Tarefa de limpeza no `lifespan` do FastAPI (loop asyncio a cada N minutos)
-- [ ] Evento `room_closed` para quem estiver conectado
-- [ ] Botão "encerrar sala"
-- [ ] Rate limiting no `/params` e no `/join`
-- [ ] Headers de segurança (CSP, nosniff) e SRI nos scripts
+### Fase 6: Expiração e robustez (1 dia) ✅
+- [x] Limpeza automática: ao iniciar e a cada `CLEANUP_INTERVAL_MINUTES` (5 por padrão) o servidor apaga as salas expiradas, com arquivos no disco, texto, clips e registros
+- [x] `room_closed` (`expired` ou `closed`) avisa e fecha as conexões de quem está na sala; o navegador mostra "Sala encerrada", esquece a chave e para de reconectar; ao chegar a zero a contagem regressiva também encerra a tela
+- [x] Botão "Encerrar sala" (com confirmação) e `DELETE /api/rooms/{code}`: qualquer aparelho que entrou pode encerrar
+- [x] Limite de tentativas feito à mão (`rate_limit.py`, sem biblioteca): senhas erradas (5 por minuto por IP e sala; enquanto bloqueado até a senha certa é recusada), consultas e entradas (30 por minuto por IP) e salas criadas (20 por hora por IP); `429` com `Retry-After`
+- [x] Cabeçalhos de segurança em toda resposta: CSP (só código, estilos e fontes do próprio servidor; `wasm-unsafe-eval` para a criptografia), `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` (o código da sala está no endereço), `Permissions-Policy`, `Cache-Control: no-store` na API e HSTS quando `COOKIE_SECURE=true`
+- [x] 125 testes no backend (30 novos) e 42 no frontend
+- [x] Verificado no navegador: com a CSP ligada nada quebrou (WebAssembly, WebSocket, QR Code, cópia, upload); encerrar numa aba mostra "Sala encerrada" na outra e esvazia o disco; o bloqueio por excesso de tentativas aparece em português
+- Não feito: SRI nos scripts (os scripts são do próprio servidor, a CSP já impede código de fora; SRI só agregaria algo se um dia vierem de CDN). Atrás de um proxy (Fase 8), iniciar o servidor com `--proxy-headers` para o limite enxergar o IP verdadeiro
 
 ### Fase 7: Polimento (contínuo)
 - [ ] Colar imagem (Ctrl+V) → upload

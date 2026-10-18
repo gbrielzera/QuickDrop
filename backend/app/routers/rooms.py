@@ -1,12 +1,19 @@
 """Rotas para criar uma sala, entrar nela e consultar seus dados."""
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import CurrentRoom, Database, RoomCode
+from app.dependencies import Connections, CurrentRoom, Database, Limits, RoomCode
 from app.encoding import from_base64url, to_base64url
 from app.models import Room
-from app.room_service import RoomCodeUnavailableError, create_room, find_active_room
+from app.rate_limit import block_if_over_limit, client_address, count_attempt
+from app.room_service import (
+    REASON_CLOSED,
+    RoomCodeUnavailableError,
+    create_room,
+    end_room,
+    find_active_room,
+)
 from app.schemas import (
     CreateRoomRequest,
     CreateRoomResponse,
@@ -28,8 +35,11 @@ async def _get_active_room_or_404(db: AsyncSession, room_code: str) -> Room:
 
 
 @router.post("", status_code=201)
-async def create_new_room(body: CreateRoomRequest, response: Response, db: Database) -> CreateRoomResponse:
+async def create_new_room(
+    body: CreateRoomRequest, request: Request, response: Response, db: Database, limits: Limits
+) -> CreateRoomResponse:
     """Cria uma sala. Quem cria já entra nela (recebe o cookie de sessão)."""
+    count_attempt(limits.room_creations, client_address(request))
     try:
         room = await create_room(
             db,
@@ -46,18 +56,31 @@ async def create_new_room(body: CreateRoomRequest, response: Response, db: Datab
 
 
 @router.get("/{code}/params")
-async def get_room_params(code: RoomCode, db: Database) -> RoomParamsResponse:
+async def get_room_params(
+    code: RoomCode, request: Request, db: Database, limits: Limits
+) -> RoomParamsResponse:
     """Antes de entrar, o navegador pergunta o salt para derivar as chaves a partir da senha."""
+    count_attempt(limits.lookups, client_address(request))
     room = await _get_active_room_or_404(db, code)
     return RoomParamsResponse(has_password=room.has_password, kdf_salt=to_base64url(room.kdf_salt))
 
 
 @router.post("/{code}/join")
-async def join_room(code: RoomCode, body: JoinRoomRequest, response: Response, db: Database) -> RoomResponse:
+async def join_room(
+    code: RoomCode, body: JoinRoomRequest, request: Request, response: Response, db: Database, limits: Limits
+) -> RoomResponse:
     """Entra na sala se a authKey estiver certa; devolve o cookie de sessão."""
+    address = client_address(request)
+    count_attempt(limits.lookups, address)
     room = await _get_active_room_or_404(db, code)
+
+    # Quem errou a senha várias vezes espera um pouco, mesmo que a próxima tentativa esteja certa.
+    failed_joins_key = f"{address}:{code}"
+    block_if_over_limit(limits.failed_joins, failed_joins_key)
     if not await verify_auth_key(body.auth_key, room.auth_hash):
+        limits.failed_joins.record(failed_joins_key)
         raise HTTPException(status_code=401, detail="Senha incorreta.")
+    limits.failed_joins.reset(failed_joins_key)
 
     set_session_cookie(response, room)
     return _to_room_response(room)
@@ -67,6 +90,16 @@ async def join_room(code: RoomCode, body: JoinRoomRequest, response: Response, d
 async def get_room(room: CurrentRoom) -> RoomResponse:
     """Dados da sala. Só quem já entrou consegue ver."""
     return _to_room_response(room)
+
+
+@router.delete("/{code}", status_code=204)
+async def close_room(room: CurrentRoom, db: Database, connections: Connections) -> Response:
+    """Encerra a sala agora: apaga tudo e avisa os aparelhos conectados.
+
+    Qualquer aparelho que entrou na sala pode encerrá-la.
+    """
+    await end_room(db, connections, room, reason=REASON_CLOSED)
+    return Response(status_code=204)
 
 
 def _to_room_response(room: Room) -> RoomResponse:

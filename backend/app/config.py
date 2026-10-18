@@ -35,6 +35,14 @@ class Settings(BaseSettings):
     max_clip_size_kb: int = 64
     max_clips_per_room: int = 200
 
+    # De quanto em quanto tempo o servidor apaga as salas que expiraram.
+    cleanup_interval_minutes: int = 5
+
+    # Limites de tentativas, para ninguém ficar adivinhando códigos e senhas nem criando salas sem parar.
+    rate_limit_lookups_per_minute: int = 30  # consultas e entradas por endereço IP
+    rate_limit_failed_joins_per_minute: int = 5  # senhas erradas por IP e sala
+    rate_limit_room_creations_per_hour: int = 20  # salas criadas por IP
+
     # Texto separado por vírgulas para ficar fácil de escrever no .env
     allowed_ttl_hours: str = "1,12,24,48"
     default_ttl_hours: int = 12

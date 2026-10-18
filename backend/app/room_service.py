@@ -5,10 +5,16 @@ from datetime import timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import storage
 from app.models import Room, utc_now
+from app.realtime import ConnectionManager
 from app.security import generate_room_code
 
 MAX_CODE_ATTEMPTS = 10
+
+# Por que uma sala acabou. O navegador usa isto para mostrar a mensagem certa.
+REASON_EXPIRED = "expired"
+REASON_CLOSED = "closed"
 
 
 class RoomCodeUnavailableError(Exception):
@@ -54,3 +60,17 @@ async def create_room(
     db.add(room)
     await db.commit()
     return room
+
+
+async def find_expired_rooms(db: AsyncSession) -> list[Room]:
+    """Salas cujo tempo já acabou."""
+    result = await db.execute(select(Room).where(Room.expires_at <= utc_now()))
+    return list(result.scalars())
+
+
+async def end_room(db: AsyncSession, connections: ConnectionManager, room: Room, reason: str) -> None:
+    """Acaba com a sala: apaga arquivos e registros (texto e clips vão junto) e avisa quem está conectado."""
+    await storage.delete_room_directory(room.id)
+    await db.delete(room)
+    await db.commit()
+    await connections.close_room(room.code, reason)

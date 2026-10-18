@@ -64,6 +64,11 @@ export function getRoom(code) {
   return request("GET", `/api/rooms/${code}`);
 }
 
+/** Encerra a sala: apaga tudo o que havia nela. */
+export function deleteRoom(code) {
+  return request("DELETE", `/api/rooms/${code}`);
+}
+
 // ---------- arquivos ----------
 
 export function listFiles(code) {

@@ -53,3 +53,22 @@ def small_limits_client(tmp_path, monkeypatch):
 def few_clips_client(tmp_path, monkeypatch):
     """Cliente de teste em que cada sala comporta só 2 clips."""
     yield from start_test_client(tmp_path, monkeypatch, debug=False, MAX_CLIPS_PER_ROOM="2")
+
+
+@pytest.fixture
+def strict_limits_client(tmp_path, monkeypatch):
+    """Cliente de teste com limites de tentativas bem baixos."""
+    yield from start_test_client(
+        tmp_path,
+        monkeypatch,
+        debug=False,
+        RATE_LIMIT_LOOKUPS_PER_MINUTE="4",
+        RATE_LIMIT_FAILED_JOINS_PER_MINUTE="3",
+        RATE_LIMIT_ROOM_CREATIONS_PER_HOUR="2",
+    )
+
+
+@pytest.fixture
+def https_client(tmp_path, monkeypatch):
+    """Cliente de teste configurado como se o site estivesse em HTTPS."""
+    yield from start_test_client(tmp_path, monkeypatch, debug=False, COOKIE_SECURE="true")

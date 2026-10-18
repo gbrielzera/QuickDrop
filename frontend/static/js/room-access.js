@@ -38,6 +38,16 @@ export function loadEncryptionKey(roomCode) {
   }
 }
 
+/** Esquece a chave da sala (usado quando a sala acaba). */
+export function forgetEncryptionKey(roomCode) {
+  keysInMemory.delete(roomCode);
+  try {
+    sessionStorage.removeItem(KEY_STORAGE_PREFIX + roomCode);
+  } catch {
+    // Sem sessionStorage: não há nada guardado para esquecer.
+  }
+}
+
 // O cálculo das chaves é pesado e trava a tela por um instante; antes dele damos tempo
 // ao navegador de mostrar "Criando..." / "Entrando...".
 function waitForNextPaint() {

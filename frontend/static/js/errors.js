@@ -5,6 +5,7 @@ import { ApiError } from "./api.js";
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_NOT_FOUND = 404;
 const HTTP_PAYLOAD_TOO_LARGE = 413;
+const HTTP_TOO_MANY_REQUESTS = 429;
 
 // Códigos que o servidor informa quando recusa um arquivo por tamanho.
 const FILE_TOO_LARGE = "file_too_large";
@@ -27,6 +28,7 @@ export function errorMessageKey(error) {
   if (error instanceof ApiError) {
     if (error.status === HTTP_UNAUTHORIZED) return "error.passwordWrong";
     if (error.status === HTTP_NOT_FOUND) return "error.roomMissing";
+    if (error.status === HTTP_TOO_MANY_REQUESTS) return "error.tooManyAttempts";
     if (error.status === HTTP_PAYLOAD_TOO_LARGE) return MESSAGE_KEY_BY_LIMIT_CODE[error.code] ?? "error.generic";
     return "error.generic";
   }

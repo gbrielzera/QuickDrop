@@ -3,6 +3,8 @@
 O servidor só guarda bytes embaralhados. O nome, o tipo e o conteúdo originais nunca chegam aqui.
 """
 
+import asyncio
+import shutil
 from collections.abc import AsyncIterator
 from pathlib import Path
 
@@ -55,3 +57,9 @@ async def save_upload(room_id: str, file_id: str, chunks: AsyncIterator[bytes], 
 def delete_file(room_id: str, file_id: str) -> None:
     """Apaga o arquivo do disco (não falha se ele já não existir)."""
     file_path(room_id, file_id).unlink(missing_ok=True)
+
+
+async def delete_room_directory(room_id: str) -> None:
+    """Apaga todos os arquivos de uma sala (não falha se a pasta não existir)."""
+    # Apagar pode demorar com muitos arquivos grandes; fazemos em outra thread para não travar o servidor.
+    await asyncio.to_thread(shutil.rmtree, _room_directory(room_id), ignore_errors=True)

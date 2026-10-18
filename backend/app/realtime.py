@@ -30,6 +30,17 @@ class ConnectionManager:
         self._forget(room_code, websocket)
         await self._broadcast_presence(room_code)
 
+    async def close_room(self, room_code: str, reason: str) -> None:
+        """Avisa que a sala acabou (`reason`: "expired" ou "closed") e fecha as conexões dela."""
+        sockets = list(self._sockets_by_room.get(room_code, set()))
+        await self.broadcast(room_code, {"type": "room_closed", "reason": reason})
+        self._sockets_by_room.pop(room_code, None)
+        for websocket in sockets:
+            try:
+                await websocket.close()
+            except Exception:
+                pass  # a conexão já tinha caído
+
     async def broadcast(self, room_code: str, message: dict) -> None:
         """Envia a mensagem para todos os aparelhos conectados na sala."""
         sockets = list(self._sockets_by_room.get(room_code, set()))

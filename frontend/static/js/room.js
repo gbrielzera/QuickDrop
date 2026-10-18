@@ -1,10 +1,10 @@
 // Página da sala: entra na sala (pelo link, pela chave guardada ou pela senha) e mostra como convidar outros aparelhos.
 
-import { ApiError, getRoom } from "./api.js";
+import { ApiError, deleteRoom, getRoom } from "./api.js";
 import { errorMessageKey } from "./errors.js";
 import { onLanguageChange, startLanguageSwitcher, t } from "./i18n.js";
 import { createQrCodeSvg } from "./qr.js";
-import { getRoomParams, joinRoom, loadEncryptionKey } from "./room-access.js";
+import { forgetEncryptionKey, getRoomParams, joinRoom, loadEncryptionKey } from "./room-access.js";
 import { buildRoomPath, formatRoomCode, readSecretFromHash } from "./room-code.js";
 import { splitTimeLeft } from "./time-left.js";
 import { startClipsPanel } from "./clips-panel.js";
@@ -13,7 +13,7 @@ import { readFileEntry } from "./file-transfer.js";
 import { connectRoomSocket } from "./socket.js";
 import { startTextEditor } from "./text-editor.js";
 import { startUploadPanel } from "./upload-panel.js";
-import { clearMessage, runWithBusyButton, setUpCopyButton, showMessage } from "./ui.js";
+import { clearMessage, runWithBusyButton, setUpConfirmButton, setUpCopyButton, showMessage } from "./ui.js";
 
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_NOT_FOUND = 404;
@@ -45,6 +45,7 @@ const otherDeviceStation = document.getElementById("device-other");
 let expiresAt = null;
 let expiryTimer = null;
 let panelsStarted = false;
+let roomHasEnded = false;
 let devicesOnline = 0;
 let isConnected = false;
 
@@ -52,6 +53,21 @@ function showOnly(viewName) {
   for (const [name, view] of Object.entries(views)) {
     view.hidden = name !== viewName;
   }
+}
+
+// A sala acabou (expirou, foi encerrada ou não existe mais): mostra o aviso e para de usar a sala.
+function showRoomEnded(titleKey, messageKey) {
+  if (roomHasEnded) {
+    return; // o primeiro aviso é o que vale
+  }
+  roomHasEnded = true;
+  clearInterval(expiryTimer);
+  forgetEncryptionKey(roomCode);
+  const title = document.getElementById("missing-title");
+  title.dataset.i18n = titleKey;
+  title.textContent = t(titleKey);
+  showMessage(document.getElementById("missing-detail"), messageKey);
+  showOnly("missing");
 }
 
 // ---------- tempo restante ----------
@@ -71,7 +87,7 @@ function renderExpiry() {
     tag.textContent = text;
   }
   if (millisecondsLeft <= 0) {
-    clearInterval(expiryTimer);
+    showRoomEnded("room.endedTitle", "room.endedExpired");
   }
 }
 
@@ -116,8 +132,7 @@ async function shouldKeepReconnecting() {
     return true;
   } catch (error) {
     if (isApiError(error, HTTP_NOT_FOUND)) {
-      showOnly("missing");
-      showMessage(document.getElementById("missing-detail"), "error.roomMissing");
+      showRoomEnded("room.missingTitle", "error.roomMissing");
       return false;
     }
     if (isApiError(error, HTTP_UNAUTHORIZED)) {
@@ -146,6 +161,9 @@ function startRealtime({ fileList, textEditor, clipsPanel }) {
       clipsPanel.addStoredClip(message.clip);
     } else if (message.type === "clip_deleted") {
       clipsPanel.removeEntry(message.clip_id);
+    } else if (message.type === "room_closed") {
+      const messageKey = message.reason === "expired" ? "room.endedExpired" : "room.endedClosed";
+      showRoomEnded("room.endedTitle", messageKey);
     }
   }
 
@@ -234,6 +252,17 @@ function isApiError(error, status) {
   return error instanceof ApiError && error.status === status;
 }
 
+// Encerra a sala para todos os aparelhos. O aviso na tela aparece quando o servidor confirma.
+async function closeRoom(button) {
+  const status = document.getElementById("room-action-status");
+  clearMessage(status);
+  try {
+    await runWithBusyButton(button, "room.closing", () => deleteRoom(roomCode));
+  } catch (error) {
+    showMessage(status, errorMessageKey(error));
+  }
+}
+
 async function enterRoom() {
   // 1) Este aparelho já entrou antes (chave guardada e cookie válido).
   if (loadEncryptionKey(roomCode)) {
@@ -276,6 +305,7 @@ async function start() {
     }
   });
   passwordForm.addEventListener("submit", handlePasswordSubmit);
+  setUpConfirmButton(document.getElementById("close-room"), "room.closeConfirm", closeRoom);
   linkInput.addEventListener("focus", () => linkInput.select());
   setUpCopyButton(document.getElementById("copy-link"), () => linkInput.value, copyStatus);
   setUpCopyButton(document.getElementById("copy-code"), () => codeText.textContent, copyStatus);

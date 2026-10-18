@@ -34,7 +34,9 @@
       <span class="room-code">{{ room_code }}</span>
     </h1>
     <span class="tag tag--large" data-expiry></span>
+    <button class="button button--outline button--small" type="button" id="close-room" data-i18n="room.close">Encerrar sala</button>
   </div>
+  <p class="error" id="room-action-status" role="status"></p>
   <nav class="jump" aria-label="Ir para uma parte da sala" data-i18n-aria-label="nav.label">
     <a class="button button--outline button--small" href="#files-section" data-i18n="nav.files">Arquivos</a>
     <a class="button button--outline button--small" href="#text-section" data-i18n="nav.text">Texto</a>
