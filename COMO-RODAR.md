@@ -112,8 +112,10 @@ O jeito mais útil de experimentar o QuickDrop: PC e celular conectados ao **mes
 No lugar do passo 8:
 
 ```powershell
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
+
+Repare que, para testar com o celular, este comando **não** tem o `--reload`. O `--reload` reinicia o servidor sempre que um arquivo do projeto muda, e a cada reinício o celular perde a conexão e mostra "Sem conexão com o servidor". Use `--reload` só quando estiver programando.
 
 ### 2. Descubra o IP do seu PC
 
@@ -202,6 +204,7 @@ Para **começar do zero**, pare o servidor (Ctrl + C), apague o arquivo `quickdr
 | `Address already in use` / porta ocupada | Outro programa usa a porta 8000. Use outra: `uvicorn app.main:app --reload --port 8001` |
 | O celular não abre o endereço | Veja a seção **"O celular não consegue abrir"** logo abaixo |
 | A página abre sem estilo ou sem funcionar | Recarregue com **Ctrl + F5** para limpar o cache |
+| "Sem conexão com o servidor. Tente de novo." | O servidor parou ou reiniciou. Olhe a janela do terminal onde ele roda: se mostra um erro, ele caiu; se a janela foi fechada, ele parou. Inicie de novo; as páginas abertas reconectam sozinhas em até 30 segundos. Com `--reload`, qualquer arquivo salvo reinicia o servidor |
 | "Muitas tentativas. Espere um minuto..." | O limite de tentativas foi atingido (senha errada várias vezes, ou muitas consultas/salas criadas do mesmo aparelho). Espere o tempo indicado; para desenvolvimento, dá para aumentar `RATE_LIMIT_*` no `.env` |
 | "Sala não encontrada ou expirada" | A sala expirou ou foi criada em outro banco de dados; crie uma nova |
 

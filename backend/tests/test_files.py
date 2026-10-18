@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.encoding import to_base64url
@@ -254,3 +255,24 @@ def test_a_full_room_refuses_any_new_file(small_limits_client):
 
     assert response.status_code == 413
     assert response.json()["detail"] == "room_full"
+
+
+# ---------- envio interrompido ----------
+
+
+def test_an_interrupted_upload_leaves_nothing_on_disk(client, tmp_path):
+    from starlette.requests import ClientDisconnect
+
+    from app import storage
+
+    async def upload_that_drops_halfway():
+        yield b"x" * 1000
+        raise ClientDisconnect
+
+    async def try_to_save():
+        await storage.save_upload("room-id", "file-id", upload_that_drops_halfway(), max_bytes=10_000)
+
+    with pytest.raises(ClientDisconnect):
+        client.portal.call(try_to_save)
+
+    assert storage_files(tmp_path) == []

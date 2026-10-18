@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response
 from fastapi.responses import FileResponse as DiskFileResponse
+from starlette.requests import ClientDisconnect
 
 from app import file_service, storage
 from app.config import BYTES_PER_MEGABYTE, get_settings
@@ -92,6 +93,10 @@ async def upload_file(
         size_bytes = await storage.save_upload(room.id, file_id, request.stream(), max_bytes)
     except storage.FileTooLargeError as error:
         raise HTTPException(status_code=413, detail=limit_error) from error
+    except ClientDisconnect as error:
+        # O aparelho desistiu no meio do envio (comum no celular, quando a tela apaga ou o Wi-Fi cai).
+        # O arquivo parcial já foi apagado por save_upload; ninguém está esperando resposta.
+        raise HTTPException(status_code=400, detail="upload_interrupted") from error
 
     if size_bytes < MIN_ENCRYPTED_FILE_BYTES:
         storage.delete_file(room.id, file_id)
