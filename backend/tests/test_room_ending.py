@@ -8,7 +8,7 @@ from app.cleanup import delete_expired_rooms
 from app.models import Clip, CodeClip, Room, RoomText, SourceCode, StoredFile, utc_now
 from tests.test_clips import create_clip
 from tests.test_files import storage_files, upload
-from tests.test_rooms import create_room, new_device
+from tests.test_rooms import AUTH_KEY, create_room, new_device
 from tests.test_text import encrypted_text, save_text
 
 
@@ -67,6 +67,71 @@ def test_only_who_joined_can_close_the_room(client):
 
     assert stranger.delete(f"/api/rooms/{room['code']}").status_code == 401
     assert client.get(f"/api/rooms/{room['code']}").status_code == 200
+
+
+def join_as_guest(client, room_code: str):
+    """Um outro aparelho que entra na sala pelo link: participante, mas não dono."""
+    guest = new_device(client)
+    assert guest.post(f"/api/rooms/{room_code}/join", json={"auth_key": AUTH_KEY}).status_code == 200
+    return guest
+
+
+def test_a_guest_cannot_close_the_room(client):
+    room = create_room(client)
+    guest = join_as_guest(client, room["code"])
+
+    response = guest.delete(f"/api/rooms/{room['code']}")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "not_owner"
+    assert client.get(f"/api/rooms/{room['code']}").status_code == 200
+
+
+def test_the_owner_can_close_the_room_even_with_guests_inside(client):
+    room = create_room(client)
+    join_as_guest(client, room["code"])
+
+    assert client.delete(f"/api/rooms/{room['code']}").status_code == 204
+
+
+def test_a_forged_owner_cookie_does_not_work(client):
+    room = create_room(client)
+    guest = join_as_guest(client, room["code"])
+    guest.cookies.set(f"owner_{room['code']}", "cookie-falso")
+
+    assert guest.delete(f"/api/rooms/{room['code']}").status_code == 403
+
+
+def test_the_owner_cookie_of_another_room_does_not_work(client):
+    first_room = create_room(client)
+    second_room = create_room(client)
+    guest = join_as_guest(client, first_room["code"])
+    guest.cookies.set(f"owner_{first_room['code']}", client.cookies.get(f"owner_{second_room['code']}"))
+
+    assert guest.delete(f"/api/rooms/{first_room['code']}").status_code == 403
+
+
+def test_the_room_data_tells_whether_this_browser_is_the_owner(client):
+    room = create_room(client)
+    guest = join_as_guest(client, room["code"])
+
+    assert client.get(f"/api/rooms/{room['code']}").json()["is_owner"] is True
+    assert guest.get(f"/api/rooms/{room['code']}").json()["is_owner"] is False
+
+
+def test_joining_again_from_the_owner_browser_keeps_the_owner_role(client):
+    room = create_room(client)
+
+    response = client.post(f"/api/rooms/{room['code']}/join", json={"auth_key": AUTH_KEY})
+
+    assert response.json()["is_owner"] is True
+
+
+def test_joining_never_gives_the_owner_cookie(client):
+    room = create_room(client)
+    guest = join_as_guest(client, room["code"])
+
+    assert guest.cookies.get(f"owner_{room['code']}") is None
 
 
 def test_closing_a_room_does_not_touch_other_rooms(client, tmp_path):

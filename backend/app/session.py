@@ -9,6 +9,7 @@ from app.config import get_settings
 from app.models import Room, utc_now
 
 SESSION_SALT = "room-session"
+OWNER_SALT = "room-owner"
 MINIMUM_COOKIE_SECONDS = 1
 
 
@@ -17,8 +18,14 @@ def session_cookie_name(room_code: str) -> str:
     return f"room_{room_code}"
 
 
-def _serializer() -> URLSafeTimedSerializer:
-    return URLSafeTimedSerializer(get_settings().secret_key, salt=SESSION_SALT)
+def owner_cookie_name(room_code: str) -> str:
+    """Nome do cookie de dono de uma sala. Só o navegador que criou a sala o recebe."""
+    return f"owner_{room_code}"
+
+
+def _serializer(salt: str = SESSION_SALT) -> URLSafeTimedSerializer:
+    # Cada tipo de cookie tem o seu "sal": um token de participante nunca vale como token de dono.
+    return URLSafeTimedSerializer(get_settings().secret_key, salt=salt)
 
 
 def create_session_token(room_code: str) -> str:
@@ -40,14 +47,36 @@ def has_session_for_room(cookies: Mapping[str, str], room_code: str) -> bool:
     return token is not None and read_session_token(token) == room_code
 
 
-def set_session_cookie(response: Response, room: Room) -> None:
-    """Dá ao dispositivo o cookie da sala. Ele deixa de valer junto com a sala."""
+def is_room_owner(cookies: Mapping[str, str], room: Room) -> bool:
+    """True se os cookies provam que este navegador criou a sala."""
+    token = cookies.get(owner_cookie_name(room.code))
+    if token is None:
+        return False
+    try:
+        # O token guarda o id interno da sala, não o código: não serve para outra sala com o mesmo código.
+        return _serializer(OWNER_SALT).loads(token) == room.id
+    except BadSignature:
+        return False
+
+
+def _set_room_cookie(response: Response, room: Room, name: str, value: str) -> None:
     seconds_until_expiry = int((room.expires_at - utc_now()).total_seconds())
     response.set_cookie(
-        key=session_cookie_name(room.code),
-        value=create_session_token(room.code),
+        key=name,
+        value=value,
         max_age=max(seconds_until_expiry, MINIMUM_COOKIE_SECONDS),
         httponly=True,  # o JavaScript da página não consegue ler o cookie
         samesite="strict",
         secure=get_settings().cookie_secure,
     )
+
+
+def set_session_cookie(response: Response, room: Room) -> None:
+    """Dá ao dispositivo o cookie da sala. Ele deixa de valer junto com a sala."""
+    _set_room_cookie(response, room, session_cookie_name(room.code), create_session_token(room.code))
+
+
+def set_owner_cookie(response: Response, room: Room) -> None:
+    """Marca este navegador como o dono da sala (só quem criou recebe)."""
+    owner_token = _serializer(OWNER_SALT).dumps(room.id)
+    _set_room_cookie(response, room, owner_cookie_name(room.code), owner_token)

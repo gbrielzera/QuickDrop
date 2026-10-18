@@ -37,6 +37,8 @@ const passwordNote = document.getElementById("room-password-note");
 const copyStatus = document.getElementById("copy-status");
 const thisDeviceStation = document.getElementById("device-this");
 const otherDeviceStation = document.getElementById("device-other");
+const closeRoomButton = document.getElementById("close-room");
+const guestNote = document.getElementById("room-guest-note");
 
 let expiresAt = null;
 let expiryTimer = null;
@@ -183,6 +185,9 @@ function startPanels() {
 async function showRoom() {
   const room = await getRoom(roomCode);
   expiresAt = new Date(room.expires_at).getTime();
+  // Só quem criou a sala vê o botão de encerrar; os convidados veem uma explicação.
+  closeRoomButton.hidden = !room.is_owner;
+  guestNote.hidden = room.is_owner;
   renderShareOptions();
   renderExpiry();
   expiryTimer = setInterval(renderExpiry, EXPIRY_REFRESH_MILLISECONDS);
@@ -268,7 +273,7 @@ async function start() {
     }
   });
   passwordForm.addEventListener("submit", handlePasswordSubmit);
-  setUpConfirmButton(document.getElementById("close-room"), "room.closeConfirm", closeRoom);
+  setUpConfirmButton(closeRoomButton, "room.closeConfirm", closeRoom);
   linkInput.addEventListener("focus", () => linkInput.select());
   setUpCopyButton(document.getElementById("copy-link"), () => linkInput.value, copyStatus);
   setUpCopyButton(document.getElementById("copy-code"), () => codeText.textContent, copyStatus);

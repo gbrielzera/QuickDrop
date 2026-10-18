@@ -24,12 +24,13 @@ from app.schemas import (
     RoomResponse,
 )
 from app.security import hash_auth_key, verify_auth_key
-from app.session import set_session_cookie
+from app.session import is_room_owner, set_owner_cookie, set_session_cookie
 
 router = APIRouter(prefix="/api/rooms", tags=["salas"])
 
 # Código que o navegador entende para avisar que o servidor atingiu o limite de salas.
 SERVER_FULL = "server_full"
+NOT_OWNER = "not_owner"
 
 
 async def _get_active_room_or_404(db: AsyncSession, room_code: str) -> Room:
@@ -59,6 +60,7 @@ async def create_new_room(
         raise HTTPException(status_code=503, detail="Tente criar a sala de novo.") from error
 
     set_session_cookie(response, room)
+    set_owner_cookie(response, room)
     return CreateRoomResponse(code=room.code, expires_at=room.expires_at_utc)
 
 
@@ -90,24 +92,31 @@ async def join_room(
     limits.failed_joins.reset(failed_joins_key)
 
     set_session_cookie(response, room)
-    return _to_room_response(room)
+    return _to_room_response(room, request)
 
 
 @router.get("/{code}")
-async def get_room(room: CurrentRoom) -> RoomResponse:
+async def get_room(room: CurrentRoom, request: Request) -> RoomResponse:
     """Dados da sala. Só quem já entrou consegue ver."""
-    return _to_room_response(room)
+    return _to_room_response(room, request)
 
 
 @router.delete("/{code}", status_code=204)
-async def close_room(room: CurrentRoom, db: Database, connections: Connections) -> Response:
+async def close_room(room: CurrentRoom, request: Request, db: Database, connections: Connections) -> Response:
     """Encerra a sala agora: apaga tudo e avisa os aparelhos conectados.
 
-    Qualquer aparelho que entrou na sala pode encerrá-la.
+    Só o dono (o navegador que criou a sala) pode encerrá-la; os convidados não.
     """
+    if not is_room_owner(request.cookies, room):
+        raise HTTPException(status_code=403, detail=NOT_OWNER)
     await end_room(db, connections, room, reason=REASON_CLOSED)
     return Response(status_code=204)
 
 
-def _to_room_response(room: Room) -> RoomResponse:
-    return RoomResponse(code=room.code, has_password=room.has_password, expires_at=room.expires_at_utc)
+def _to_room_response(room: Room, request: Request) -> RoomResponse:
+    return RoomResponse(
+        code=room.code,
+        has_password=room.has_password,
+        expires_at=room.expires_at_utc,
+        is_owner=is_room_owner(request.cookies, room),
+    )

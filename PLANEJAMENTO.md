@@ -509,7 +509,7 @@ Vem antes de tudo porque todas as outras partes dependem dela.
 ### Fase 6: Expiração e robustez (1 dia) ✅
 - [x] Limpeza automática: ao iniciar e a cada `CLEANUP_INTERVAL_MINUTES` (5 por padrão) o servidor apaga as salas expiradas, com arquivos no disco, texto, clips e registros
 - [x] `room_closed` (`expired` ou `closed`) avisa e fecha as conexões de quem está na sala; o navegador mostra "Sala encerrada", esquece a chave e para de reconectar; ao chegar a zero a contagem regressiva também encerra a tela
-- [x] Botão "Encerrar sala" (com confirmação) e `DELETE /api/rooms/{code}`: qualquer aparelho que entrou pode encerrar
+- [x] Botão "Encerrar sala" (com confirmação) e `DELETE /api/rooms/{code}`. Na Fase 6 qualquer aparelho que entrasse podia encerrar; **agora só o dono** (veja "Dono da sala" abaixo)
 - [x] Limite de tentativas feito à mão (`rate_limit.py`, sem biblioteca): senhas erradas (5 por minuto por IP e sala; enquanto bloqueado até a senha certa é recusada), consultas e entradas (30 por minuto por IP) e salas criadas (20 por hora por IP); `429` com `Retry-After`
 - [x] Cabeçalhos de segurança em toda resposta: CSP (só código, estilos e fontes do próprio servidor; `wasm-unsafe-eval` para a criptografia), `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` (o código da sala está no endereço), `Permissions-Policy`, `Cache-Control: no-store` na API e HSTS quando `COOKIE_SECURE=true`
 - [x] 125 testes no backend (30 novos) e 42 no frontend
@@ -539,6 +539,17 @@ Para passar trechos de código sem perder a formatação, a sala ganhou um edito
 - [x] Código reaproveitado em vez de copiado: no backend, `create_document_router` e `create_clips_router` montam as rotas do texto e do código; no frontend, `shared-editor.js` e `clips-panel.js` servem aos dois, e `room-panels.js` liga todos os painéis
 - [x] 148 testes no backend e 68 no frontend (a indentação tem testes próprios)
 - [x] Verificado no navegador com duas abas: código com tabulação, espaços no fim da linha, crases e acentos chegou idêntico ao outro aparelho; o bloco salvo apareceu ao vivo, foi copiado exatamente e excluído com confirmação; Tab, Shift+Tab e Esc+Tab se comportaram como descrito
+
+### Extra (depois da Fase 8): dono da sala ✅
+Antes, qualquer convidado podia encerrar a sala. Agora só quem a criou pode.
+- [x] **Cookie de dono** (`owner_{código}`): assinado, `HttpOnly`, `SameSite=Strict`, vale até a sala expirar. Só o navegador que **cria** a sala o recebe; entrar pelo link, QR Code ou senha nunca dá esse cookie
+- [x] O cookie guarda o **id interno da sala**, não o código, e usa um "sal" próprio: nem um token de participante nem o de dono de outra sala valem como dono desta
+- [x] `DELETE /api/rooms/{code}` de um convidado responde **403** (`not_owner`); sem ter entrado continua 401
+- [x] `GET` e `join` da sala devolvem `is_owner`; a tela mostra o botão só ao dono, e ao convidado mostra o aviso de que a sala some sozinha quando o tempo acabar
+- [x] Convidados continuam enviando, apagando arquivos, clips e texto (a sala é um espaço compartilhado, decisão do Gabriel)
+- [x] Sem mudança no banco: nada de coluna nova nem migração
+- Limitação: o dono é o **navegador** que criou. Criar no PC e abrir no celular pelo QR Code faz do celular um convidado; limpar os cookies do PC tira o poder de encerrar (a sala ainda expira sozinha). Salas criadas antes desta atualização ficam sem dono
+- [x] 164 testes no backend (7 novos) e 68 no frontend; conferido no navegador com dois "aparelhos" (`localhost` dono, `127.0.0.1` convidado)
 
 ### Fase 8: Internet (no ar em https://quickdrop-syoti.mexicocentral.cloudapp.azure.com; celular na 4G funcionou)
 Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always Free** (uma VM Ubuntu de verdade, ligada 24 h) com **Docker + Caddy** e um endereço grátis do **DuckDNS**.

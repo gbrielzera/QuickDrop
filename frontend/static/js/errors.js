@@ -3,6 +3,7 @@
 import { ApiError } from "./api.js";
 
 const HTTP_UNAUTHORIZED = 401;
+const HTTP_FORBIDDEN = 403;
 const HTTP_NOT_FOUND = 404;
 const HTTP_PAYLOAD_TOO_LARGE = 413;
 const HTTP_SERVICE_UNAVAILABLE = 503;
@@ -31,6 +32,7 @@ const MESSAGE_KEY_BY_LIMIT_CODE = {
 export function errorMessageKey(error) {
   if (error instanceof ApiError) {
     if (error.status === HTTP_UNAUTHORIZED) return "error.passwordWrong";
+    if (error.status === HTTP_FORBIDDEN) return "error.notOwner";
     if (error.status === HTTP_NOT_FOUND) return "error.roomMissing";
     if (error.status === HTTP_TOO_MANY_REQUESTS) return "error.tooManyAttempts";
     if (error.status === HTTP_SERVICE_UNAVAILABLE || error.status === HTTP_INSUFFICIENT_STORAGE) {
