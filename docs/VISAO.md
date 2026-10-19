@@ -528,7 +528,7 @@ Probabilidade (P) e impacto (I): **B** baixo, **M** médio, **A** alto.
 | R6 | Link ou QR Code compartilhado com quem não deveria | M | M | Dono pode trancar ou encerrar; segredo some da barra de endereço; salas expiram | Mitigado em parte |
 | R7 | Queda da hospedagem ou da máquina virtual | B | M | Reinício automático, alerta a cada 15 min, plano de recuperação documentado | Mitigado |
 | R8 | Navegador antigo sem WebAssembly ou WebSocket | B | M | Mensagem de erro; recomendações de navegadores atualizados | Aceito |
-| R9 | Entrada lenta no celular (derivação das chaves e rede) | M | M | Medido ~4 s; módulos carregados em paralelo, cache das bibliotecas e menos idas ao servidor; a medir de novo | **Em medição** |
+| R9 | Entrada lenta no celular (derivação das chaves e rede) | M | M | Módulos carregados em paralelo, cache das bibliotecas, menos idas ao servidor e conferência instantânea da senha; medido 2,08 s no celular em 4G (eram ~4 s) | Mitigado |
 | R10 | Rotinas agendadas do GitHub desativadas por inatividade (60 dias) | M | B | Lembrete em `DEPLOY.md`; reativar na aba Actions | Documentado |
 | R11 | Perda da chave SSH ou do arquivo `.env` | B | M | Guardar cópia em cofre de senhas; recriar a VM a partir do repositório | A fazer pelo administrador |
 
@@ -542,7 +542,7 @@ O produto **ainda não tem usuários além do autor**, então não há números 
 |---|---|---|
 | Tempo para concluir uma transferência entre dois aparelhos | Teste com pessoas | Menos de 30 s |
 | Transferências concluídas sem ajuda | Teste de usabilidade | 9 em cada 10 |
-| Tempo de entrada com senha no celular | Medição em aparelho | Até ~3 s (medido ~4 s antes das otimizações) |
+| Tempo de entrada com senha no celular | Medição em aparelho | Até ~3 s (medido 2,08 s em 4G) |
 | Disponibilidade do site | Verificação a cada 15 min | 99% ao mês |
 | Vulnerabilidades conhecidas nas dependências | `pip-audit`, Dependabot | Zero em aberto |
 | Cobertura de testes automatizados | Contagem | Todo requisito essencial com teste ou verificação registrada |
@@ -571,7 +571,7 @@ flowchart TB
 ```
 
 ### 13.2 O que falta
-- **Validar em aparelho real:** tempo de entrada com senha no celular (medir de novo depois das otimizações), outros navegadores e acessibilidade com leitores de tela. Já validados em celular real: 100 MB no 4G (1 min 36 s) e reconexão com a tela apagada.
+- **Validar:** outros navegadores e acessibilidade com leitores de tela. Já validados em celular real: entrada com senha em 2,08 s no 4G, 100 MB no 4G (1 min 36 s) e reconexão com a tela apagada.
 - **Decidir a hospedagem depois do crédito** (cerca de 7 meses).
 - **Ideias futuras:** realce de sintaxe, "Compartilhar com..." do Android, edição sem conflito (CRDT), nome dos aparelhos, mais de um servidor.
 

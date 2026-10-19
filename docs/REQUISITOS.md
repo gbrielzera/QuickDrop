@@ -195,7 +195,7 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 
 | ID | Requisito | Prior. | Estado |
 |---|---|---|---|
-| RNF-020 | **Entrar numa sala com senha** (do toque em Entrar até a sala aparecer) leva **no máximo ~3 segundos** num celular comum, com internet móvel. | I | 🟡 medido ~4 s no celular antes das otimizações (a derivação em si leva ~0,1 s no computador); falta medir de novo |
+| RNF-020 | **Entrar numa sala com senha** (do toque em Entrar até a sala aparecer) leva **no máximo ~3 segundos** num celular comum, com internet móvel. | I | ✅ testado em celular real em 4G: 2,08 s (eram ~4 s antes das otimizações de carregamento) |
 | RNF-021 | Arquivos são processados em **blocos de 1 MB** para não carregar o arquivo inteiro na memória ao criptografar. | E | ✅ |
 | RNF-022 | O servidor atende com folga o uso previsto (dezenas de salas e poucos aparelhos por sala) em **1 vCPU e 1 GiB**, usando limites e filas para não esgotar memória. | I | ✅ |
 | RNF-023 | O envio de um arquivo de **100 MB** pela internet móvel (4G) conclui sem erro. | I | ✅ testado em celular real: 1 min 36 s, e o arquivo baixou normalmente em outro aparelho |
@@ -388,7 +388,6 @@ Mensagens do WebSocket: `presence`, `file_added`, `file_deleted`, `text_updated`
 ## 10. Itens pendentes e fora de escopo
 
 ### 10.1 Pendentes de validação
-- Tempo de entrada com senha no celular depois das otimizações de carregamento (RNF-020): medido ~4 s antes; a meta é ~3 s.
 - Auditoria de acessibilidade WCAG 2.1 AA com leitores de tela (RNF-030).
 - Teste formal em Safari, Firefox e outros navegadores (RNF-040).
 

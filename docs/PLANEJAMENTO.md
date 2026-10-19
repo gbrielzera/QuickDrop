@@ -582,7 +582,7 @@ Teste em celular real (4G): 100 MB enviados em 1 min 36 s e baixados normalmente
 - [x] **Menos idas ao servidor:** depois de entrar, a sala não é pedida de novo; o salt da sala é guardado em memória (antes `/params` era pedido duas vezes)
 - [x] **O servidor deixou de usar Argon2 na `authKey`**: passou a guardar um **HMAC-SHA256 com a `SECRET_KEY`**. A `authKey` já sai do Argon2id do navegador, então repetir o Argon2 no servidor só custava ~100 a 300 ms de CPU por entrada (numa VM fraca) e abria espaço para esgotar o servidor, sem dificultar muito o ataque; e sem a `SECRET_KEY` (que não fica no banco) um banco roubado não serve nem para testar senhas. Consequências: a dependência `argon2-cffi` saiu, e salas criadas antes desta atualização não aceitam aparelhos novos (quem já estava dentro continua; elas expiram em até 48 h). Trocar a `SECRET_KEY` invalida todas as salas
 - [x] 195 testes no backend; na produção, entrar com senha caiu de 618 para 540 ms medidos no computador, e a página ficou pronta em ~0,93 s (antes ~1,35 s)
-- Falta: medir de novo a entrada com senha no celular (as voltas de rede economizadas valem mais no 4G)
+- [x] **Medido de novo no celular (4G): 2,08 s** para entrar numa sala com senha (eram ~4 s), dentro da meta de ~3 s
 
 ### Fase 8: Internet (no ar em https://quickdrop-syoti.mexicocentral.cloudapp.azure.com; celular na 4G funcionou)
 Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always Free** (uma VM Ubuntu de verdade, ligada 24 h) com **Docker + Caddy** e um endereço grátis do **DuckDNS**.
@@ -613,7 +613,7 @@ Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always
 **8d. Conferir na internet**
 - [ ] Cadeado do HTTPS, nota dos cabeçalhos de segurança, cookie com `Secure`
 - [ ] Teste com **celular no 4G** e PC em outra rede: sala, arquivo de 100 MB, texto ao vivo, celular com a tela apagada e voltando
-- [x] Entrada com senha no celular: ~4 s medidos; otimizada (veja "Extra: velocidade de entrada"); falta medir de novo
+- [x] Entrada com senha no celular: ~4 s medidos, otimizada e medida de novo em 2,08 s (veja "Extra: velocidade de entrada")
 - [ ] Atualizar o app depois: `git pull && docker compose up -d --build` (descrito no `DEPLOY.md`)
 
 **Resultado do servidor (Azure for Students, em vez da Oracle):** a Oracle recusou os cartões; a Microsoft liberou o crédito de estudante, mas só em 5 regiões. VM `Standard_B2ats_v2` no **México Central**, Ubuntu 24.04, Docker + Caddy, endereço do próprio Azure. Conferido pela internet: certificado Let's Encrypt válido, redirecionamento 80 para 443, HSTS, IP real do visitante nos registros (o `--proxy-headers` funciona), sala criada, arquivo de 20 MB enviado e baixado, sala encerrada. Celular na 4G testado pelo Gabriel: funcionou. Pendente: arquivo de 100 MB, tempo do Argon2id no celular e tela apagada.

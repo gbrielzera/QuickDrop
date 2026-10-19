@@ -284,9 +284,9 @@ Os arquivos `.docx` são gerados a partir dos `.md`: edite o `.md` e gere de nov
 
 Todas as fases planejadas estão concluídas e o produto está no ar: salas, arquivos cifrados, tempo real, texto, código e clips, expiração, segurança, imagens, zip, PWA, dono e trancar sala, hospedagem, monitoramento e atualizações automáticas.
 
-**Já validado em celular real:** envio de 100 MB no 4G (1 min 36 s) e reconexão com a tela apagada.
+**Já validado em celular real (4G):** entrada numa sala com senha em 2,08 s, envio de 100 MB em 1 min 36 s e reconexão com a tela apagada.
 
-**Ainda a validar:** o tempo de entrada com senha no celular (medido ~4 s; foi otimizado e falta medir de novo), outros navegadores e uma auditoria de acessibilidade (a meta é WCAG 2.1 AA).
+**Ainda a validar:** outros navegadores e uma auditoria de acessibilidade (a meta é WCAG 2.1 AA).
 
 **Ideias futuras:** realce de sintaxe nos blocos de código, "Compartilhar com..." do Android, edição simultânea sem conflito (CRDT), nome dos aparelhos e mais de um servidor.
 
