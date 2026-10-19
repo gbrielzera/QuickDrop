@@ -1,5 +1,10 @@
 """Rotas que entregam as páginas HTML do frontend."""
 
+import posixpath
+import re
+from functools import lru_cache
+from pathlib import PurePosixPath
+
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -8,6 +13,33 @@ from app.config import FRONTEND_DIR, get_settings
 from app.dependencies import RoomCode
 
 templates = Jinja2Templates(directory=FRONTEND_DIR / "templates")
+
+STATIC_JS_DIR = FRONTEND_DIR / "static" / "js"
+IMPORT_PATTERN = re.compile(r"""(?:from|import)\s*["'](\./[^"']+\.m?js)["']""")
+
+
+@lru_cache
+def modules_to_preload(entry_module: str) -> list[str]:
+    """Todos os módulos JavaScript que uma página carrega (o dela e os que ele importa, e assim por diante).
+
+    O navegador só descobre um módulo depois de baixar quem o importa: com 5 níveis, são 5 idas e vindas à
+    rede em fila, o que no celular com internet móvel passa de um segundo. Avisar tudo de uma vez no HTML
+    (`modulepreload`) faz o navegador baixar todos ao mesmo tempo.
+    """
+    found: list[str] = []
+    pending = [PurePosixPath(entry_module)]
+    while pending:
+        module = pending.pop(0)
+        module_name = str(module)
+        if module_name in found:
+            continue
+        found.append(module_name)
+        source = (STATIC_JS_DIR / module).read_text(encoding="utf-8")
+        for relative_import in IMPORT_PATTERN.findall(source):
+            imported = PurePosixPath(posixpath.normpath(str(module.parent / relative_import)))
+            pending.append(imported)
+    return found
+
 
 router = APIRouter(include_in_schema=False)
 
@@ -23,6 +55,7 @@ async def index(request: Request) -> HTMLResponse:
         "app_name": settings.app_name,
         "ttl_options": settings.ttl_options,
         "default_ttl": settings.default_ttl_hours,
+        "preload_modules": modules_to_preload("home.js"),
     }
     return templates.TemplateResponse(request, "index.html", page_data)
 
@@ -67,6 +100,7 @@ async def room_page(code: RoomCode, request: Request) -> HTMLResponse:
         "max_text_bytes": settings.max_text_size_bytes,
         "max_clip_bytes": settings.max_clip_size_bytes,
         "max_code_clip_bytes": settings.max_code_clip_size_bytes,
+        "preload_modules": modules_to_preload("room.js"),
     }
     return templates.TemplateResponse(request, "room.html", page_data)
 

@@ -223,8 +223,9 @@ function startPanels() {
   startRealtime(panels);
 }
 
-async function showRoom() {
-  const room = await getRoom(roomCode);
+// `knownRoom` são os dados que a entrada na sala já devolveu: evita perguntar tudo de novo ao servidor.
+async function showRoom(knownRoom = null) {
+  const room = knownRoom ?? (await getRoom(roomCode));
   expiresAt = new Date(room.expires_at).getTime();
   // Só quem criou a sala vê o botão de encerrar; os convidados veem uma explicação.
   closeRoomButton.hidden = !room.is_owner;
@@ -253,8 +254,10 @@ async function handlePasswordSubmit(event) {
   event.preventDefault();
   clearMessage(passwordError);
   try {
-    await runWithBusyButton(passwordSubmitButton, "join.busy", () => joinRoom(roomCode, passwordInput.value));
-    await showRoom();
+    const room = await runWithBusyButton(passwordSubmitButton, "join.busy", () =>
+      joinRoom(roomCode, passwordInput.value),
+    );
+    await showRoom(room);
   } catch (error) {
     showMessage(passwordError, errorMessageKey(error));
   }
@@ -288,8 +291,7 @@ async function enterRoom() {
   // 2) Chegou por um link ou QR Code com o segredo.
   if (secretFromLink) {
     try {
-      await joinRoom(roomCode, secretFromLink);
-      await showRoom();
+      await showRoom(await joinRoom(roomCode, secretFromLink));
       return;
     } catch (error) {
       if (!isApiError(error, HTTP_UNAUTHORIZED)) throw error;

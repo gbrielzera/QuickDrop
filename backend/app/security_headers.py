@@ -34,6 +34,8 @@ SECURITY_HEADERS = {
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
 }
 
+RARELY_CHANGING_PATHS = ("/static/js/vendor/", "/static/fonts/", "/static/icons/")
+
 # Diz ao navegador para usar só HTTPS neste site por um ano. Só faz sentido quando o site está em HTTPS.
 HSTS_VALUE = "max-age=31536000"
 
@@ -74,6 +76,10 @@ class SecurityHeadersMiddleware:
         if path.startswith("/api/"):
             # As respostas da API têm dados da sala: nada de guardá-las em cache.
             headers.setdefault("Cache-Control", "no-store")
+        elif path.startswith(RARELY_CHANGING_PATHS):
+            # Bibliotecas de terceiros, fontes e ícones quase nunca mudam: guardá-los por um dia evita baixar
+            # (ou nem perguntar ao servidor) os maiores arquivos a cada visita, o que pesa no celular.
+            headers.setdefault("Cache-Control", "public, max-age=86400")
         elif path.startswith("/static/"):
             # Sem isto o navegador pode reaproveitar por horas um JavaScript antigo depois de uma atualização.
             # "no-cache" deixa guardar, mas pergunta ao servidor se mudou (e ele responde 304 se não mudou).

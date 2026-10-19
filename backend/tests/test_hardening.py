@@ -3,15 +3,15 @@
 import sqlite3
 
 import pytest
-from argon2 import PasswordHasher
 from starlette.websockets import WebSocketDisconnect
 
 from app import file_service
+from app.config import get_settings
 from app.security import hash_auth_key, verify_auth_key
 from app.session import create_session_token, session_cookie_name
 from tests.conftest import start_test_client
 from tests.test_files import ONE_MEGABYTE, encrypted_bytes, storage_files, upload
-from tests.test_rooms import AUTH_KEY, create_room, create_room_payload, new_device
+from tests.test_rooms import AUTH_KEY, OTHER_AUTH_KEY, create_room, create_room_payload, new_device
 
 # ---------- sala trancada ----------
 
@@ -138,16 +138,28 @@ def test_a_room_accepts_only_the_maximum_number_of_connections(two_devices_clien
             third.receive_json()
 
 
-def test_the_hash_of_the_auth_key_uses_the_lighter_argon2_settings(client):
-    auth_hash = client.portal.call(hash_auth_key, AUTH_KEY)
+def test_the_auth_key_hash_is_not_the_auth_key_and_is_stable(client):
+    auth_hash = hash_auth_key(AUTH_KEY)
 
-    assert "m=19456,t=2,p=1" in auth_hash
+    assert auth_hash != AUTH_KEY
+    assert len(auth_hash) == 64
+    assert hash_auth_key(AUTH_KEY) == auth_hash
 
 
-def test_hashes_made_with_the_old_settings_still_verify(client):
-    old_hash = PasswordHasher().hash(AUTH_KEY)
+def test_the_auth_key_check_accepts_only_the_right_key(client):
+    auth_hash = hash_auth_key(AUTH_KEY)
 
-    assert client.portal.call(verify_auth_key, AUTH_KEY, old_hash) is True
+    assert verify_auth_key(AUTH_KEY, auth_hash) is True
+    assert verify_auth_key(OTHER_AUTH_KEY, auth_hash) is False
+    assert verify_auth_key(AUTH_KEY, "isto-nao-e-um-hash") is False
+
+
+def test_a_stolen_hash_is_useless_with_another_secret_key(client, monkeypatch):
+    auth_hash = hash_auth_key(AUTH_KEY)
+
+    monkeypatch.setattr(get_settings(), "secret_key", "outra-chave-secreta-do-servidor")
+
+    assert verify_auth_key(AUTH_KEY, auth_hash) is False
 
 
 # ---------- cabeçalhos e documentação ----------
@@ -178,3 +190,34 @@ def test_a_strange_host_header_never_reaches_the_policy(client):
 
 def test_room_creation_still_works_with_the_default_limits(client):
     assert client.post("/api/rooms", json=create_room_payload()).status_code == 201
+
+
+# ---------- velocidade de carregamento ----------
+
+
+def test_the_room_page_preloads_every_module_it_needs(client):
+    page = client.get("/r/ABCDEF").text
+
+    for module in ("room.js", "crypto.js", "vendor/libsodium-sumo.mjs", "upload-panel.js", "zip.js"):
+        assert f'rel="modulepreload" href="http://testserver/static/js/{module}"' in page
+
+
+def test_the_home_page_preloads_the_modules_it_needs(client):
+    page = client.get("/").text
+
+    assert 'rel="modulepreload" href="http://testserver/static/js/home.js"' in page
+    assert 'rel="modulepreload" href="http://testserver/static/js/vendor/libsodium-sumo.mjs"' in page
+    assert "upload-panel.js" not in page
+
+
+def test_libraries_fonts_and_icons_are_cached_for_a_day(client):
+    for path in (
+        "/static/js/vendor/libsodium-sumo.mjs",
+        "/static/fonts/barlow-latin-500-normal.woff2",
+        "/static/icons/favicon-32.png",
+    ):
+        assert client.get(path).headers["cache-control"] == "public, max-age=86400"
+
+
+def test_the_apps_own_scripts_are_always_revalidated(client):
+    assert client.get("/static/js/room.js").headers["cache-control"] == "no-cache"

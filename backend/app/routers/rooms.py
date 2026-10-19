@@ -57,7 +57,7 @@ async def create_new_room(
             ttl_hours=body.ttl_hours,
             has_password=body.has_password,
             kdf_salt=from_base64url(body.kdf_salt),
-            auth_hash=await hash_auth_key(body.auth_key),
+            auth_hash=hash_auth_key(body.auth_key),
         )
     except RoomCodeUnavailableError as error:
         raise HTTPException(status_code=503, detail="Tente criar a sala de novo.") from error
@@ -94,7 +94,7 @@ async def join_room(
     # Quem errou a senha várias vezes espera um pouco, mesmo que a próxima tentativa esteja certa.
     failed_joins_key = f"{address}:{code}"
     block_if_over_limit(limits.failed_joins, failed_joins_key)
-    if not await verify_auth_key(body.auth_key, room.auth_hash):
+    if not verify_auth_key(body.auth_key, room.auth_hash):
         limits.failed_joins.record(failed_joins_key)
         security_events.record(FAILED_JOIN)
         raise HTTPException(status_code=401, detail="Senha incorreta.")

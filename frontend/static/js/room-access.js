@@ -99,18 +99,25 @@ export async function createRoom({ ttlHours, password }) {
   return { code: room.code, secret: password ? "" : secret };
 }
 
+// O salt de uma sala nunca muda: guardar a resposta evita uma ida ao servidor a mais ao pedir a senha.
+const paramsInMemory = new Map();
+
 /** Pergunta ao servidor se a sala tem senha e qual é o salt. Lança ApiError(404) se não existir. */
 export async function getRoomParams(roomCode) {
-  const params = await api.getRoomParams(roomCode);
-  return { hasPassword: params.has_password, kdfSalt: fromBase64Url(params.kdf_salt) };
+  if (!paramsInMemory.has(roomCode)) {
+    const params = await api.getRoomParams(roomCode);
+    paramsInMemory.set(roomCode, { hasPassword: params.has_password, kdfSalt: fromBase64Url(params.kdf_salt) });
+  }
+  return paramsInMemory.get(roomCode);
 }
 
-/** Entra numa sala com o segredo (ou senha). Lança ApiError(401) se estiver errado. */
+/** Entra numa sala com o segredo (ou senha) e devolve os dados da sala. Lança ApiError(401) se estiver errado. */
 export async function joinRoom(roomCode, secret) {
   await waitForNextPaint();
   const { kdfSalt } = await getRoomParams(roomCode);
   const { authKey, encryptionKey } = deriveRoomKeys(secret, kdfSalt);
 
-  await api.joinRoom(roomCode, toBase64Url(authKey));
+  const room = await api.joinRoom(roomCode, toBase64Url(authKey));
   saveEncryptionKey(roomCode, encryptionKey);
+  return room;
 }
