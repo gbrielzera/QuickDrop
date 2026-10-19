@@ -197,7 +197,7 @@ flowchart TD
     mestra["Chave-mestra<br/>(apagada da memória logo depois)"]
     auth["authKey"]
     enc["Chave de criptografia"]
-    servidor[("Servidor guarda só o<br/>hash Argon2 da authKey")]
+    servidor[("Servidor guarda só um HMAC<br/>da authKey (com chave do servidor)")]
     conteudo["Cifra arquivos, nomes, textos,<br/>código e clips<br/>(só no navegador)"]
 
     segredo --> argon
@@ -294,7 +294,7 @@ erDiagram
         string code UK "6 caracteres"
         bool has_password
         blob kdf_salt
-        string auth_hash "Argon2 da authKey"
+        string auth_hash "HMAC da authKey"
         bool locked
         datetime created_at
         datetime expires_at
@@ -509,7 +509,7 @@ Os requisitos detalhados e os critérios de aceitação estão no [Documento de 
 | **Usabilidade** | Transferência concluída sem aprender nada, em poucos passos |
 | **Acessibilidade** | WCAG 2.1 AA (alvo; sem auditoria formal) |
 | **Disponibilidade** | Reinício automático; alerta se o site cair |
-| **Manutenibilidade** | Código limpo, 190 testes no backend e 72 no frontend, documentação atualizada |
+| **Manutenibilidade** | Código limpo, 195 testes no backend e 72 no frontend, documentação atualizada |
 | **Portabilidade** | Docker: o mesmo pacote roda em qualquer servidor |
 
 ---
@@ -523,12 +523,12 @@ Probabilidade (P) e impacto (I): **B** baixo, **M** médio, **A** alto.
 | R1 | O crédito do Azure acaba em cerca de 7 meses | A | M | Alerta de 60% e 85%; o Docker permite migrar de hospedagem em cerca de 20 minutos | Monitorado |
 | R2 | Servidor comprometido entrega JavaScript malicioso | B | A | SSH restrito e só por chave, contêiner sem privilégios, atualizações automáticas, CSP rígida; limitação explicada na página Sobre | Mitigado em parte |
 | R3 | Uso para enviar conteúdo ilegal ou malware | M | M | Salas temporárias; contato para denúncia; a ação possível é encerrar a sala | Aceito |
-| R4 | Ataque de negação de serviço ou lotação do servidor | M | M | Limites por IP e globais, Argon2 leve e em fila, contagem de eventos | Mitigado |
+| R4 | Ataque de negação de serviço ou lotação do servidor | M | M | Limites por IP e globais, conferência da senha instantânea (HMAC), contagem de eventos | Mitigado |
 | R5 | Senha fraca escolhida pela pessoa | M | A | Mínimo de 10 caracteres; segredo gerado de 12; Argon2id | Mitigado em parte |
 | R6 | Link ou QR Code compartilhado com quem não deveria | M | M | Dono pode trancar ou encerrar; segredo some da barra de endereço; salas expiram | Mitigado em parte |
 | R7 | Queda da hospedagem ou da máquina virtual | B | M | Reinício automático, alerta a cada 15 min, plano de recuperação documentado | Mitigado |
 | R8 | Navegador antigo sem WebAssembly ou WebSocket | B | M | Mensagem de erro; recomendações de navegadores atualizados | Aceito |
-| R9 | Celular real mais lento que o esperado na derivação das chaves | M | M | Parâmetro Argon2id "interativo" (~64 MB); a medir | **Pendente** |
+| R9 | Entrada lenta no celular (derivação das chaves e rede) | M | M | Medido ~4 s; módulos carregados em paralelo, cache das bibliotecas e menos idas ao servidor; a medir de novo | **Em medição** |
 | R10 | Rotinas agendadas do GitHub desativadas por inatividade (60 dias) | M | B | Lembrete em `DEPLOY.md`; reativar na aba Actions | Documentado |
 | R11 | Perda da chave SSH ou do arquivo `.env` | B | M | Guardar cópia em cofre de senhas; recriar a VM a partir do repositório | A fazer pelo administrador |
 
@@ -542,7 +542,7 @@ O produto **ainda não tem usuários além do autor**, então não há números 
 |---|---|---|
 | Tempo para concluir uma transferência entre dois aparelhos | Teste com pessoas | Menos de 30 s |
 | Transferências concluídas sem ajuda | Teste de usabilidade | 9 em cada 10 |
-| Tempo de entrada com senha no celular | Medição em aparelho | Menos de 1 s |
+| Tempo de entrada com senha no celular | Medição em aparelho | Até ~3 s (medido ~4 s antes das otimizações) |
 | Disponibilidade do site | Verificação a cada 15 min | 99% ao mês |
 | Vulnerabilidades conhecidas nas dependências | `pip-audit`, Dependabot | Zero em aberto |
 | Cobertura de testes automatizados | Contagem | Todo requisito essencial com teste ou verificação registrada |
@@ -571,7 +571,7 @@ flowchart TB
 ```
 
 ### 13.2 O que falta
-- **Validar em aparelho real:** tempo das senhas no celular, 100 MB na internet móvel, tela apagada, outros navegadores, acessibilidade com leitores de tela.
+- **Validar em aparelho real:** tempo de entrada com senha no celular (medir de novo depois das otimizações), outros navegadores e acessibilidade com leitores de tela. Já validados em celular real: 100 MB no 4G (1 min 36 s) e reconexão com a tela apagada.
 - **Decidir a hospedagem depois do crédito** (cerca de 7 meses).
 - **Ideias futuras:** realce de sintaxe, "Compartilhar com..." do Android, edição sem conflito (CRDT), nome dos aparelhos, mais de um servidor.
 

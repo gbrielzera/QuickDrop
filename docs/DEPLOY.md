@@ -136,7 +136,7 @@ Na primeira vez o Caddy demora alguns segundos para obter o certificado HTTPS. A
 - [ ] Enviar um arquivo grande (perto de 100 MB) e baixar no outro aparelho.
 - [ ] Texto e código aparecendo ao vivo nos dois lados.
 - [ ] Apagar a tela do celular por 1 minuto, acender de novo: a sala deve reconectar.
-- [ ] Tempo de entrada numa sala com senha (a derivação Argon2id) abaixo de ~1 s no celular.
+- [ ] Tempo de entrada numa sala com senha no celular em torno de 3 s ou menos (do toque em Entrar até a sala aparecer).
 - [ ] `https://SEU-ENDERECO.duckdns.org/sobre` abre e mostra seu e-mail de contato.
 
 ## Atualizar depois

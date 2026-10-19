@@ -139,7 +139,7 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 | RF-051 | Ao perder a conexão, o navegador **reconecta sozinho** com espera crescente (1 s até 30 s) e, ao voltar, **confere tudo de novo** com o servidor. | E | ✅ |
 | RF-052 | A tela mostra quando **este aparelho está sem conexão**. | I | ✅ |
 | RF-053 | Se a sala deixou de existir enquanto o aparelho estava offline, o sistema avisa em vez de tentar reconectar para sempre. | I | ✅ |
-| RF-054 | Funcionamento com a **tela do celular apagada e acesa de novo**. | I | 🟡 reconexão implementada; falta confirmar em aparelho real |
+| RF-054 | Funcionamento com a **tela do celular apagada e acesa de novo**. | I | ✅ testado em celular real: voltou sozinho, sem recarregar, com o texto e o arquivo novos |
 
 ### 4.5 Interface e instalação
 
@@ -174,7 +174,7 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 |---|---|---|---|
 | RNF-001 | **Criptografia de ponta a ponta**: o conteúdo é cifrado no navegador (XChaCha20-Poly1305) e o servidor não possui a chave. | E | ✅ |
 | RNF-002 | A senha passa por **Argon2id** no navegador; a chave de acesso (`authKey`) e a de criptografia são derivadas separadamente, e o servidor recebe **só a primeira**. | E | ✅ |
-| RNF-003 | O servidor guarda apenas um **hash Argon2** da `authKey`. | E | ✅ |
+| RNF-003 | O servidor guarda apenas um **HMAC-SHA256 da `authKey`**, calculado com a chave secreta do servidor (que não fica no banco): um banco roubado não serve nem para testar senhas. | E | ✅ |
 | RNF-004 | O segredo gerado tem **pelo menos ~59 bits** (12 caracteres de 31) e a senha própria **no mínimo 10 caracteres**. | E | ✅ |
 | RNF-005 | **HTTPS obrigatório** em produção, com HSTS, certificado automático e redirecionamento de HTTP. | E | ✅ |
 | RNF-006 | **Cookies** `HttpOnly`, `SameSite=Strict` e `Secure`, assinados, ligados ao id interno da sala e válidos só até a sala expirar. | E | ✅ |
@@ -195,10 +195,10 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 
 | ID | Requisito | Prior. | Estado |
 |---|---|---|---|
-| RNF-020 | Derivar as chaves a partir da senha leva **menos de ~1 segundo** em um celular comum. | I | 🟡 medido só no computador; falta medir em celular |
+| RNF-020 | **Entrar numa sala com senha** (do toque em Entrar até a sala aparecer) leva **no máximo ~3 segundos** num celular comum, com internet móvel. | I | 🟡 medido ~4 s no celular antes das otimizações (a derivação em si leva ~0,1 s no computador); falta medir de novo |
 | RNF-021 | Arquivos são processados em **blocos de 1 MB** para não carregar o arquivo inteiro na memória ao criptografar. | E | ✅ |
 | RNF-022 | O servidor atende com folga o uso previsto (dezenas de salas e poucos aparelhos por sala) em **1 vCPU e 1 GiB**, usando limites e filas para não esgotar memória. | I | ✅ |
-| RNF-023 | O envio de um arquivo de **100 MB** pela internet móvel (4G) conclui sem erro. | I | 🟡 testado 20 MB na internet e 100 MB localmente; falta 100 MB no 4G |
+| RNF-023 | O envio de um arquivo de **100 MB** pela internet móvel (4G) conclui sem erro. | I | ✅ testado em celular real: 1 min 36 s, e o arquivo baixou normalmente em outro aparelho |
 
 ### 5.3 Usabilidade e acessibilidade
 
@@ -232,7 +232,7 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 |---|---|---|---|
 | RNF-060 | **Código limpo** conforme `CLAUDE.md` (nomes claros, funções pequenas, comentários que explicam o porquê, tipos). | E | ✅ |
 | RNF-061 | Backend e frontend em **pastas separadas**; a criptografia concentrada em **um só arquivo** do frontend. | E | ✅ |
-| RNF-062 | **Testes automatizados**: 190 no backend e 72 no frontend, com formatação e análise estática (`ruff`). | E | ✅ |
+| RNF-062 | **Testes automatizados**: 195 no backend e 72 no frontend, com formatação e análise estática (`ruff`). | E | ✅ |
 | RNF-063 | Documentação do projeto atualizada (`PLANEJAMENTO.md`, `COMO-RODAR.md`, `DEPLOY.md`, `DESIGN.md`, este documento e o de Visão). | I | ✅ |
 
 ### 5.7 Portabilidade, custo e operação
@@ -326,8 +326,8 @@ Resumo dos cenários que definem se o produto está **aceito**. Todos têm teste
 | CA-09 | Desligar a rede de um aparelho e religar | Reconecta sozinho e atualiza a lista |
 | CA-10 | Abrir o site em HTTP | É redirecionado para HTTPS |
 | CA-11 | Arquivo adulterado no servidor | O navegador recusa a descriptografia |
-| CA-12 | Celular na internet móvel cria sala, envia 100 MB e baixa em outro aparelho | **Pendente**: 100 MB no 4G ainda não foi confirmado |
-| CA-13 | Celular com tela apagada por 1 minuto | **Pendente**: reconecta e atualiza |
+| CA-12 | Celular na internet móvel cria sala, envia 100 MB e baixa em outro aparelho | Aceito: 100 MB no 4G em 1 min 36 s, baixado normalmente |
+| CA-13 | Celular com tela apagada por 1 minuto | Aceito: reconecta sozinho e atualiza texto e arquivos |
 
 ---
 
@@ -388,9 +388,7 @@ Mensagens do WebSocket: `presence`, `file_added`, `file_deleted`, `text_updated`
 ## 10. Itens pendentes e fora de escopo
 
 ### 10.1 Pendentes de validação
-- Tempo da derivação Argon2id em celular real (meta: menos de ~1 s) (RNF-020).
-- Envio de 100 MB na internet móvel (RNF-023, CA-12).
-- Reconexão com a tela do celular apagada (RF-054, CA-13).
+- Tempo de entrada com senha no celular depois das otimizações de carregamento (RNF-020): medido ~4 s antes; a meta é ~3 s.
 - Auditoria de acessibilidade WCAG 2.1 AA com leitores de tela (RNF-030).
 - Teste formal em Safari, Firefox e outros navegadores (RNF-040).
 

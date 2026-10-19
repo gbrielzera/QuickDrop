@@ -89,7 +89,7 @@ flowchart TD
     mestra["Chave-mestra<br/>(apagada da memória logo depois)"]
     auth["authKey"]
     enc["Chave de criptografia"]
-    servidor[("Servidor guarda só o<br/>hash Argon2 da authKey")]
+    servidor[("Servidor guarda só um HMAC<br/>da authKey (com chave do servidor)")]
     conteudo["Cifra arquivos, nomes, textos,<br/>código e clips<br/>(só no navegador)"]
 
     segredo --> argon
@@ -123,7 +123,7 @@ flowchart TD
 | Backend | Python, FastAPI, Uvicorn, SQLAlchemy 2 (assíncrono) |
 | Banco e arquivos | SQLite (aiosqlite) e disco local, só com dados cifrados |
 | Tempo real | WebSocket, com reconexão e reconferência automáticas |
-| Criptografia | libsodium no navegador: Argon2id, XChaCha20-Poly1305; hash Argon2 no servidor |
+| Criptografia | libsodium no navegador: Argon2id, XChaCha20-Poly1305; HMAC-SHA256 no servidor |
 | Frontend | HTML (Jinja2), CSS e JavaScript puro, sem framework nem etapa de build |
 | Qualidade | pytest, `node --test`, ruff, pip-audit, Dependabot |
 | Implantação | Docker Compose, Caddy (HTTPS automático), GitHub Actions |
@@ -240,7 +240,7 @@ As regras de código do projeto estão em [CLAUDE.md](CLAUDE.md): código simple
 
 ```powershell
 cd backend
-pytest                    # 190 testes do servidor
+pytest                    # 195 testes do servidor
 ruff check . ; ruff format --check .
 
 cd ..\frontend
@@ -284,7 +284,9 @@ Os arquivos `.docx` são gerados a partir dos `.md`: edite o `.md` e gere de nov
 
 Todas as fases planejadas estão concluídas e o produto está no ar: salas, arquivos cifrados, tempo real, texto, código e clips, expiração, segurança, imagens, zip, PWA, dono e trancar sala, hospedagem, monitoramento e atualizações automáticas.
 
-**Ainda a validar em aparelhos reais:** tempo da derivação da senha no celular, envio de 100 MB na internet móvel, reconexão com a tela apagada, outros navegadores e uma auditoria de acessibilidade (a meta é WCAG 2.1 AA).
+**Já validado em celular real:** envio de 100 MB no 4G (1 min 36 s) e reconexão com a tela apagada.
+
+**Ainda a validar:** o tempo de entrada com senha no celular (medido ~4 s; foi otimizado e falta medir de novo), outros navegadores e uma auditoria de acessibilidade (a meta é WCAG 2.1 AA).
 
 **Ideias futuras:** realce de sintaxe nos blocos de código, "Compartilhar com..." do Android, edição simultânea sem conflito (CRDT), nome dos aparelhos e mais de um servidor.
 
