@@ -1,62 +1,71 @@
-/* QuickDrop — mundo visual "Linhas de Metrô": placas esmaltadas, círculos de linha e um diagrama de rota. */
+/* QuickDrop — visual plano e claro: cores de alto contraste, Inter e cantos suaves. */
 
 @font-face {
-  font-family: "Barlow";
+  font-family: "Inter";
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/inter-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
   font-weight: 500;
   font-display: swap;
-  src: url("../fonts/barlow-latin-500-normal.woff2") format("woff2");
+  src: url("../fonts/inter-latin-500-normal.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Barlow";
+  font-family: "Inter";
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/inter-latin-600-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
   font-weight: 700;
   font-display: swap;
-  src: url("../fonts/barlow-latin-700-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Barlow";
-  font-weight: 800;
-  font-display: swap;
-  src: url("../fonts/barlow-latin-800-normal.woff2") format("woff2");
+  src: url("../fonts/inter-latin-700-normal.woff2") format("woff2");
 }
 
 :root {
-  --ground: #f4f6f8;
+  --ground: #f8fafc;
   --surface: #ffffff;
-  --ink: #101820;
-  --ink-soft: #3b4652;
-  --outline: #101820;
-  --blue: #0455a1;
+  --ink: #0f172a;
+  --ink-soft: #475569;
+  --outline: #7c8ba1;  /* 3,4:1 sobre o fundo: limites de campos e botões precisam de 3:1 */
+  --blue: #2563eb;
   --on-blue: #ffffff;
-  --green: #007a5e;
+  --green: #047857;
   --on-green: #ffffff;
-  --placeholder: #5d6874;
+  --placeholder: #64748b;
   /* Só o código usa fonte monoespaçada: do sistema, sem baixar nada. */
   --font-code: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --signal: #ffd100;
-  --on-signal: #101820;
-  --danger: #b3261e;
+  --signal: #d97706;
+  --on-signal: #0f172a;
+  --danger: #dc2626;
 
   --gutter: clamp(1rem, 5vw, 4.5rem);
-  --radius: 6px;
-  --stroke: 3px;
+  --radius: 10px;
+  --stroke: 1px;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ground: #0d141b;
-    --surface: #141d26;
-    --ink: #eef2f6;
-    --ink-soft: #b4bfca;
-    --outline: #5b6b7b;
-    --blue: #6aaeff;
-    --on-blue: #0d141b;
-    --green: #3dd6a6;
-    --on-green: #0d141b;
-    --placeholder: #8e9aa7;
-    --danger: #ff8a80;
+    --ground: #0b1120;
+    --surface: #111a2e;
+    --ink: #e2e8f0;
+    --ink-soft: #94a3b8;
+    --outline: #64748b;
+    --blue: #60a5fa;
+    --on-blue: #0b1120;
+    --green: #34d399;
+    --on-green: #0b1120;
+    --placeholder: #94a3b8;
+    --signal: #f59e0b;
+    --on-signal: #0b1120;
+    --danger: #f87171;
     color-scheme: dark;
   }
 }
@@ -73,7 +82,7 @@ body {
   margin: 0;
   background: var(--ground);
   color: var(--ink);
-  font-family: "Barlow", "Segoe UI", system-ui, sans-serif;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   font-size: 1.125rem;
   font-weight: 500;
   line-height: 1.45;
@@ -99,7 +108,7 @@ p {
 
 h1 {
   font-size: clamp(2.25rem, 1.2rem + 4vw, 4.5rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
   text-wrap: balance;
@@ -134,7 +143,7 @@ h1 {
   gap: 0.75rem;
   color: inherit;
   font-size: 1.75rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   text-decoration: none;
 }
@@ -148,7 +157,7 @@ h1 {
   border-radius: 50%;
   background: var(--blue);
   color: var(--on-blue);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .roundel svg {
@@ -221,7 +230,7 @@ h1 {
   min-height: 72px;
   padding: 0 1.5rem;
   font-size: 1.75rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
@@ -433,7 +442,7 @@ input:focus-visible {
   border-radius: var(--radius);
   font: inherit;
   font-size: 1.375rem;
-  font-weight: 800;
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
 }
@@ -530,7 +539,7 @@ input:focus-visible {
 .station__name {
   margin-top: 0.5rem;
   font-size: 1.75rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
@@ -548,7 +557,7 @@ input:focus-visible {
   color: var(--on-signal);
   font-size: 1.125rem;
   font-variant-numeric: tabular-nums;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* O trem viaja pela linha, saindo da estação de origem e parando no meio do caminho. */
@@ -564,7 +573,7 @@ input:focus-visible {
   background: var(--signal);
   color: var(--on-signal);
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: 700;
   animation: ride 2.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -628,7 +637,7 @@ input:focus-visible {
 .typed-code {
   font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
   font-variant-numeric: tabular-nums;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.04em;
   overflow-wrap: anywhere;
 }
@@ -675,7 +684,7 @@ input:focus-visible {
 .section-title {
   margin-top: clamp(2.5rem, 5vw, 3.5rem);
   font-size: 1.75rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.01em;
   scroll-margin-top: 1rem;
 }
@@ -697,7 +706,7 @@ input:focus-visible {
 
 .dropzone__text {
   font-size: 1.375rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .dropzone .button {
@@ -734,7 +743,7 @@ input:focus-visible {
 .file__name {
   min-width: 0;
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 

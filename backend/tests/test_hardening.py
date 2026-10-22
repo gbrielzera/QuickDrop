@@ -213,7 +213,7 @@ def test_the_home_page_preloads_the_modules_it_needs(client):
 def test_libraries_fonts_and_icons_are_cached_for_a_day(client):
     for path in (
         "/static/js/vendor/libsodium-sumo.mjs",
-        "/static/fonts/barlow-latin-500-normal.woff2",
+        "/static/fonts/inter-latin-500-normal.woff2",
         "/static/icons/favicon-32.png",
     ):
         assert client.get(path).headers["cache-control"] == "public, max-age=86400"

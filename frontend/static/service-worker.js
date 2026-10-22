@@ -10,9 +10,10 @@ const OFFLINE_PAGE = "/static/offline.html";
 const OFFLINE_FILES = [
   OFFLINE_PAGE,
   "/static/css/style.css",
-  "/static/fonts/barlow-latin-500-normal.woff2",
-  "/static/fonts/barlow-latin-700-normal.woff2",
-  "/static/fonts/barlow-latin-800-normal.woff2",
+  "/static/fonts/inter-latin-400-normal.woff2",
+  "/static/fonts/inter-latin-500-normal.woff2",
+  "/static/fonts/inter-latin-600-normal.woff2",
+  "/static/fonts/inter-latin-700-normal.woff2",
 ];
 
 self.addEventListener("install", (event) => {
