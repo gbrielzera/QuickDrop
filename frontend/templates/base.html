@@ -31,7 +31,10 @@
         <button type="button" data-language="pt" aria-pressed="true">PT</button>
         <button type="button" data-language="en" aria-pressed="false">EN</button>
       </div>
-      <button class="theme-toggle" type="button" aria-pressed="false" data-i18n-aria-label="theme.toggle" aria-label="Alternar entre tema claro e escuro">
+      <a class="topbar__icon" href="/sobre" data-i18n-aria-label="topbar.about" data-i18n-title="topbar.about" aria-label="Sobre" title="Sobre"{% if request.url.path == "/sobre" %} aria-current="page"{% endif %}>
+        {{ icon("info") }}
+      </a>
+      <button class="topbar__icon theme-toggle" type="button" aria-pressed="false" data-i18n-aria-label="theme.toggle" data-i18n-title="theme.toggle" aria-label="Alternar entre tema claro e escuro" title="Alternar entre tema claro e escuro">
         <span class="icon-moon">{{ icon("moon") }}</span>
         <span class="icon-sun">{{ icon("sun") }}</span>
       </button>
@@ -40,7 +43,6 @@
   <main class="page">
     {% block content %}{% endblock %}
   </main>
-  <footer class="page-footer"><a href="/sobre" data-i18n="footer.about">Sobre</a></footer>
   <script type="module" src="{{ url_for('static', path='js/theme-toggle.js') }}"></script>
   <script type="module" src="{{ url_for('static', path='js/pwa.js') }}"></script>
   {% block scripts %}{% endblock %}

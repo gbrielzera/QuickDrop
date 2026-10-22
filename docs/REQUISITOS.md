@@ -149,7 +149,7 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 | RF-061 | **Tema claro e escuro**: segue o sistema do aparelho e há um **botão discreto no topo** para trocar; a escolha é lembrada neste navegador. | I | ✅ |
 | RF-062 | Layout **pensado primeiro para celular** e que se adapta ao computador. | E | ✅ |
 | RF-063 | **App instalável (PWA)**: manifesto, ícones, cor da barra e página "sem conexão" quando o servidor não responde. O app **não guarda** salas nem arquivos em cache. | D | ✅ |
-| RF-064 | Página **Sobre** com o que o servidor guarda, por quanto tempo e como denunciar abuso (contato configurável). | I | ✅ |
+| RF-064 | Página **Sobre** com o que o servidor guarda, por quanto tempo e como denunciar abuso (contato configurável), acessível por um **ícone ⓘ no topo** de todas as páginas, junto do idioma e do tema. | I | ✅ |
 | RF-065 | Diagrama visual do caminho da transferência (origem, sala e destino) nas telas inicial e da sala. | D | ✅ |
 
 ### 4.6 Operação e administração
@@ -232,7 +232,7 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 |---|---|---|---|
 | RNF-060 | **Código limpo** conforme `CLAUDE.md` (nomes claros, funções pequenas, comentários que explicam o porquê, tipos). | E | ✅ |
 | RNF-061 | Backend e frontend em **pastas separadas**; a criptografia concentrada em **um só arquivo** do frontend. | E | ✅ |
-| RNF-062 | **Testes automatizados**: 198 no backend e 74 no frontend, com formatação e análise estática (`ruff`). | E | ✅ |
+| RNF-062 | **Testes automatizados**: 200 no backend e 74 no frontend, com formatação e análise estática (`ruff`). | E | ✅ |
 | RNF-063 | Documentação do projeto atualizada (`PLANEJAMENTO.md`, `COMO-RODAR.md`, `DEPLOY.md`, `DESIGN.md`, este documento e o de Visão). | I | ✅ |
 
 ### 5.7 Portabilidade, custo e operação

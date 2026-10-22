@@ -240,7 +240,7 @@ As regras de código do projeto estão em [CLAUDE.md](CLAUDE.md): código simple
 
 ```powershell
 cd backend
-pytest                    # 198 testes do servidor
+pytest                    # 200 testes do servidor
 ruff check . ; ruff format --check .
 
 cd ..\frontend

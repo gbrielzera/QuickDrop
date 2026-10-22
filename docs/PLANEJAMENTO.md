@@ -593,7 +593,9 @@ O autor não gostou do visual "Linhas de Metrô"; a skill `ui-ux-pro-max` foi in
 - [x] **Botão de tema** no topo (lua/sol), discreto: o tema segue o aparelho até a pessoa escolher; a escolha é lembrada (`localStorage`) e aplicada por um script minúsculo no `<head>` antes da primeira pintura, para a página não piscar. Rótulo acessível em português e inglês e `aria-pressed`
 - [x] `DESIGN.md` reescrito para o sistema novo
 - [x] Correção de um teste de presença que travava de vez em quando (usava dois clientes de teste, cada um com seu laço de eventos): agora usa duas conexões do mesmo cliente
-- [x] 198 testes no backend e 74 no frontend; conferido no navegador em desktop, celular e tema escuro (alternar, lembrar a escolha, escolha "claro" valendo com o aparelho em modo escuro)
+- [x] O link "Sobre" saiu do rodapé (um link solto, destoante) e virou um **ícone ⓘ no topo**, junto do idioma e do tema, com rótulo e dica nos dois idiomas; o rodapé foi removido. Marca e botões ajustados para caber lado a lado em 360px de largura
+- [x] Segundo teste de presença que travava de vez em quando corrigido de verdade: o cliente de teste cancela a tarefa do servidor ao fechar e o aviso "um aparelho a menos" às vezes nem era enviado; o teste agora confere a contagem de aparelhos (o aviso é testado direto no gerenciador de conexões). 0 travamentos em 40 rodadas e 4 suítes completas seguidas
+- [x] 200 testes no backend e 74 no frontend; conferido no navegador em desktop, celular e tema escuro (alternar, lembrar a escolha, escolha "claro" valendo com o aparelho em modo escuro)
 
 ### Fase 8: Internet (no ar em https://quickdrop-syoti.mexicocentral.cloudapp.azure.com; celular na 4G funcionou)
 Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always Free** (uma VM Ubuntu de verdade, ligada 24 h) com **Docker + Caddy** e um endereço grátis do **DuckDNS**.

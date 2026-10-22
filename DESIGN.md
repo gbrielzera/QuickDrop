@@ -202,7 +202,7 @@ Cartões de 24px (`rounded.card`), campos, caixa de código e QR de 14px (`round
 - Âmbar, pílula, 800, números tabulares. Usada só para o tempo restante (e a variante grande na sala). Some quando vazia.
 
 ### Navigation
-- Barra do topo: círculo violeta com glifo e marca em 800 à esquerda; seletor PT / EN à direita, botões de 44px, o ativo (`aria-pressed`) preenchido de tinta.
+- Barra do topo: círculo violeta com glifo e marca em 800 à esquerda; à direita, o seletor PT / EN, o ícone ⓘ (Sobre) e o botão de tema (lua ou sol), todos com alvo de 44px (40px em telas de 420px ou menos). O idioma ativo (`aria-pressed`) fica preenchido de tinta; o ⓘ ganha o tom pastel quando é a página atual (`aria-current`). Os dois ícones têm rótulo acessível e dica ao passar o mouse (`title`) nos dois idiomas. Em telas muito estreitas (menos de ~340px) os botões descem para uma segunda linha em vez de apertar a marca. Não há rodapé.
 
 ### Arquivos, texto e clips
 - **Área de soltar:** borda tracejada de 1.5px (fica violeta ao arrastar um arquivo por cima) e botão violeta de largura limitada. A fila de envio mostra nome, tamanho e uma barra preenchida de âmbar (o que está em trânsito).

@@ -509,7 +509,7 @@ Os requisitos detalhados e os critérios de aceitação estão no [Documento de 
 | **Usabilidade** | Transferência concluída sem aprender nada, em poucos passos |
 | **Acessibilidade** | WCAG 2.1 AA (alvo; sem auditoria formal) |
 | **Disponibilidade** | Reinício automático; alerta se o site cair |
-| **Manutenibilidade** | Código limpo, 198 testes no backend e 74 no frontend, documentação atualizada |
+| **Manutenibilidade** | Código limpo, 200 testes no backend e 74 no frontend, documentação atualizada |
 | **Portabilidade** | Docker: o mesmo pacote roda em qualquer servidor |
 
 ---

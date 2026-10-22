@@ -2,7 +2,7 @@
 //
 // No HTML, um elemento com data-i18n="chave" tem o texto trocado pela tradução.
 // Se o texto tiver valores, como "{textSize}", eles ficam em data-i18n-values (um JSON).
-// Também funcionam data-i18n-placeholder e data-i18n-aria-label.
+// Também funcionam data-i18n-placeholder, data-i18n-aria-label e data-i18n-title (a dica ao passar o mouse).
 
 import { messages } from "./messages.js";
 
@@ -49,6 +49,7 @@ export function applyTranslations(root = document) {
   }
   translateAttribute(root, "data-i18n-placeholder", "placeholder");
   translateAttribute(root, "data-i18n-aria-label", "aria-label");
+  translateAttribute(root, "data-i18n-title", "title");
 }
 
 function markActiveLanguageButton() {
