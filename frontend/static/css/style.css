@@ -1,71 +1,80 @@
 /* QuickDrop — visual plano e claro: cores de alto contraste, Inter e cantos suaves. */
 
 @font-face {
-  font-family: "Inter";
-  font-weight: 400;
-  font-display: swap;
-  src: url("../fonts/inter-latin-400-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-weight: 500;
-  font-display: swap;
-  src: url("../fonts/inter-latin-500-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Inter";
+  font-family: "Nunito";
   font-weight: 600;
   font-display: swap;
-  src: url("../fonts/inter-latin-600-normal.woff2") format("woff2");
+  src: url("../fonts/nunito-latin-600-normal.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: "Nunito";
   font-weight: 700;
   font-display: swap;
-  src: url("../fonts/inter-latin-700-normal.woff2") format("woff2");
+  src: url("../fonts/nunito-latin-700-normal.woff2") format("woff2");
 }
 
+@font-face {
+  font-family: "Nunito";
+  font-weight: 800;
+  font-display: swap;
+  src: url("../fonts/nunito-latin-800-normal.woff2") format("woff2");
+}
+
+/* Claro: creme quente, violeta (criar), verde (entrar) e âmbar (tempo). Todos os textos passam de 4,5:1. */
 :root {
-  --ground: #f8fafc;
+  --ground: #fbf7f2;
   --surface: #ffffff;
-  --ink: #0f172a;
-  --ink-soft: #475569;
-  --outline: #7c8ba1;  /* 3,4:1 sobre o fundo: limites de campos e botões precisam de 3:1 */
-  --blue: #2563eb;
+  --ink: #2b2a33;
+  --ink-soft: #5b5866;
+  --outline: #8c8799; /* limites de campos e botões: 3:1 ou mais sobre o fundo */
+  --line: #e7e0d6; /* divisórias e bordas decorativas */
+  --blue: #6d4aff;
   --on-blue: #ffffff;
-  --green: #047857;
+  --blue-tint: #ece8ff;
+  --on-blue-tint: #3b2bb3;
+  --green: #0d7a62;
   --on-green: #ffffff;
-  --placeholder: #64748b;
+  --green-tint: #dcf5ec;
+  --on-green-tint: #0b5d4b;
+  --placeholder: #6b6778;
   /* Só o código usa fonte monoespaçada: do sistema, sem baixar nada. */
   --font-code: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --signal: #d97706;
-  --on-signal: #0f172a;
-  --danger: #dc2626;
+  --signal: #ffb020;
+  --on-signal: #2b2a33;
+  --danger: #c4352b;
+  --shadow: 0 14px 34px rgba(70, 50, 140, 0.1);
 
   --gutter: clamp(1rem, 5vw, 4.5rem);
-  --radius: 10px;
-  --stroke: 1px;
+  --radius: 14px;
+  --radius-card: 24px;
+  --radius-pill: 999px;
+  --stroke: 1.5px;
   color-scheme: light;
 }
 
+/* Escuro: roxo quase preto, com os mesmos contrastes. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --ground: #0b1120;
-    --surface: #111a2e;
-    --ink: #e2e8f0;
-    --ink-soft: #94a3b8;
-    --outline: #64748b;
-    --blue: #60a5fa;
-    --on-blue: #0b1120;
-    --green: #34d399;
-    --on-green: #0b1120;
-    --placeholder: #94a3b8;
-    --signal: #f59e0b;
-    --on-signal: #0b1120;
-    --danger: #f87171;
+    --ground: #17141f;
+    --surface: #211d2e;
+    --ink: #f1eefb;
+    --ink-soft: #b7b0cc;
+    --outline: #7d7794;
+    --line: #342f47;
+    --blue: #a592ff;
+    --on-blue: #17141f;
+    --blue-tint: #2d2650;
+    --on-blue-tint: #cbc2ff;
+    --green: #5fd6b4;
+    --on-green: #17141f;
+    --green-tint: #1d3a34;
+    --on-green-tint: #9eecd3;
+    --placeholder: #a39cba;
+    --signal: #ffbf47;
+    --on-signal: #17141f;
+    --danger: #ff8f85;
+    --shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
     color-scheme: dark;
   }
 }
@@ -82,10 +91,10 @@ body {
   margin: 0;
   background: var(--ground);
   color: var(--ink);
-  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
   font-size: 1.125rem;
-  font-weight: 500;
-  line-height: 1.45;
+  font-weight: 600;
+  line-height: 1.5;
   caret-color: var(--blue);
   scrollbar-color: var(--outline) var(--ground);
 }
@@ -96,7 +105,7 @@ body {
 }
 
 :focus-visible {
-  outline: var(--stroke) solid var(--ink);
+  outline: 3px solid var(--blue);
   outline-offset: 3px;
 }
 
@@ -108,9 +117,9 @@ p {
 
 h1 {
   font-size: clamp(2.25rem, 1.2rem + 4vw, 4.5rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
@@ -132,9 +141,9 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 88px;
+  min-height: 80px;
   padding: 0 var(--gutter);
-  border-bottom: 4px solid var(--outline);
+  border-bottom: 1px solid var(--line);
 }
 
 .brand {
@@ -142,9 +151,9 @@ h1 {
   align-items: center;
   gap: 0.75rem;
   color: inherit;
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.625rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   text-decoration: none;
 }
 
@@ -218,9 +227,10 @@ h1 {
 
 .sign {
   overflow: hidden;
-  border: var(--stroke) solid var(--outline);
-  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
   background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .sign__band {
@@ -229,31 +239,31 @@ h1 {
   gap: 1rem;
   min-height: 72px;
   padding: 0 1.5rem;
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   letter-spacing: -0.01em;
 }
 
 .sign--blue .sign__band {
-  background: var(--blue);
-  color: var(--on-blue);
+  background: var(--blue-tint);
+  color: var(--on-blue-tint);
 }
 
 .sign--green .sign__band {
-  background: var(--green);
-  color: var(--on-green);
+  background: var(--green-tint);
+  color: var(--on-green-tint);
 }
 
 .sign__band .roundel {
   width: 2.5rem;
   height: 2.5rem;
-  background: var(--on-blue);
-  color: var(--blue);
+  background: var(--blue);
+  color: var(--on-blue);
 }
 
 .sign--green .sign__band .roundel {
-  background: var(--on-green);
-  color: var(--green);
+  background: var(--green);
+  color: var(--on-green);
 }
 
 .sign__body {
@@ -326,7 +336,7 @@ input:focus-visible {
   margin-top: 0.5rem;
   overflow: hidden;
   border: var(--stroke) solid var(--outline);
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
 }
 
 .segmented label {
@@ -365,7 +375,7 @@ input:focus-visible {
 }
 
 .segmented input:focus-visible + span {
-  outline: var(--stroke) solid var(--ink);
+  outline: 3px solid var(--blue);
   outline-offset: -6px;
 }
 
@@ -439,10 +449,10 @@ input:focus-visible {
   min-height: 60px;
   place-items: center;
   border: var(--stroke) solid transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   font: inherit;
-  font-size: 1.375rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 800;
   text-decoration: none;
   cursor: pointer;
 }
