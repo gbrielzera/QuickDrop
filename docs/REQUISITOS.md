@@ -146,11 +146,11 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 | ID | Requisito | Prior. | Estado |
 |---|---|---|---|
 | RF-060 | Interface em **português (Brasil) e inglês**, com troca imediata e escolha lembrada; o idioma inicial segue o navegador. | E | ✅ |
-| RF-061 | **Tema claro e escuro** conforme o sistema do aparelho. | I | ✅ |
+| RF-061 | **Tema claro e escuro**: segue o sistema do aparelho e há um **botão discreto no topo** para trocar; a escolha é lembrada neste navegador. | I | ✅ |
 | RF-062 | Layout **pensado primeiro para celular** e que se adapta ao computador. | E | ✅ |
 | RF-063 | **App instalável (PWA)**: manifesto, ícones, cor da barra e página "sem conexão" quando o servidor não responde. O app **não guarda** salas nem arquivos em cache. | D | ✅ |
 | RF-064 | Página **Sobre** com o que o servidor guarda, por quanto tempo e como denunciar abuso (contato configurável). | I | ✅ |
-| RF-065 | Diagrama visual do caminho da transferência ("linhas de metrô") nas telas inicial e da sala. | D | ✅ |
+| RF-065 | Diagrama visual do caminho da transferência (origem, sala e destino) nas telas inicial e da sala. | D | ✅ |
 
 ### 4.6 Operação e administração
 
@@ -232,7 +232,7 @@ Os valores de limites (tamanhos, tempos, quantidades) são **configuráveis** no
 |---|---|---|---|
 | RNF-060 | **Código limpo** conforme `CLAUDE.md` (nomes claros, funções pequenas, comentários que explicam o porquê, tipos). | E | ✅ |
 | RNF-061 | Backend e frontend em **pastas separadas**; a criptografia concentrada em **um só arquivo** do frontend. | E | ✅ |
-| RNF-062 | **Testes automatizados**: 195 no backend e 72 no frontend, com formatação e análise estática (`ruff`). | E | ✅ |
+| RNF-062 | **Testes automatizados**: 198 no backend e 74 no frontend, com formatação e análise estática (`ruff`). | E | ✅ |
 | RNF-063 | Documentação do projeto atualizada (`PLANEJAMENTO.md`, `COMO-RODAR.md`, `DEPLOY.md`, `DESIGN.md`, este documento e o de Visão). | I | ✅ |
 
 ### 5.7 Portabilidade, custo e operação

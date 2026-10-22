@@ -488,7 +488,7 @@ Os requisitos detalhados e os critérios de aceitação estão no [Documento de 
 | Acesso | Cookie assinado por sala + cookie de dono | Sem contas | Dono é o navegador, não a pessoa |
 | Hospedagem | VM do Azure for Students + Docker + Caddy | Grátis (com crédito), HTTPS automático | Crédito de ~7 meses |
 | Operação | GitHub Actions, Dependabot, cron e unattended-upgrades | Sem custo e quase sem manutenção | Depende de o GitHub manter os agendamentos ativos |
-| Design | Sistema visual "Linhas de Metrô" | Diferencia o produto e explica o caminho da transferência | Documentado em `DESIGN.md` |
+| Design | Sistema visual suave "Encontro suave" (violeta, verde, Nunito, cantos arredondados, temas claro e escuro) | Acolhedor e fácil de usar com uma mão; contraste conferido nos dois temas | Documentado em `DESIGN.md` |
 
 ---
 
@@ -509,7 +509,7 @@ Os requisitos detalhados e os critérios de aceitação estão no [Documento de 
 | **Usabilidade** | Transferência concluída sem aprender nada, em poucos passos |
 | **Acessibilidade** | WCAG 2.1 AA (alvo; sem auditoria formal) |
 | **Disponibilidade** | Reinício automático; alerta se o site cair |
-| **Manutenibilidade** | Código limpo, 195 testes no backend e 72 no frontend, documentação atualizada |
+| **Manutenibilidade** | Código limpo, 198 testes no backend e 74 no frontend, documentação atualizada |
 | **Portabilidade** | Docker: o mesmo pacote roda em qualquer servidor |
 
 ---

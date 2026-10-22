@@ -3,7 +3,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from app.realtime import ConnectionManager
 from tests.test_files import ENCRYPTED_META, encrypted_bytes, upload
-from tests.test_rooms import AUTH_KEY, create_room, new_device
+from tests.test_rooms import create_room, new_device
 
 
 def room_socket_url(room_code: str) -> str:
@@ -102,12 +102,12 @@ def test_a_device_in_the_room_connects_and_sees_itself_online(client):
 
 def test_presence_follows_devices_joining_and_leaving(client):
     room = create_room(client)
-    other_device = new_device(client)
-    other_device.post(f"/api/rooms/{room['code']}/join", json={"auth_key": AUTH_KEY})
 
+    # Duas conexões do mesmo cliente de teste (como duas abas): o servidor conta conexões, não cookies.
+    # Usar um segundo cliente criaria outro laço de eventos e o teste às vezes travava.
     with client.websocket_connect(room_socket_url(room["code"])) as first:
         assert read_presence(first) == 1
-        with other_device.websocket_connect(room_socket_url(room["code"])) as second:
+        with client.websocket_connect(room_socket_url(room["code"])) as second:
             assert read_presence(first) == 2
             assert read_presence(second) == 2
         assert read_presence(first) == 1

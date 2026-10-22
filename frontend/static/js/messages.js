@@ -68,6 +68,7 @@ export const messages = {
     "nav.files": "Arquivos",
     "nav.text": "Texto",
     "nav.code": "Código",
+    "theme.toggle": "Alternar entre tema claro e escuro",
     "nav.invite": "Convidar",
 
     "text.title": "Texto compartilhado",
@@ -235,6 +236,7 @@ export const messages = {
     "nav.files": "Files",
     "nav.text": "Text",
     "nav.code": "Code",
+    "theme.toggle": "Switch between light and dark theme",
     "nav.invite": "Invite",
 
     "text.title": "Shared text",

@@ -53,9 +53,10 @@
   color-scheme: light;
 }
 
-/* Escuro: roxo quase preto, com os mesmos contrastes. */
+/* Escuro: roxo quase preto, com os mesmos contrastes. Vale quando o aparelho está no modo escuro e a
+   pessoa não escolheu o claro no botão do topo. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ground: #17141f;
     --surface: #211d2e;
     --ink: #f1eefb;
@@ -77,6 +78,30 @@
     --shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
     color-scheme: dark;
   }
+}
+
+/* Escolha feita no botão do topo: vale sobre o tema do aparelho. */
+:root[data-theme="dark"] {
+  --ground: #17141f;
+  --surface: #211d2e;
+  --ink: #f1eefb;
+  --ink-soft: #b7b0cc;
+  --outline: #7d7794;
+  --line: #342f47;
+  --blue: #a592ff;
+  --on-blue: #17141f;
+  --blue-tint: #2d2650;
+  --on-blue-tint: #cbc2ff;
+  --green: #5fd6b4;
+  --on-green: #17141f;
+  --green-tint: #1d3a34;
+  --on-green-tint: #9eecd3;
+  --placeholder: #a39cba;
+  --signal: #ffbf47;
+  --on-signal: #17141f;
+  --danger: #ff8f85;
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
 }
 
 * {
@@ -177,6 +202,59 @@ h1 {
   stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.theme-toggle {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: var(--blue-tint);
+  color: var(--on-blue-tint);
+}
+
+.theme-toggle svg {
+  width: 1.375rem;
+  height: 1.375rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Mostra a lua no tema claro (leva ao escuro) e o sol no escuro (leva ao claro). */
+.theme-toggle .icon-sun,
+:root[data-theme="dark"] .theme-toggle .icon-moon {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle .icon-sun {
+  display: inline-grid;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon {
+    display: none;
+  }
+
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun {
+    display: inline-grid;
+  }
 }
 
 .language {

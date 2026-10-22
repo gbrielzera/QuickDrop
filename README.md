@@ -61,7 +61,7 @@ O QuickDrop troca isso por uma **sala temporária**: você cria, entra pelo outr
 - **Clips** para guardar trechos de texto e copiar depois.
 
 **Experiência**
-- Pensado primeiro para o **celular**; português do Brasil e inglês; tema claro e escuro; instalável como app (PWA); uso completo por teclado.
+- Pensado primeiro para o **celular**; português do Brasil e inglês; tema claro e escuro (segue o aparelho, com um botão discreto no topo para trocar); instalável como app (PWA); uso completo por teclado.
 
 ## Como funciona
 
@@ -240,11 +240,11 @@ As regras de código do projeto estão em [CLAUDE.md](CLAUDE.md): código simple
 
 ```powershell
 cd backend
-pytest                    # 195 testes do servidor
+pytest                    # 198 testes do servidor
 ruff check . ; ruff format --check .
 
 cd ..\frontend
-npm test                  # 72 testes do JavaScript (criptografia, zip, códigos de sala...)
+npm test                  # 74 testes do JavaScript (criptografia, zip, códigos de sala...)
 ```
 
 - Os testes confirmam, por exemplo, que **nenhum conteúdo legível chega ao banco nem ao disco**, que o convidado não consegue encerrar a sala e que os limites de tamanho e de tentativas funcionam.
@@ -276,7 +276,7 @@ A demonstração roda em uma máquina virtual pequena (1 vCPU e 1 GiB) com Docke
 | [Como rodar](docs/COMO-RODAR.md) | Passo a passo para usar no computador e no celular, e solução de problemas |
 | [Implantação](docs/DEPLOY.md) | Colocar na internet, atualizar e manter |
 | [Planejamento](docs/PLANEJAMENTO.md) | Decisões e histórico de cada fase |
-| [Design](DESIGN.md) · [Produto](PRODUCT.md) | Sistema visual ("Linhas de Metrô") e princípios do produto |
+| [Design](DESIGN.md) · [Produto](PRODUCT.md) | Sistema visual ("Encontro suave": violeta, verde, Nunito, temas claro e escuro) e princípios do produto |
 
 Os arquivos `.docx` são gerados a partir dos `.md`: edite o `.md` e gere de novo.
 

@@ -584,6 +584,17 @@ Teste em celular real (4G): 100 MB enviados em 1 min 36 s e baixados normalmente
 - [x] 195 testes no backend; na produção, entrar com senha caiu de 618 para 540 ms medidos no computador, e a página ficou pronta em ~0,93 s (antes ~1,35 s)
 - [x] **Medido de novo no celular (4G): 2,08 s** para entrar numa sala com senha (eram ~4 s), dentro da meta de ~3 s
 
+### Extra: redesign do front-end e botão de tema ✅
+O autor não gostou do visual "Linhas de Metrô"; a skill `ui-ux-pro-max` foi instalada só neste projeto e apresentou três direções (minimalismo editorial, vidro escuro e suave e amigável). Escolhida: **suave e amigável**.
+- [x] Só a camada visual mudou (CSS, fonte, ícones e algumas referências): o HTML, os identificadores e o JavaScript da lógica ficaram iguais
+- [x] **Cores:** creme, violeta (criar), verde (entrar) e âmbar (tempo); tema escuro em roxo quase preto. **Todos os pares passam**: texto a 4,5:1 ou mais e bordas de campos e botões a 3:1 ou mais, nos dois temas (conferido por cálculo)
+- [x] **Fonte Nunito** (600, 700, 800; licença SIL OFL) hospedada localmente, no lugar da Barlow; cantos de 24 px nos cartões, 14 px nos campos e pílula nos botões; anel de foco violeta de 3 px
+- [x] **Ícones do app** (PWA) redesenhados em violeta, e cores do manifesto e da barra do navegador atualizadas
+- [x] **Botão de tema** no topo (lua/sol), discreto: o tema segue o aparelho até a pessoa escolher; a escolha é lembrada (`localStorage`) e aplicada por um script minúsculo no `<head>` antes da primeira pintura, para a página não piscar. Rótulo acessível em português e inglês e `aria-pressed`
+- [x] `DESIGN.md` reescrito para o sistema novo
+- [x] Correção de um teste de presença que travava de vez em quando (usava dois clientes de teste, cada um com seu laço de eventos): agora usa duas conexões do mesmo cliente
+- [x] 198 testes no backend e 74 no frontend; conferido no navegador em desktop, celular e tema escuro (alternar, lembrar a escolha, escolha "claro" valendo com o aparelho em modo escuro)
+
 ### Fase 8: Internet (no ar em https://quickdrop-syoti.mexicocentral.cloudapp.azure.com; celular na 4G funcionou)
 Hospedagem **grátis**, explicada na seção 14.1. Resumo: **Oracle Cloud Always Free** (uma VM Ubuntu de verdade, ligada 24 h) com **Docker + Caddy** e um endereço grátis do **DuckDNS**.
 
