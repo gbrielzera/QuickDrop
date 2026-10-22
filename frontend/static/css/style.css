@@ -646,32 +646,108 @@ input:focus-visible {
   font-weight: 700;
 }
 
-/* O trem viaja pela linha, saindo da estação de origem e parando no meio do caminho. */
-.route__train {
+/*
+ * O envelope viaja de estação em estação num ciclo de 10 s, parando um instante em cada uma.
+ * Os brilhos das estações usam o mesmo ciclo, então os tempos (em %) combinam com os do envelope:
+ * chega na 1ª perto de 4%, na 2ª perto de 42% e na 3ª perto de 80%.
+ */
+.route__track {
   position: absolute;
-  top: 8px;
-  left: calc(100% / 3);
+  top: 28px;
+  right: calc(100% / 6);
+  left: calc(100% / 6);
+  height: 0;
+  pointer-events: none;
+}
+
+.route__envelope {
+  position: absolute;
   z-index: 2;
-  padding: 0.25rem 1rem;
-  transform: translateX(-50%);
-  border: var(--stroke) solid var(--ink);
-  border-radius: 999px;
-  background: var(--signal);
-  color: var(--on-signal);
-  font-size: 1.125rem;
-  font-weight: 700;
-  animation: ride 2.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 32px;
+  transform: translate(-50%, -50%);
+  fill: var(--signal);
+  stroke: var(--ink);
+  stroke-width: var(--stroke);
+  stroke-linejoin: round;
+  filter: drop-shadow(0 3px 6px var(--shadow));
+  animation: envelope-travel-x 10s linear infinite;
 }
 
-@keyframes ride {
-  from {
-    left: calc(100% / 6 + 5rem);
-  }
+.route__envelope path {
+  fill: none;
 }
 
+@keyframes envelope-travel-x {
+  0% { left: 0; opacity: 0; animation-timing-function: ease-out; }
+  4% { left: 0; opacity: 1; }
+  10% { left: 0; animation-timing-function: cubic-bezier(0.45, 0, 0.25, 1); }
+  38% { left: 50%; }
+  46% { left: 50%; animation-timing-function: cubic-bezier(0.45, 0, 0.25, 1); }
+  76% { left: 100%; opacity: 1; }
+  88% { left: 100%; opacity: 1; animation-timing-function: ease-in; }
+  95%, 100% { left: 100%; opacity: 0; }
+}
+
+@keyframes envelope-travel-y {
+  0% { top: 0; opacity: 0; animation-timing-function: ease-out; }
+  4% { top: 0; opacity: 1; }
+  10% { top: 0; animation-timing-function: cubic-bezier(0.45, 0, 0.25, 1); }
+  38% { top: 50%; }
+  46% { top: 50%; animation-timing-function: cubic-bezier(0.45, 0, 0.25, 1); }
+  76% { top: 100%; opacity: 1; }
+  88% { top: 100%; opacity: 1; animation-timing-function: ease-in; }
+  95%, 100% { top: 100%; opacity: 0; }
+}
+
+/* Brilho suave na borda da estação quando o envelope passa por ela. */
+.route__stations:has(~ .route__track) .station__dot {
+  animation-duration: 10s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+.route__stations:has(~ .route__track) .station:nth-child(1) .station__dot {
+  animation-name: station-glow-first;
+}
+
+.route__stations:has(~ .route__track) .station:nth-child(2) .station__dot {
+  animation-name: station-glow-second;
+}
+
+.route__stations:has(~ .route__track) .station:nth-child(3) .station__dot {
+  animation-name: station-glow-third;
+}
+
+@keyframes station-glow-first {
+  0%, 100% { border-color: var(--ink); box-shadow: none; }
+  4%, 12% { border-color: var(--blue); box-shadow: 0 0 0 5px var(--blue-tint); }
+  22% { border-color: var(--ink); box-shadow: none; }
+}
+
+@keyframes station-glow-second {
+  0%, 34%, 100% { border-color: var(--ink); box-shadow: none; }
+  42%, 48% { border-color: var(--blue); box-shadow: 0 0 0 5px var(--blue-tint); }
+  58% { border-color: var(--ink); box-shadow: none; }
+}
+
+@keyframes station-glow-third {
+  0%, 72%, 100% { border-color: var(--ink); box-shadow: none; }
+  80%, 90% { border-color: var(--green); box-shadow: 0 0 0 5px var(--green-tint); }
+  98% { border-color: var(--ink); box-shadow: none; }
+}
+
+/* Sem animação: o envelope descansa no meio do caminho, dentro da sala. */
 @media (prefers-reduced-motion: reduce) {
-  .route__train {
+  .route__envelope {
+    left: 50%;
     animation: none;
+  }
+
+  .route__stations .station__dot {
+    animation: none !important;
   }
 }
 
@@ -1109,8 +1185,25 @@ textarea:focus-visible {
     font-size: 1.5rem;
   }
 
-  .route__train {
-    display: none;
+  /* Na vertical a trilha acompanha a linha e o envelope desce por ela. */
+  .route__track {
+    top: 28px;
+    right: auto;
+    bottom: 28px;
+    left: 28px;
+    width: 0;
+    height: auto;
+  }
+
+  .route__envelope {
+    left: 0;
+    animation-name: envelope-travel-y;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .route__envelope {
+      top: 50%;
+    }
   }
 }
 

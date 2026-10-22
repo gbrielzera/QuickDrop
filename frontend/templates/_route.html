@@ -1,4 +1,4 @@
-{# Diagrama da rota. A página define `stations` (três itens com name_key, name, detail_key e detail; `id` é opcional e deixa o JavaScript achar a estação) e, se quiser o trem em trânsito, `show_train`. #}
+{# Diagrama da rota. A página define `stations` (três itens com name_key, name, detail_key e detail; `id` é opcional e deixa o JavaScript achar a estação) e, se quiser o envelope viajando entre elas, `show_envelope`. #}
 <div class="route" role="group" aria-label="Caminho do arquivo entre os aparelhos" data-i18n-aria-label="route.label">
   <ol class="route__stations">
     {% for station in stations %}
@@ -13,7 +13,12 @@
     </li>
     {% endfor %}
   </ol>
-  {% if show_train %}
-  <span class="route__train" aria-hidden="true" data-i18n="route.file">arquivo</span>
+  {% if show_envelope %}
+  <span class="route__track" aria-hidden="true">
+    <svg class="route__envelope" viewBox="0 0 36 26" focusable="false">
+      <rect x="1" y="1" width="34" height="24" rx="5"/>
+      <path d="M2 4l16 12L34 4"/>
+    </svg>
+  </span>
   {% endif %}
 </div>

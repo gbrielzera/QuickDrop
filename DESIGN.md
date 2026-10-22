@@ -140,7 +140,7 @@ Creme quente com tinta quase preta, duas cores de função saturadas e um âmbar
 - **Verde** (`green`): entrar, destino. Botão verde, círculo de linha do cartão Entrar, segunda metade da linha do diagrama. Faixa em `green-tint` com texto `on-green-tint`.
 
 ### Tertiary
-- **Âmbar** (`amber`): só tempo restante (etiqueta) e o arquivo em trânsito (cápsula do trem). Também a seleção de texto. Texto sempre `on-amber`.
+- **Âmbar** (`amber`): só tempo restante (etiqueta) e o envelope em trânsito. Também a seleção de texto. Texto sempre `on-amber`.
 
 ### Neutral
 - **Creme** (`ground`) e **Branco** (`surface`): fundo da página e fundo dos cartões e campos.
@@ -217,7 +217,7 @@ Cartões de 24px (`rounded.card`), campos, caixa de código e QR de 14px (`round
 - **QR Code:** sempre tinta escura sobre fundo branco, nos dois temas, para continuar escaneável.
 
 ### Diagrama da rota (assinatura)
-Três estações (aparelho de origem, sala com código e tempo restante, aparelho de destino) sobre uma linha violeta-depois-verde. A cápsula âmbar "arquivo" percorre a linha uma vez ao carregar e para entre a origem e a sala; sob `prefers-reduced-motion` fica parada. O ponto do outro aparelho fica verde quando ele está conectado, e a estação deste aparelho mostra "Sem conexão. Reconectando..." em `danger` quando a conexão cai.
+Três estações (aparelho de origem, sala com código e tempo restante, aparelho de destino) sobre uma linha violeta-depois-verde. Na tela inicial, um envelope âmbar percorre a linha num ciclo suave de 10 s, parando um instante em cada estação, e a borda de cada estação brilha de leve (violeta, e verde no destino) quando ele chega; no celular o caminho é vertical. É decorativo (`aria-hidden`). Sob `prefers-reduced-motion` fica parado na sala, sem brilho. O ponto do outro aparelho fica verde quando ele está conectado, e a estação deste aparelho mostra "Sem conexão. Reconectando..." em `danger` quando a conexão cai.
 
 ## Do's and Don'ts
 

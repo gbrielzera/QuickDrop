@@ -37,7 +37,6 @@ export const messages = {
     "route.otherDeviceOnline": "Conectado",
     "route.otherDevicesOnline": "{count} conectados",
     "route.reconnecting": "Sem conexão. Reconectando...",
-    "route.file": "arquivo",
 
     "files.sendTitle": "Enviar arquivos",
     "files.dropHint": "Arraste arquivos para cá",
@@ -205,7 +204,6 @@ export const messages = {
     "route.otherDeviceOnline": "Connected",
     "route.otherDevicesOnline": "{count} connected",
     "route.reconnecting": "Offline. Reconnecting...",
-    "route.file": "file",
 
     "files.sendTitle": "Send files",
     "files.dropHint": "Drag files here",
