@@ -1,5 +1,5 @@
 # Imagem do QuickDrop: o backend e o frontend juntos, porque o backend serve o frontend.
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
