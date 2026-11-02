@@ -3,17 +3,25 @@ version: 2
 updates:
   - package-ecosystem: pip
     directory: /backend
+    cooldown:
+      default-days: 7  # espera uma semana antes de propor uma versão recém-publicada (pode estar comprometida)
     schedule:
       interval: weekly
   - package-ecosystem: docker
     directory: /
+    cooldown:
+      default-days: 7  # espera uma semana antes de propor uma versão recém-publicada (pode estar comprometida)
     schedule:
       interval: weekly
   - package-ecosystem: docker-compose
     directory: /
+    cooldown:
+      default-days: 7  # espera uma semana antes de propor uma versão recém-publicada (pode estar comprometida)
     schedule:
       interval: weekly
   - package-ecosystem: github-actions
     directory: /
+    cooldown:
+      default-days: 7  # espera uma semana antes de propor uma versão recém-publicada (pode estar comprometida)
     schedule:
       interval: monthly
