@@ -35,6 +35,7 @@ SECURITY_HEADERS = {
     # Isolam a página de janelas e sites de outras origens (nada aqui precisa ser aberto por terceiros).
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Resource-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "require-corp",
 }
 
 RARELY_CHANGING_PATHS = ("/static/js/vendor/", "/static/fonts/", "/static/icons/")

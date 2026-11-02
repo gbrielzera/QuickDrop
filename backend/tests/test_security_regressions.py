@@ -47,6 +47,7 @@ def test_pages_isolate_themselves_from_other_origins(client):
 
     assert headers["cross-origin-opener-policy"] == "same-origin"
     assert headers["cross-origin-resource-policy"] == "same-origin"
+    assert headers["cross-origin-embedder-policy"] == "require-corp"
 
 
 def test_a_device_flooding_the_socket_is_disconnected(client):
