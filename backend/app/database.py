@@ -37,13 +37,15 @@ async def create_tables(engine: AsyncEngine) -> None:
     """Cria as tabelas que ainda não existem e acrescenta as colunas que bancos antigos não têm."""
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
-        await _add_locked_column_if_missing(connection)
+        await _add_column_if_missing(connection, "locked", "BOOLEAN NOT NULL DEFAULT FALSE")
+        await _add_column_if_missing(connection, "session_epoch", "INTEGER NOT NULL DEFAULT 0")
 
 
-async def _add_locked_column_if_missing(connection) -> None:
-    # O create_all não altera tabelas que já existem: bancos antigos não têm a coluna "locked".
+async def _add_column_if_missing(connection, column_name: str, column_definition: str) -> None:
+    # O create_all não altera tabelas que já existem: bancos antigos não têm as colunas mais novas de "rooms".
+    # Os nomes vêm do código (nunca de quem usa o app), então podem entrar direto no comando SQL.
     column_names = await connection.run_sync(
         lambda sync_connection: [column["name"] for column in inspect(sync_connection).get_columns("rooms")]
     )
-    if "locked" not in column_names:
-        await connection.execute(text("ALTER TABLE rooms ADD COLUMN locked BOOLEAN NOT NULL DEFAULT FALSE"))
+    if column_name not in column_names:
+        await connection.execute(text(f"ALTER TABLE rooms ADD COLUMN {column_name} {column_definition}"))

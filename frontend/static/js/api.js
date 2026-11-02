@@ -69,6 +69,11 @@ export function lockRoom(code, locked) {
   return request("PUT", `/api/rooms/${code}/lock`, { locked });
 }
 
+/** Remove os outros aparelhos e tranca a sala (só o dono pode). */
+export function kickOtherDevices(code) {
+  return request("POST", `/api/rooms/${code}/kick-others`);
+}
+
 /** Encerra a sala: apaga tudo o que havia nela. */
 export function deleteRoom(code) {
   return request("DELETE", `/api/rooms/${code}`);

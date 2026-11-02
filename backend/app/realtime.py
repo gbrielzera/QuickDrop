@@ -8,6 +8,8 @@ import asyncio
 
 from fastapi import WebSocket
 
+WEBSOCKET_POLICY_VIOLATION = 1008
+
 
 class ConnectionManager:
     """Guarda os WebSockets abertos de cada sala."""
@@ -38,6 +40,15 @@ class ConnectionManager:
         for websocket in sockets:
             try:
                 await websocket.close()
+            except Exception:
+                pass  # a conexão já tinha caído
+
+    async def disconnect_all(self, room_code: str) -> None:
+        """Fecha todas as conexões da sala (quem ainda tiver sessão válida reconecta sozinho)."""
+        sockets = list(self._sockets_by_room.pop(room_code, set()))
+        for websocket in sockets:
+            try:
+                await websocket.close(code=WEBSOCKET_POLICY_VIOLATION)
             except Exception:
                 pass  # a conexão já tinha caído
 

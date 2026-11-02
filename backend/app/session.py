@@ -12,6 +12,7 @@ SESSION_SALT = "room-session"
 OWNER_SALT = "room-owner"
 MINIMUM_COOKIE_SECONDS = 1
 HOST_COOKIE_PREFIX = "__Host-"
+SESSION_PAYLOAD_LENGTH = 2
 
 
 def _cookie_prefix() -> str:
@@ -35,27 +36,31 @@ def _serializer(salt: str = SESSION_SALT) -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(get_settings().secret_key, salt=salt)
 
 
-def create_session_token(room_id: str) -> str:
-    """Cria um token assinado que prova que o dispositivo entrou na sala."""
-    return _serializer().dumps(room_id)
+def create_session_token(room_id: str, session_epoch: int = 0) -> str:
+    """Cria um token assinado que prova que o dispositivo entrou na sala (nesta "época" de sessões)."""
+    return _serializer().dumps([room_id, session_epoch])
 
 
-def read_session_token(token: str) -> str | None:
-    """Devolve o id da sala guardado no token, ou None se o token for falso ou adulterado."""
+def read_session_token(token: str) -> tuple[str, int] | None:
+    """Devolve (id da sala, época) guardados no token, ou None se o token for falso, adulterado ou antigo."""
     try:
-        return _serializer().loads(token)
+        payload = _serializer().loads(token)
     except BadSignature:
         return None
+    if not isinstance(payload, list) or len(payload) != SESSION_PAYLOAD_LENGTH:
+        return None
+    return payload[0], payload[1]
 
 
 def has_session_for_room(cookies: Mapping[str, str], room: Room) -> bool:
     """True se os cookies provam que este dispositivo entrou na sala.
 
     O token guarda o id interno da sala, não o código: se um dia outra sala receber um código antigo,
-    os cookies da sala anterior não valem nela.
+    os cookies da sala anterior não valem nela. A época faz os cookies antigos morrerem quando o dono
+    remove os outros aparelhos.
     """
     token = cookies.get(session_cookie_name(room.code))
-    return token is not None and read_session_token(token) == room.id
+    return token is not None and read_session_token(token) == (room.id, room.session_epoch)
 
 
 def is_room_owner(cookies: Mapping[str, str], room: Room) -> bool:
@@ -84,7 +89,9 @@ def _set_room_cookie(response: Response, room: Room, name: str, value: str) -> N
 
 def set_session_cookie(response: Response, room: Room) -> None:
     """Dá ao dispositivo o cookie da sala. Ele deixa de valer junto com a sala."""
-    _set_room_cookie(response, room, session_cookie_name(room.code), create_session_token(room.id))
+    _set_room_cookie(
+        response, room, session_cookie_name(room.code), create_session_token(room.id, room.session_epoch)
+    )
 
 
 def set_owner_cookie(response: Response, room: Room) -> None:

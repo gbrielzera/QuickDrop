@@ -86,7 +86,7 @@ export async function createRoom({ ttlHours, password }) {
   await waitForNextPaint();
   const secret = password || generateRoomSecret();
   const salt = generateSalt();
-  const { authKey, encryptionKey } = deriveRoomKeys(secret, salt);
+  const { authKey, encryptionKey } = deriveRoomKeys(secret, salt, Boolean(password));
 
   const room = await api.createRoom({
     ttlHours,
@@ -114,8 +114,8 @@ export async function getRoomParams(roomCode) {
 /** Entra numa sala com o segredo (ou senha) e devolve os dados da sala. Lança ApiError(401) se estiver errado. */
 export async function joinRoom(roomCode, secret) {
   await waitForNextPaint();
-  const { kdfSalt } = await getRoomParams(roomCode);
-  const { authKey, encryptionKey } = deriveRoomKeys(secret, kdfSalt);
+  const { kdfSalt, hasPassword } = await getRoomParams(roomCode);
+  const { authKey, encryptionKey } = deriveRoomKeys(secret, kdfSalt, hasPassword);
 
   const room = await api.joinRoom(roomCode, toBase64Url(authKey));
   saveEncryptionKey(roomCode, encryptionKey);

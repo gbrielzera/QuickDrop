@@ -14,12 +14,12 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.config import get_settings
 from app.dependencies import RoomCode
 from app.rate_limit import RateLimiter, normalize_address
+from app.realtime import WEBSOCKET_POLICY_VIOLATION
 from app.room_service import find_active_room
 from app.session import has_session_for_room
 
 router = APIRouter()
 
-WEBSOCKET_POLICY_VIOLATION = 1008
 WEBSOCKET_UNSUPPORTED_DATA = 1003
 # O navegador manda um "ping" a cada 25 segundos; este teto é bem acima disso e só pega quem inunda a sala.
 MAX_MESSAGES_PER_MINUTE = 30

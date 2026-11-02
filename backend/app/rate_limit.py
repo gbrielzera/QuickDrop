@@ -96,6 +96,42 @@ class ConcurrentLimiter:
             self._active_by_key.pop(key, None)
 
 
+class ActiveRoomsQuota:
+    """Quantas salas ainda abertas cada chave (ex.: um endereço IP) criou.
+
+    Fica só na memória e some quando a sala expira (ou o servidor reinicia): não guardamos quem criou
+    cada sala no banco. Encerrar uma sala antes da hora não devolve a vaga, o que é aceitável: o limite
+    é alto e existe para impedir que poucos endereços ocupem todas as salas do servidor.
+    """
+
+    def __init__(self, max_rooms: int) -> None:
+        self._max_rooms = max_rooms
+        self._expirations_by_key: dict[str, list[float]] = {}
+
+    def _open_rooms(self, key: str) -> list[float]:
+        expirations = [moment for moment in self._expirations_by_key.get(key, []) if moment > _now()]
+        if expirations:
+            self._expirations_by_key[key] = expirations
+        else:
+            self._expirations_by_key.pop(key, None)
+        return expirations
+
+    def is_full(self, key: str) -> bool:
+        """True se a chave já tem o máximo de salas abertas."""
+        return len(self._open_rooms(key)) >= self._max_rooms
+
+    def record(self, key: str, seconds_until_expiry: int) -> None:
+        """Anota uma sala nova, que deixa de contar quando expirar."""
+        expirations = self._open_rooms(key)
+        expirations.append(_now() + seconds_until_expiry)
+        self._expirations_by_key[key] = expirations
+
+    def forget_idle_keys(self) -> None:
+        """Libera a memória das chaves sem nenhuma sala aberta."""
+        for key in list(self._expirations_by_key):
+            self._open_rooms(key)
+
+
 @dataclass
 class RateLimits:
     """Todos os limites do app."""
@@ -107,6 +143,7 @@ class RateLimits:
     api_requests: RateLimiter  # teto geral de pedidos à API (por IP)
     uploads: RateLimiter  # arquivos enviados (por IP)
     concurrent_uploads: ConcurrentLimiter  # envios em andamento (por IP)
+    active_rooms: ActiveRoomsQuota  # salas abertas por IP
 
     def forget_idle_keys(self) -> None:
         for limiter in (
@@ -118,6 +155,7 @@ class RateLimits:
             self.uploads,
         ):
             limiter.forget_idle_keys()
+        self.active_rooms.forget_idle_keys()
 
 
 def create_rate_limits(settings: Settings) -> RateLimits:
@@ -132,6 +170,7 @@ def create_rate_limits(settings: Settings) -> RateLimits:
         api_requests=RateLimiter(settings.rate_limit_api_per_minute, SECONDS_PER_MINUTE),
         uploads=RateLimiter(settings.rate_limit_uploads_per_hour, SECONDS_PER_HOUR),
         concurrent_uploads=ConcurrentLimiter(settings.max_concurrent_uploads_per_address),
+        active_rooms=ActiveRoomsQuota(settings.max_active_rooms_per_address),
     )
 
 

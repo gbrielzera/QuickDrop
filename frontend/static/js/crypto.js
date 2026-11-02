@@ -23,9 +23,18 @@ const ENCRYPTION_KEY_ID = 2;
 // não consegue trocar um pelo outro.
 const PURPOSE_KEY_IDS = { meta: 10, text: 11, source: 12, clip: 13, codeClip: 14, file: 15 };
 
-// Argon2id "interactive": rápido o bastante para celulares (cerca de 64 MB de memória).
-const ARGON2_OPS_LIMIT = sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE;
-const ARGON2_MEMORY_LIMIT = sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE;
+// Segredo gerado pelo app (59 bits aleatórios): Argon2id "interactive" basta e é rápido no celular (64 MB).
+const GENERATED_SECRET_ARGON2 = {
+  opsLimit: sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
+  memoryLimit: sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
+};
+// Senha escolhida por uma pessoa costuma ter bem menos aleatoriedade: o cálculo fica mais caro para
+// encarecer um ataque que teste senhas (por exemplo, de quem tem o banco de dados do servidor).
+// 128 MB e 3 passadas ainda rodam em celulares comuns (cerca de meio segundo num computador).
+const CHOSEN_PASSWORD_ARGON2 = {
+  opsLimit: sodium.crypto_pwhash_OPSLIMIT_MODERATE,
+  memoryLimit: 128 * 1024 * 1024,
+};
 
 // Arquivos são criptografados em blocos de 1 MB para não precisar do arquivo inteiro na memória.
 const FILE_CHUNK_BYTES = 1024 * 1024;
@@ -75,14 +84,17 @@ export function generateRoomSecret() {
  * - authKey: enviada ao servidor para provar que quem entra conhece a senha.
  * - encryptionKey: usada para criptografar tudo; nunca é enviada.
  * O servidor não consegue calcular a encryptionKey a partir da authKey.
+ * `isChosenPassword` é true quando a pessoa escolheu a senha (e false para o segredo gerado pelo app):
+ * quem cria e quem entra precisam usar o mesmo valor, senão as chaves não coincidem.
  */
-export function deriveRoomKeys(password, salt) {
+export function deriveRoomKeys(password, salt, isChosenPassword) {
+  const { opsLimit, memoryLimit } = isChosenPassword ? CHOSEN_PASSWORD_ARGON2 : GENERATED_SECRET_ARGON2;
   const masterKey = sodium.crypto_pwhash(
     KEY_BYTES,
     password,
     salt,
-    ARGON2_OPS_LIMIT,
-    ARGON2_MEMORY_LIMIT,
+    opsLimit,
+    memoryLimit,
     sodium.crypto_pwhash_ALG_ARGON2ID13,
   );
   const authKey = sodium.crypto_kdf_derive_from_key(KEY_BYTES, AUTH_KEY_ID, KDF_CONTEXT, masterKey);

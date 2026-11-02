@@ -7,7 +7,7 @@ from app.config import get_settings
 from app.dependencies import Connections, CurrentRoom, Database, Limits, RoomCode
 from app.encoding import from_base64url, to_base64url
 from app.models import Room
-from app.rate_limit import block_if_over_limit, client_address, count_attempt
+from app.rate_limit import SECONDS_PER_HOUR, block_if_over_limit, client_address, count_attempt
 from app.room_service import (
     REASON_CLOSED,
     RoomCodeUnavailableError,
@@ -34,6 +34,7 @@ router = APIRouter(prefix="/api/rooms", tags=["salas"])
 SERVER_FULL = "server_full"
 NOT_OWNER = "not_owner"
 ROOM_LOCKED = "room_locked"
+TOO_MANY_ROOMS = "too_many_rooms"
 
 
 async def _get_active_room_or_404(db: AsyncSession, room_code: str) -> Room:
@@ -48,7 +49,10 @@ async def create_new_room(
     body: CreateRoomRequest, request: Request, response: Response, db: Database, limits: Limits
 ) -> CreateRoomResponse:
     """Cria uma sala. Quem cria já entra nela (recebe o cookie de sessão)."""
-    count_attempt(limits.room_creations, client_address(request))
+    address = client_address(request)
+    count_attempt(limits.room_creations, address)
+    if limits.active_rooms.is_full(address):
+        raise HTTPException(status_code=429, detail=TOO_MANY_ROOMS)
     if await count_active_rooms(db) >= get_settings().max_active_rooms:
         raise HTTPException(status_code=503, detail=SERVER_FULL)
     try:
@@ -62,6 +66,7 @@ async def create_new_room(
     except RoomCodeUnavailableError as error:
         raise HTTPException(status_code=503, detail="Tente criar a sala de novo.") from error
 
+    limits.active_rooms.record(address, seconds_until_expiry=body.ttl_hours * SECONDS_PER_HOUR)
     set_session_cookie(response, room)
     set_owner_cookie(response, room)
     return CreateRoomResponse(code=room.code, expires_at=room.expires_at_utc)
@@ -120,6 +125,24 @@ async def lock_room(body: LockRoomRequest, room: CurrentRoom, request: Request, 
     room.locked = body.locked
     db.add(room)
     await db.commit()
+    return _to_room_response(room, request)
+
+
+@router.post("/{code}/kick-others")
+async def kick_other_devices(
+    room: CurrentRoom, request: Request, response: Response, db: Database, connections: Connections
+) -> RoomResponse:
+    """Remove todos os outros aparelhos e tranca a sala. Só o dono pode.
+
+    Trancar junto é o que dá sentido à remoção: sem isso, quem sabe o link entraria de novo na hora.
+    """
+    _require_owner(request, room)
+    room.session_epoch += 1
+    room.locked = True
+    db.add(room)
+    await db.commit()
+    set_session_cookie(response, room)  # o dono continua dentro, com a sessão da nova época
+    await connections.disconnect_all(room.code)
     return _to_room_response(room, request)
 
 

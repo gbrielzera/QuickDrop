@@ -24,7 +24,7 @@ const fileResult = document.getElementById("file-result");
 
 // Chaves de teste: a mesma sala falsa serve para o texto e para o arquivo.
 function createTestKeys() {
-  return deriveRoomKeys(generateRoomSecret(), generateSalt()).encryptionKey;
+  return deriveRoomKeys(generateRoomSecret(), generateSalt(), false).encryptionKey;
 }
 
 // Dá ao navegador a chance de mostrar "Calculando..." antes de o cálculo pesado travar a tela.
@@ -41,7 +41,7 @@ async function measureKeyDerivation() {
   await waitForNextPaint();
 
   const startedAt = performance.now();
-  deriveRoomKeys(generateRoomSecret(), generateSalt());
+  deriveRoomKeys(generateRoomSecret(), generateSalt(), false);
   measureResult.textContent = `Derivar as chaves levou ${formatMilliseconds(performance.now() - startedAt)}.`;
 }
 

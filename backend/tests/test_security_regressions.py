@@ -112,3 +112,87 @@ def test_on_https_the_cookies_use_the_host_prefix(https_client):
 
     assert any(name.startswith("__Host-room_") for name in names)
     assert any(name.startswith("__Host-owner_") for name in names)
+
+
+# ---------- remover os outros aparelhos ----------
+
+
+def test_the_owner_removes_other_devices_and_locks_the_room(client):
+    from tests.test_rooms import AUTH_KEY, new_device
+
+    room = create_room(client)
+    guest = new_device(client)
+    assert guest.post(f"/api/rooms/{room['code']}/join", json={"auth_key": AUTH_KEY}).status_code == 200
+    assert guest.get(f"/api/rooms/{room['code']}").status_code == 200
+
+    response = client.post(f"/api/rooms/{room['code']}/kick-others")
+
+    assert response.status_code == 200
+    assert response.json()["is_locked"] is True
+    assert guest.get(f"/api/rooms/{room['code']}").status_code == 401  # o cookie antigo morreu
+    assert guest.post(f"/api/rooms/{room['code']}/join", json={"auth_key": AUTH_KEY}).status_code == 403
+    assert client.get(f"/api/rooms/{room['code']}").status_code == 200  # o dono continua dentro
+
+
+def test_a_guest_cannot_remove_other_devices(client):
+    from tests.test_rooms import AUTH_KEY, new_device
+
+    room = create_room(client)
+    guest = new_device(client)
+    guest.post(f"/api/rooms/{room['code']}/join", json={"auth_key": AUTH_KEY})
+
+    assert guest.post(f"/api/rooms/{room['code']}/kick-others").status_code == 403
+    assert guest.get(f"/api/rooms/{room['code']}").status_code == 200
+
+
+def test_removing_other_devices_closes_their_sockets(client):
+    from tests.test_rooms import AUTH_KEY, new_device
+
+    room = create_room(client)
+    guest = new_device(client)
+    guest.post(f"/api/rooms/{room['code']}/join", json={"auth_key": AUTH_KEY})
+
+    with guest.websocket_connect(room_socket_url(room["code"])) as socket:
+        socket.receive_json()  # presença
+        client.post(f"/api/rooms/{room['code']}/kick-others")
+        try:
+            while True:
+                socket.receive_json()
+        except WebSocketDisconnect as disconnect:
+            assert disconnect.code == 1008
+
+
+def test_old_style_session_tokens_are_refused():
+    from app.session import create_session_token, read_session_token
+
+    assert read_session_token(create_session_token("room-id", 3)) == ("room-id", 3)
+    assert read_session_token("token-invalido") is None
+
+
+# ---------- salas abertas por origem ----------
+
+
+def test_one_address_cannot_hold_unlimited_open_rooms(tmp_path, monkeypatch):
+    from tests.conftest import start_test_client
+    from tests.test_rooms import create_room_payload
+
+    for client in start_test_client(tmp_path, monkeypatch, debug=False, MAX_ACTIVE_ROOMS_PER_ADDRESS="2"):
+        assert client.post("/api/rooms", json=create_room_payload()).status_code == 201
+        assert client.post("/api/rooms", json=create_room_payload()).status_code == 201
+
+        response = client.post("/api/rooms", json=create_room_payload())
+
+        assert response.status_code == 429
+        assert response.json()["detail"] == "too_many_rooms"
+
+
+def test_the_room_quota_frees_up_when_the_rooms_expire():
+    from app.rate_limit import ActiveRoomsQuota
+
+    quota = ActiveRoomsQuota(max_rooms=1)
+    quota.record("a", seconds_until_expiry=0)
+    assert not quota.is_full("a")
+
+    quota.record("a", seconds_until_expiry=3600)
+    assert quota.is_full("a")
+    assert not quota.is_full("b")

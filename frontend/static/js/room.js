@@ -1,6 +1,6 @@
 // Página da sala: entra na sala (pelo link, pela chave guardada ou pela senha) e mostra como convidar outros aparelhos.
 
-import { ApiError, deleteRoom, getRoom, lockRoom } from "./api.js";
+import { ApiError, deleteRoom, getRoom, kickOtherDevices, lockRoom } from "./api.js";
 import { errorMessageKey } from "./errors.js";
 import { onLanguageChange, startLanguageSwitcher, t } from "./i18n.js";
 import { createQrCodeSvg } from "./qr.js";
@@ -48,6 +48,7 @@ const otherDeviceStation = document.getElementById("device-other");
 const closeRoomButton = document.getElementById("close-room");
 const guestNote = document.getElementById("room-guest-note");
 const lockRoomButton = document.getElementById("lock-room");
+const kickOthersButton = document.getElementById("kick-others");
 const lockedNote = document.getElementById("room-locked-note");
 
 let expiresAt = null;
@@ -126,6 +127,18 @@ async function toggleRoomLock() {
   clearMessage(status);
   try {
     const room = await runWithBusyButton(lockRoomButton, "room.locking", () => lockRoom(roomCode, !roomIsLocked));
+    renderLockState(room.is_locked);
+  } catch (error) {
+    showMessage(status, errorMessageKey(error));
+  }
+}
+
+// Remove os outros aparelhos e tranca a sala: quem já sabe o link não consegue voltar.
+async function kickOthers(button) {
+  const status = document.getElementById("room-action-status");
+  clearMessage(status);
+  try {
+    const room = await runWithBusyButton(button, "room.locking", () => kickOtherDevices(roomCode));
     renderLockState(room.is_locked);
   } catch (error) {
     showMessage(status, errorMessageKey(error));
@@ -230,6 +243,7 @@ async function showRoom(knownRoom = null) {
   // Só quem criou a sala vê o botão de encerrar; os convidados veem uma explicação.
   closeRoomButton.hidden = !room.is_owner;
   lockRoomButton.hidden = !room.is_owner;
+  kickOthersButton.hidden = !room.is_owner;
   guestNote.hidden = room.is_owner;
   renderLockState(room.is_locked);
   renderShareOptions();
@@ -321,6 +335,7 @@ async function start() {
   });
   passwordForm.addEventListener("submit", handlePasswordSubmit);
   setUpConfirmButton(closeRoomButton, "room.closeConfirm", closeRoom);
+  setUpConfirmButton(kickOthersButton, "room.kickConfirm", kickOthers);
   lockRoomButton.addEventListener("click", toggleRoomLock);
   linkInput.addEventListener("focus", () => linkInput.select());
   setUpCopyButton(document.getElementById("copy-link"), () => linkInput.value, copyStatus);

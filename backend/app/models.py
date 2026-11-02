@@ -38,6 +38,9 @@ class Room(Base):
     # Sala trancada: ninguém novo entra (quem já entrou continua). Só o dono tranca e destranca.
     locked: Mapped[bool] = mapped_column(default=False, server_default="0")
 
+    # Sobe 1 quando o dono remove os outros aparelhos: os cookies de sessão antigos deixam de valer.
+    session_epoch: Mapped[int] = mapped_column(default=0, server_default="0")
+
     created_at: Mapped[datetime] = mapped_column(default=utc_now)
     expires_at: Mapped[datetime] = mapped_column(index=True)
 

@@ -230,3 +230,11 @@ test("arquivo: o identificador muda a cada arquivo e é o cabeçalho do conteúd
   assert.notEqual(await readFileStreamId(first), await readFileStreamId(second));
   assert.equal(fromBase64Url(await readFileStreamId(first)).length, FILE_HEADER_BYTES);
 });
+
+test("senha escolhida e segredo gerado usam parâmetros diferentes (e cada um é estável)", () => {
+  const generated = deriveRoomKeys("mesma-entrada", salt, false);
+  const chosen = deriveRoomKeys("mesma-entrada", salt, true);
+
+  assert.notDeepEqual(chosen.authKey, generated.authKey);
+  assert.deepEqual(deriveRoomKeys("mesma-entrada", salt, true).authKey, chosen.authKey);
+});
