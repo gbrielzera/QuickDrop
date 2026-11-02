@@ -30,6 +30,16 @@ def _comes_from_this_site(websocket: WebSocket) -> bool:
     return urlparse(origin).netloc == websocket.headers.get("host")
 
 
+def _is_over_rate_limit(websocket: WebSocket) -> bool:
+    """True se este endereço IP já abriu conexões demais; senão, anota esta tentativa."""
+    limiter = websocket.app.state.rate_limits.api_requests
+    address = websocket.client.host if websocket.client else "unknown"
+    if limiter.is_blocked(address):
+        return True
+    limiter.record(address)
+    return False
+
+
 async def _may_join(websocket: WebSocket, room_code: str) -> bool:
     """True se a conexão vem deste site, a sala existe e o aparelho entrou nela."""
     if not _comes_from_this_site(websocket):
@@ -45,7 +55,7 @@ async def room_socket(websocket: WebSocket, code: RoomCode) -> None:
     """Mantém a conexão de um aparelho com a sala. Só entra quem tem o cookie da sala."""
     connections = websocket.app.state.connections
     room_is_crowded = connections.count(code) >= get_settings().max_connections_per_room
-    if room_is_crowded or not await _may_join(websocket, code):
+    if room_is_crowded or _is_over_rate_limit(websocket) or not await _may_join(websocket, code):
         await websocket.close(code=WEBSOCKET_POLICY_VIOLATION)
         return
 

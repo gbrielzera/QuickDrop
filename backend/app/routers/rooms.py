@@ -94,8 +94,11 @@ async def join_room(
     # Quem errou a senha várias vezes espera um pouco, mesmo que a próxima tentativa esteja certa.
     failed_joins_key = f"{address}:{code}"
     block_if_over_limit(limits.failed_joins, failed_joins_key)
+    # Teto por sala: quem usa muitos IPs diferentes não escapa do limite por IP.
+    block_if_over_limit(limits.failed_joins_by_room, code)
     if not verify_auth_key(body.auth_key, room.auth_hash):
         limits.failed_joins.record(failed_joins_key)
+        limits.failed_joins_by_room.record(code)
         security_events.record(FAILED_JOIN)
         raise HTTPException(status_code=401, detail="Senha incorreta.")
     limits.failed_joins.reset(failed_joins_key)

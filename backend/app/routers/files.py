@@ -139,7 +139,14 @@ async def upload_file(
         if full_error is not None:
             storage.delete_file(room.id, file_id)
             raise HTTPException(status_code=full_error[0], detail=full_error[1])
-        stored_file = await file_service.save_file_record(db, room.id, file_id, encrypted_meta, size_bytes)
+        try:
+            stored_file = await file_service.save_file_record(
+                db, room.id, file_id, encrypted_meta, size_bytes
+            )
+        except Exception:
+            # Ex.: a sala foi encerrada durante o envio. Sem registro, o arquivo ficaria órfão no disco.
+            storage.delete_file(room.id, file_id)
+            raise
     file_response = _to_file_response(stored_file)
     await connections.broadcast(
         room.code, {"type": "file_added", "file": file_response.model_dump(mode="json")}

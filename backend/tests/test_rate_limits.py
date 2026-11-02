@@ -171,3 +171,23 @@ def test_too_many_rooms_created_from_the_same_address_are_refused(strict_limits_
     statuses = [client.post("/api/rooms", json=create_room_payload()).status_code for _ in range(3)]
 
     assert statuses == [201, 201, 429]
+
+
+def test_example_secret_key_is_refused(monkeypatch):
+    from pydantic import ValidationError
+
+    from app.config import Settings
+
+    monkeypatch.setenv("SECRET_KEY", "troque-por-um-valor-aleatorio-longo")
+    with pytest.raises(ValidationError):
+        Settings()
+
+
+def test_wrong_passwords_are_limited_per_room_across_all_devices(room_limit_client):
+    code = create_room(room_limit_client)["code"]
+    join_url = f"/api/rooms/{code}/join"
+    wrong_key = {"auth_key": OTHER_AUTH_KEY}
+
+    statuses = [new_device(room_limit_client).post(join_url, json=wrong_key).status_code for _ in range(3)]
+
+    assert statuses == [401, 401, 429]

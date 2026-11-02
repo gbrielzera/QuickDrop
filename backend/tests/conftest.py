@@ -20,6 +20,7 @@ def start_test_client(tmp_path, monkeypatch, debug: bool, **extra_settings: str)
     monkeypatch.setenv("STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{tmp_path / 'test.db'}")
     monkeypatch.setenv("DEBUG", "true" if debug else "false")
+    monkeypatch.setenv("COOKIE_SECURE", "false")  # o cliente de teste fala HTTP
     for name, value in extra_settings.items():
         monkeypatch.setenv(name, value)
     get_settings.cache_clear()
@@ -86,4 +87,12 @@ def small_server_client(tmp_path, monkeypatch):
     """Cliente de teste de um servidor pequeno: 2 MB de arquivos no total e no máximo 2 salas ativas."""
     yield from start_test_client(
         tmp_path, monkeypatch, debug=False, MAX_TOTAL_STORAGE_MB="2", MAX_ACTIVE_ROOMS="2"
+    )
+
+
+@pytest.fixture
+def room_limit_client(tmp_path, monkeypatch):
+    """Cliente de teste que só aceita 2 senhas erradas por sala (somando todos os IPs)."""
+    yield from start_test_client(
+        tmp_path, monkeypatch, debug=False, RATE_LIMIT_FAILED_JOINS_PER_ROOM_PER_MINUTE="2"
     )

@@ -73,6 +73,7 @@ class RateLimits:
 
     lookups: RateLimiter  # consultas ao código de uma sala (por IP)
     failed_joins: RateLimiter  # senhas erradas numa sala (por IP e sala)
+    failed_joins_by_room: RateLimiter  # senhas erradas numa sala, de todos os IPs juntos
     room_creations: RateLimiter  # salas criadas (por IP)
     api_requests: RateLimiter  # teto geral de pedidos à API (por IP)
     uploads: RateLimiter  # arquivos enviados (por IP)
@@ -81,6 +82,7 @@ class RateLimits:
         for limiter in (
             self.lookups,
             self.failed_joins,
+            self.failed_joins_by_room,
             self.room_creations,
             self.api_requests,
             self.uploads,
@@ -93,6 +95,9 @@ def create_rate_limits(settings: Settings) -> RateLimits:
     return RateLimits(
         lookups=RateLimiter(settings.rate_limit_lookups_per_minute, SECONDS_PER_MINUTE),
         failed_joins=RateLimiter(settings.rate_limit_failed_joins_per_minute, SECONDS_PER_MINUTE),
+        failed_joins_by_room=RateLimiter(
+            settings.rate_limit_failed_joins_per_room_per_minute, SECONDS_PER_MINUTE
+        ),
         room_creations=RateLimiter(settings.rate_limit_room_creations_per_hour, SECONDS_PER_HOUR),
         api_requests=RateLimiter(settings.rate_limit_api_per_minute, SECONDS_PER_MINUTE),
         uploads=RateLimiter(settings.rate_limit_uploads_per_hour, SECONDS_PER_HOUR),

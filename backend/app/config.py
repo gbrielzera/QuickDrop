@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BACKEND_DIR.parent / "frontend"
+EXAMPLE_SECRET_KEY_PREFIX = "troque-por"
 BYTES_PER_KILOBYTE = 1024
 BYTES_PER_MEGABYTE = 1024 * 1024
 
@@ -21,7 +22,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Assina o cookie de sessão das salas. Obrigatória: sem ela, qualquer um poderia forjar cookies.
-    secret_key: str = Field(min_length=16)
+    secret_key: str = Field(min_length=32)
 
     database_url: str = f"sqlite+aiosqlite:///{BACKEND_DIR / 'quickdrop.db'}"
     storage_dir: Path = BACKEND_DIR / "storage"
@@ -50,6 +51,7 @@ class Settings(BaseSettings):
     # Limites de tentativas, para ninguém ficar adivinhando códigos e senhas nem criando salas sem parar.
     rate_limit_lookups_per_minute: int = 30  # consultas e entradas por endereço IP
     rate_limit_failed_joins_per_minute: int = 5  # senhas erradas por IP e sala
+    rate_limit_failed_joins_per_room_per_minute: int = 20  # senhas erradas numa sala, somando todos os IPs
     rate_limit_room_creations_per_hour: int = 20  # salas criadas por IP
     rate_limit_api_per_minute: int = 600  # pedidos à API por IP (teto geral, bem acima do uso normal)
     rate_limit_uploads_per_hour: int = 120  # arquivos enviados por IP
@@ -58,8 +60,8 @@ class Settings(BaseSettings):
     allowed_ttl_hours: str = "1,12,24,48"
     default_ttl_hours: int = 12
 
-    # Ligue (COOKIE_SECURE=true) quando o site estiver em HTTPS, para o cookie nunca trafegar em HTTP.
-    cookie_secure: bool = False
+    # Por padrão o cookie só trafega em HTTPS. Em desenvolvimento local (HTTP), use COOKIE_SECURE=false.
+    cookie_secure: bool = True
 
     @property
     def ttl_options(self) -> list[int]:
@@ -89,6 +91,13 @@ class Settings(BaseSettings):
     @property
     def max_code_clip_size_bytes(self) -> int:
         return self.max_code_clip_size_kb * BYTES_PER_KILOBYTE
+
+    @model_validator(mode="after")
+    def check_secret_key_is_not_the_example(self) -> "Settings":
+        """Impede iniciar com a chave de exemplo dos arquivos .env.*example, que é pública."""
+        if self.secret_key.startswith(EXAMPLE_SECRET_KEY_PREFIX):
+            raise ValueError("SECRET_KEY ainda é o valor de exemplo: gere uma chave aleatória.")
+        return self
 
     @model_validator(mode="after")
     def check_default_ttl_is_an_option(self) -> "Settings":

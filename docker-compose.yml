@@ -19,6 +19,10 @@ services:
       COOKIE_SECURE: "true"
       DATABASE_URL: sqlite+aiosqlite:////data/quickdrop.db
       STORAGE_DIR: /data/storage
+      # Só o Caddy (nesta rede) pode dizer qual é o IP do visitante; senão alguém burlaria os limites.
+      FORWARDED_ALLOW_IPS: 172.28.0.0/24
+    networks:
+      - internal
     volumes:
       - quickdrop-data:/data
 
@@ -28,6 +32,8 @@ services:
     logging: *limited-logs
     depends_on:
       - app
+    networks:
+      - internal
     ports:
       - "80:80"
       - "443:443"
@@ -38,6 +44,12 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
+
+networks:
+  internal:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
 
 volumes:
   quickdrop-data:

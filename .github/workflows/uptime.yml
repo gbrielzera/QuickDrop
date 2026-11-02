@@ -14,6 +14,7 @@ jobs:
     steps:
       - name: Conferir que o QuickDrop responde
         run: |
+          # HEALTH_URL (Settings > Variables do repositório): endereço do /api/health, fora do código público.
           # --fail: erro HTTP (5xx etc.) vira falha. O certificado inválido ou vencido também falha.
           curl --fail --silent --show-error --max-time 20 --retry 2 --retry-delay 15 --retry-all-errors \
-            https://quickdrop-syoti.mexicocentral.cloudapp.azure.com/api/health | grep -q '"status":"ok"'
+            "${{ vars.HEALTH_URL }}" | grep -q '"status":"ok"'
