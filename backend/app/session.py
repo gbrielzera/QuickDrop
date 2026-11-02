@@ -11,16 +11,23 @@ from app.models import Room, utc_now
 SESSION_SALT = "room-session"
 OWNER_SALT = "room-owner"
 MINIMUM_COOKIE_SECONDS = 1
+HOST_COOKIE_PREFIX = "__Host-"
+
+
+def _cookie_prefix() -> str:
+    # O prefixo __Host- faz o navegador recusar que outro endereço do mesmo domínio (um subdomínio)
+    # crie ou sobrescreva este cookie. Ele só é aceito em HTTPS, por isso não vale no desenvolvimento local.
+    return HOST_COOKIE_PREFIX if get_settings().cookie_secure else ""
 
 
 def session_cookie_name(room_code: str) -> str:
     """Nome do cookie de uma sala. Cada sala tem o seu, então dá para estar em várias ao mesmo tempo."""
-    return f"room_{room_code}"
+    return f"{_cookie_prefix()}room_{room_code}"
 
 
 def owner_cookie_name(room_code: str) -> str:
     """Nome do cookie de dono de uma sala. Só o navegador que criou a sala o recebe."""
-    return f"owner_{room_code}"
+    return f"{_cookie_prefix()}owner_{room_code}"
 
 
 def _serializer(salt: str = SESSION_SALT) -> URLSafeTimedSerializer:

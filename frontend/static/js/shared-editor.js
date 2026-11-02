@@ -11,6 +11,7 @@ import { errorMessageKey } from "./errors.js";
 import { formatFileSize } from "./file-size.js";
 import { getLanguage } from "./i18n.js";
 import { clearMessage, setUpConfirmButton, setUpCopyButton, showMessage } from "./ui.js";
+import { attachVersion, detachVersion } from "./versioned-text.js";
 
 const HTTP_CONFLICT = 409;
 // Espera a pessoa parar de digitar por um instante antes de salvar, para não salvar a cada tecla.
@@ -41,8 +42,12 @@ export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionK
   let saveTimer = null;
   let pendingConflict = null; // { text, version } do outro aparelho, enquanto a pessoa não escolhe
 
-  function decrypt(ciphertext) {
-    return ciphertext === "" ? "" : decryptText(fromBase64Url(ciphertext), getEncryptionKey(), purpose);
+  // O texto cifrado leva o número da versão dentro: o servidor não consegue passar um texto antigo por novo.
+  function decrypt(ciphertext, version) {
+    if (ciphertext === "") {
+      return "";
+    }
+    return detachVersion(decryptText(fromBase64Url(ciphertext), getEncryptionKey(), purpose), version);
   }
 
   function hasUnsavedChanges() {
@@ -81,7 +86,9 @@ export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionK
     sentText = text;
     setStatus("text.saving");
     try {
-      const encrypted = toBase64Url(encryptText(text, getEncryptionKey(), purpose));
+      // O servidor sempre grava a versão seguinte à que enviamos como base.
+      const versionedText = attachVersion(text, baseVersion + 1);
+      const encrypted = toBase64Url(encryptText(versionedText, getEncryptionKey(), purpose));
       const saved = await api.put(roomCode, encrypted, baseVersion);
       baseVersion = saved.version;
       savedText = text;
@@ -106,7 +113,7 @@ export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionK
   // ---------- conflito: outro aparelho salvou antes ----------
 
   function showConflict({ ciphertext, version }) {
-    pendingConflict = { text: decrypt(ciphertext), version };
+    pendingConflict = { text: decrypt(ciphertext, version), version };
     conflictBox.hidden = false;
     setStatus("text.conflict");
   }
@@ -137,7 +144,7 @@ export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionK
   function receiveRemote({ ciphertext, version }) {
     if (pendingConflict) {
       if (version > pendingConflict.version) {
-        pendingConflict = { text: decrypt(ciphertext), version };
+        pendingConflict = { text: decrypt(ciphertext, version), version };
       }
       return;
     }
@@ -145,7 +152,7 @@ export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionK
       return; // já temos esta versão (ou uma mais nova)
     }
 
-    const remoteText = decrypt(ciphertext);
+    const remoteText = decrypt(ciphertext, version);
     if (isSaving && remoteText === sentText) {
       return; // é o eco do que nós mesmos estamos salvando; a resposta do servidor atualiza a versão
     }

@@ -64,4 +64,4 @@ def test_the_download_keeps_its_own_no_store_header(client):
 
 def test_https_is_only_required_when_the_site_runs_on_https(client, https_client):
     assert "strict-transport-security" not in client.get("/").headers
-    assert https_client.get("/").headers["strict-transport-security"] == "max-age=31536000"
+    assert https_client.get("/").headers["strict-transport-security"] == "max-age=31536000; includeSubDomains"

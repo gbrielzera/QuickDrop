@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import HTTPConnection
 
 from app.models import Room
-from app.rate_limit import RateLimits, client_address, count_attempt
+from app.rate_limit import TOO_MANY_ATTEMPTS, RateLimits, client_address, count_attempt
 from app.realtime import ConnectionManager
 from app.room_service import find_active_room
 from app.security import ROOM_CODE_PATTERN
@@ -45,6 +45,19 @@ async def limit_api_requests(
 ) -> None:
     """Teto geral de pedidos à API por endereço IP, além dos limites mais específicos de cada rota."""
     count_attempt(limits.api_requests, client_address(request))
+
+
+async def limit_concurrent_uploads(
+    request: Request, limits: Annotated[RateLimits, Depends(get_rate_limits)]
+) -> AsyncIterator[None]:
+    """Recusa (429) o envio de quem já tem vários em andamento; a vaga volta quando o envio termina."""
+    address = client_address(request)
+    if not limits.concurrent_uploads.try_acquire(address):
+        raise HTTPException(status_code=429, detail=TOO_MANY_ATTEMPTS, headers={"Retry-After": "10"})
+    try:
+        yield
+    finally:
+        limits.concurrent_uploads.release(address)
 
 
 async def get_upload_lock(connection: HTTPConnection) -> asyncio.Lock:

@@ -61,3 +61,54 @@ def test_a_device_flooding_the_socket_is_disconnected(client):
                 websocket.receive_json()
         except WebSocketDisconnect as disconnect:
             assert disconnect.code == 1008
+
+
+def test_a_device_with_all_its_upload_slots_busy_cannot_start_another(client):
+    from app.rate_limit import ConcurrentLimiter
+    from tests.test_files import upload
+
+    room = create_room(client)
+    limiter = client.app.state.rate_limits.concurrent_uploads
+    assert isinstance(limiter, ConcurrentLimiter)
+    while limiter.try_acquire("testclient"):
+        pass
+
+    assert upload(client, room["code"]).status_code == 429
+
+    limiter.release("testclient")
+    assert upload(client, room["code"]).status_code == 201
+
+
+def test_the_upload_slot_is_returned_even_when_the_upload_is_refused(client):
+    from tests.test_files import upload
+
+    room = create_room(client)
+    limiter = client.app.state.rate_limits.concurrent_uploads
+
+    for _ in range(10):
+        upload(client, room["code"], content=b"")  # recusado: arquivo vazio
+
+    assert limiter.try_acquire("testclient")
+
+
+def test_the_concurrent_limiter_counts_per_key():
+    from app.rate_limit import ConcurrentLimiter
+
+    limiter = ConcurrentLimiter(max_active=1)
+
+    assert limiter.try_acquire("a")
+    assert not limiter.try_acquire("a")
+    assert limiter.try_acquire("b")
+    limiter.release("a")
+    assert limiter.try_acquire("a")
+
+
+def test_on_https_the_cookies_use_the_host_prefix(https_client):
+    https_client.post(
+        "/api/rooms",
+        json={"ttl_hours": 12, "has_password": False, "kdf_salt": "c" * 22, "auth_key": "d" * 43},
+    )
+    names = set(https_client.cookies.keys())
+
+    assert any(name.startswith("__Host-room_") for name in names)
+    assert any(name.startswith("__Host-owner_") for name in names)

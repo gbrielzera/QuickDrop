@@ -7,13 +7,21 @@ Qualquer tipo de arquivo é aceito. Os únicos limites são de tamanho.
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import FileResponse as DiskFileResponse
 from starlette.requests import ClientDisconnect
 
 from app import file_service, storage
 from app.config import BYTES_PER_MEGABYTE, get_settings
-from app.dependencies import Connections, CurrentRoom, Database, ItemId, Limits, UploadLock
+from app.dependencies import (
+    Connections,
+    CurrentRoom,
+    Database,
+    ItemId,
+    Limits,
+    UploadLock,
+    limit_concurrent_uploads,
+)
 from app.encoding import from_base64url, to_base64url
 from app.models import StoredFile
 from app.rate_limit import client_address, count_attempt
@@ -76,7 +84,7 @@ async def list_room_files(room: CurrentRoom, db: Database) -> list[FileResponse]
     return [_to_file_response(stored_file) for stored_file in stored_files]
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, dependencies=[Depends(limit_concurrent_uploads)])
 async def upload_file(
     request: Request,
     room: CurrentRoom,

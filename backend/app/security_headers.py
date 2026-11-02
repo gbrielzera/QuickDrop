@@ -40,7 +40,7 @@ SECURITY_HEADERS = {
 RARELY_CHANGING_PATHS = ("/static/js/vendor/", "/static/fonts/", "/static/icons/")
 
 # Diz ao navegador para usar só HTTPS neste site por um ano. Só faz sentido quando o site está em HTTPS.
-HSTS_VALUE = "max-age=31536000"
+HSTS_VALUE = "max-age=31536000; includeSubDomains"
 
 
 def _content_security_policy(request_host: str) -> str:

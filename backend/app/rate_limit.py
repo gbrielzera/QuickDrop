@@ -68,6 +68,34 @@ class RateLimiter:
             self._recent_hits(key)
 
 
+class ConcurrentLimiter:
+    """Conta quantas coisas cada chave (ex.: um endereço IP) está fazendo AGORA, ao mesmo tempo.
+
+    Serve para os envios de arquivo: os bytes só entram na soma do espaço do servidor quando o envio
+    termina, então muitos envios simultâneos poderiam ocupar o disco além do limite por um tempo.
+    """
+
+    def __init__(self, max_active: int) -> None:
+        self._max_active = max_active
+        self._active_by_key: dict[str, int] = {}
+
+    def try_acquire(self, key: str) -> bool:
+        """Reserva uma vaga para a chave. Devolve False se ela já usa todas as suas vagas."""
+        active = self._active_by_key.get(key, 0)
+        if active >= self._max_active:
+            return False
+        self._active_by_key[key] = active + 1
+        return True
+
+    def release(self, key: str) -> None:
+        """Devolve a vaga reservada por try_acquire."""
+        remaining = self._active_by_key.get(key, 0) - 1
+        if remaining > 0:
+            self._active_by_key[key] = remaining
+        else:
+            self._active_by_key.pop(key, None)
+
+
 @dataclass
 class RateLimits:
     """Todos os limites do app."""
@@ -78,6 +106,7 @@ class RateLimits:
     room_creations: RateLimiter  # salas criadas (por IP)
     api_requests: RateLimiter  # teto geral de pedidos à API (por IP)
     uploads: RateLimiter  # arquivos enviados (por IP)
+    concurrent_uploads: ConcurrentLimiter  # envios em andamento (por IP)
 
     def forget_idle_keys(self) -> None:
         for limiter in (
@@ -102,6 +131,7 @@ def create_rate_limits(settings: Settings) -> RateLimits:
         room_creations=RateLimiter(settings.rate_limit_room_creations_per_hour, SECONDS_PER_HOUR),
         api_requests=RateLimiter(settings.rate_limit_api_per_minute, SECONDS_PER_MINUTE),
         uploads=RateLimiter(settings.rate_limit_uploads_per_hour, SECONDS_PER_HOUR),
+        concurrent_uploads=ConcurrentLimiter(settings.max_concurrent_uploads_per_address),
     )
 
 

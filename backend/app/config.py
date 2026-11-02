@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     rate_limit_room_creations_per_hour: int = 20  # salas criadas por IP
     rate_limit_api_per_minute: int = 600  # pedidos à API por IP (teto geral, bem acima do uso normal)
     rate_limit_uploads_per_hour: int = 120  # arquivos enviados por IP
+    max_concurrent_uploads_per_address: int = 5  # envios acontecendo ao mesmo tempo por IP
 
     # Texto separado por vírgulas para ficar fácil de escrever no .env
     allowed_ttl_hours: str = "1,12,24,48"
