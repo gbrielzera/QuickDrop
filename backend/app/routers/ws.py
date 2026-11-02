@@ -13,6 +13,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.config import get_settings
 from app.dependencies import RoomCode
+from app.rate_limit import RateLimiter, normalize_address
 from app.room_service import find_active_room
 from app.session import has_session_for_room
 
@@ -20,6 +21,9 @@ router = APIRouter()
 
 WEBSOCKET_POLICY_VIOLATION = 1008
 WEBSOCKET_UNSUPPORTED_DATA = 1003
+# O navegador manda um "ping" a cada 25 segundos; este teto é bem acima disso e só pega quem inunda a sala.
+MAX_MESSAGES_PER_MINUTE = 30
+SECONDS_PER_MINUTE = 60
 
 
 def _comes_from_this_site(websocket: WebSocket) -> bool:
@@ -33,7 +37,7 @@ def _comes_from_this_site(websocket: WebSocket) -> bool:
 def _is_over_rate_limit(websocket: WebSocket) -> bool:
     """True se este endereço IP já abriu conexões demais; senão, anota esta tentativa."""
     limiter = websocket.app.state.rate_limits.api_requests
-    address = websocket.client.host if websocket.client else "unknown"
+    address = normalize_address(websocket.client.host) if websocket.client else "unknown"
     if limiter.is_blocked(address):
         return True
     limiter.record(address)
@@ -60,9 +64,14 @@ async def room_socket(websocket: WebSocket, code: RoomCode) -> None:
         return
 
     await connections.connect(code, websocket)
+    message_limiter = RateLimiter(MAX_MESSAGES_PER_MINUTE, SECONDS_PER_MINUTE)
     try:
         while True:
             message = await websocket.receive_json()
+            if message_limiter.is_blocked("connection"):
+                await websocket.close(code=WEBSOCKET_POLICY_VIOLATION)
+                break
+            message_limiter.record("connection")
             if isinstance(message, dict) and message.get("type") == "ping":
                 await websocket.send_json({"type": "pong"})
     except WebSocketDisconnect:

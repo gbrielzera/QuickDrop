@@ -10,6 +10,11 @@ from app.encoding import from_base64url
 
 SALT_BYTES = 16
 AUTH_KEY_BYTES = 32
+# Teto do texto cifrado em base64url (cerca de 3 MB), conferido ANTES de decodificar: sem ele, um corpo
+# gigante ocuparia a memória do servidor mesmo para quem nem entrou na sala.
+MAX_CIPHERTEXT_CHARS = 4_000_000
+# Maior número que o SQLite guarda numa coluna inteira; acima disso a gravação falharia com erro 500.
+MAX_VERSION = 2**63 - 1
 
 
 def _must_decode_to(expected_bytes: int):
@@ -30,7 +35,7 @@ def _must_be_base64url(text: str) -> str:
 
 
 Salt = Annotated[str, AfterValidator(_must_decode_to(SALT_BYTES))]
-Base64Text = Annotated[str, AfterValidator(_must_be_base64url)]
+Base64Text = Annotated[str, Field(max_length=MAX_CIPHERTEXT_CHARS), AfterValidator(_must_be_base64url)]
 AuthKey = Annotated[str, AfterValidator(_must_decode_to(AUTH_KEY_BYTES))]
 
 
@@ -94,7 +99,7 @@ class UpdateTextRequest(BaseModel):
     """Novo texto compartilhado (já criptografado) e a versão em que ele se baseou."""
 
     ciphertext: Base64Text
-    base_version: int = Field(ge=0)
+    base_version: int = Field(ge=0, le=MAX_VERSION)
 
 
 class TextResponse(BaseModel):

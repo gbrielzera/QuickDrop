@@ -32,6 +32,9 @@ SECURITY_HEADERS = {
     # O código da sala aparece no endereço da página: nunca o repassamos a outros sites.
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    # Isolam a página de janelas e sites de outras origens (nada aqui precisa ser aberto por terceiros).
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
 }
 
 RARELY_CHANGING_PATHS = ("/static/js/vendor/", "/static/fonts/", "/static/icons/")
@@ -73,8 +76,8 @@ class SecurityHeadersMiddleware:
             headers.setdefault(name, value)
         if self.hsts_enabled:
             headers.setdefault("Strict-Transport-Security", HSTS_VALUE)
-        if path.startswith("/api/"):
-            # As respostas da API têm dados da sala: nada de guardá-las em cache.
+        if path.startswith(("/api/", "/r/")):
+            # As respostas da API têm dados da sala, e o endereço de uma sala não deve ficar em cache.
             headers.setdefault("Cache-Control", "no-store")
         elif path.startswith(RARELY_CHANGING_PATHS):
             # Bibliotecas de terceiros, fontes e ícones quase nunca mudam: guardá-los por um dia evita baixar

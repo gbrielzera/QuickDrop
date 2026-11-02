@@ -1,12 +1,32 @@
 # O Caddy recebe os acessos da internet, cuida do HTTPS (certificado Let's Encrypt automático)
 # e repassa para o app. WebSocket funciona sem configuração extra.
+{
+	servers {
+		timeouts {
+			# Contra conexões que mandam um byte de cada vez só para ocupar o servidor (Slowloris).
+			# O corpo tem prazo largo porque um envio de 100 MB pelo celular pode demorar.
+			read_header 10s
+			read_body 10m
+		}
+	}
+}
+
 {$DOMAIN} {
 	encode zstd gzip
 
 	# Não anuncia qual software está por trás.
 	header -Server
 
-	# Arquivo de 100 MB + o acréscimo da criptografia. O app confere o limite exato.
+	# Só o envio de arquivo (100 MB + o acréscimo da criptografia) pode ter corpo grande. As demais rotas
+	# da API recebem JSON pequeno: o limite baixo impede que alguém ocupe a memória do servidor com
+	# corpos gigantes. O app confere os limites exatos.
+	@json_api {
+		path /api/*
+		not path_regexp upload ^/api/rooms/[^/]+/files$
+	}
+	request_body @json_api {
+		max_size 4MB
+	}
 	request_body {
 		max_size 110MB
 	}

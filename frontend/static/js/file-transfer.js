@@ -8,6 +8,7 @@ import {
   encryptFile,
   encryptJson,
   fromBase64Url,
+  readFileStreamId,
   toBase64Url,
 } from "./crypto.js";
 import { safeFileName } from "./file-size.js";
@@ -27,9 +28,9 @@ export function readFileEntry(storedFile, encryptionKey) {
   };
   try {
     const meta = decryptJson(fromBase64Url(storedFile.encrypted_meta), encryptionKey);
-    return { ...entry, readable: true, name: String(meta.name), type: String(meta.type), size: Number(meta.size) };
+    return { ...entry, readable: true, name: String(meta.name), type: String(meta.type), size: Number(meta.size), streamId: String(meta.streamId) };
   } catch {
-    return { ...entry, readable: false, name: "", type: "", size: storedFile.size_bytes };
+    return { ...entry, readable: false, name: "", type: "", size: storedFile.size_bytes, streamId: "" };
   }
 }
 
@@ -40,7 +41,9 @@ export function readFileEntry(storedFile, encryptionKey) {
 export async function sendFile({ roomCode, file, encryptionKey, onStage, onProgress }) {
   onStage("encrypting");
   const encryptedBlob = await encryptFile(file, encryptionKey);
-  const encryptedMeta = encryptJson({ name: file.name, type: file.type, size: file.size }, encryptionKey);
+  // O identificador do conteúdo vai nos metadados: quem baixar confere que o arquivo é mesmo este.
+  const streamId = await readFileStreamId(encryptedBlob);
+  const encryptedMeta = encryptJson({ name: file.name, type: file.type, size: file.size, streamId }, encryptionKey);
 
   onStage("sending");
   const storedFile = await api.uploadFile(roomCode, encryptedBlob, toBase64Url(encryptedMeta), onProgress);
@@ -53,7 +56,15 @@ export async function fetchDecryptedFile({ roomCode, entry, encryptionKey, onSta
   const encryptedBlob = await api.downloadFile(roomCode, entry.id);
 
   onStage("decrypting");
+  // Um servidor adulterado poderia entregar o conteúdo de outro arquivo da sala: o nome e o tipo
+  // mostrados pertenceriam a um arquivo e o conteúdo a outro.
+  if ((await readFileStreamId(encryptedBlob)) !== entry.streamId) {
+    throw new Error("O conteúdo baixado não corresponde a este arquivo.");
+  }
   const decryptedBlob = await decryptFile(encryptedBlob, encryptionKey);
+  if (decryptedBlob.size !== entry.size) {
+    throw new Error("O tamanho do arquivo não confere com o registrado.");
+  }
   return new Blob([decryptedBlob], { type: entry.type });
 }
 

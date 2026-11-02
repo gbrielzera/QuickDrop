@@ -14,6 +14,7 @@ import {
   fromBase64Url,
   generateRoomSecret,
   generateSalt,
+  readFileStreamId,
   toBase64Url,
 } from "../static/js/crypto.js";
 
@@ -93,34 +94,34 @@ test("authKey e encryptionKey são diferentes (o servidor só vê a authKey)", (
 test("texto: ida e volta, incluindo acentos e emoji", () => {
   const original = "Olá, mundo! Ação 日本語 🔒";
 
-  const encrypted = encryptText(original, encryptionKey);
+  const encrypted = encryptText(original, encryptionKey, "text");
 
-  assert.equal(decryptText(encrypted, encryptionKey), original);
+  assert.equal(decryptText(encrypted, encryptionKey, "text"), original);
 });
 
 test("texto vazio também funciona", () => {
-  assert.equal(decryptText(encryptText("", encryptionKey), encryptionKey), "");
+  assert.equal(decryptText(encryptText("", encryptionKey, "text"), encryptionKey, "text"), "");
 });
 
 test("o mesmo texto criptografado duas vezes gera resultados diferentes", () => {
-  assert.notDeepEqual(encryptText("igual", encryptionKey), encryptText("igual", encryptionKey));
+  assert.notDeepEqual(encryptText("igual", encryptionKey, "text"), encryptText("igual", encryptionKey, "text"));
 });
 
 test("texto: chave errada falha", () => {
-  const encrypted = encryptText("segredo", encryptionKey);
+  const encrypted = encryptText("segredo", encryptionKey, "text");
 
-  assert.throws(() => decryptText(encrypted, otherKey));
+  assert.throws(() => decryptText(encrypted, otherKey, "text"));
 });
 
 test("texto: dado adulterado falha", () => {
-  const encrypted = encryptText("segredo", encryptionKey);
+  const encrypted = encryptText("segredo", encryptionKey, "text");
   encrypted[encrypted.length - 1] ^= 1;
 
-  assert.throws(() => decryptText(encrypted, encryptionKey));
+  assert.throws(() => decryptText(encrypted, encryptionKey, "text"));
 });
 
 test("texto cifrado não contém o texto original", () => {
-  const encrypted = encryptText("PALAVRA-SECRETA-123", encryptionKey);
+  const encrypted = encryptText("PALAVRA-SECRETA-123", encryptionKey, "text");
 
   const asLatin1 = Buffer.from(encrypted).toString("latin1");
   assert.ok(!asLatin1.includes("PALAVRA-SECRETA-123"));
@@ -209,4 +210,23 @@ test("arquivo: dados extras depois de um bloco final completo falham", async () 
 
 test("arquivo: menor que o cabeçalho falha", async () => {
   await assert.rejects(decryptFile(new Blob([new Uint8Array(10)]), encryptionKey), /pequeno demais/);
+});
+
+test("um texto cifrado para uma finalidade não vale em outra", () => {
+  const clip = encryptText("segredo", encryptionKey, "clip");
+
+  assert.throws(() => decryptText(clip, encryptionKey, "text"));
+  assert.throws(() => decryptJson(clip, encryptionKey));
+});
+
+test("finalidade desconhecida é recusada", () => {
+  assert.throws(() => encryptText("x", encryptionKey, "inventada"), /desconhecida/);
+});
+
+test("arquivo: o identificador muda a cada arquivo e é o cabeçalho do conteúdo", async () => {
+  const first = await encryptFile(makeRandomBlob(100), encryptionKey);
+  const second = await encryptFile(makeRandomBlob(100), encryptionKey);
+
+  assert.notEqual(await readFileStreamId(first), await readFileStreamId(second));
+  assert.equal(fromBase64Url(await readFileStreamId(first)).length, FILE_HEADER_BYTES);
 });

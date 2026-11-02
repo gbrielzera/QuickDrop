@@ -78,6 +78,7 @@ export function startRoomPanels({ roomCode, getEncryptionKey }) {
     ids: TEXT_EDITOR_IDS,
     api: { get: getText, put: putText },
     maxBytes: Number(limits.maxTextBytes),
+    purpose: "text",
     getEncryptionKey,
   });
   const textClips = startClipsPanel({
@@ -93,6 +94,7 @@ export function startRoomPanels({ roomCode, getEncryptionKey }) {
     ids: CODE_EDITOR_IDS,
     api: { get: getSource, put: putSource },
     maxBytes: Number(limits.maxTextBytes),
+    purpose: "source",
     getEncryptionKey,
   });
   setUpCodeKeys(document.getElementById(CODE_EDITOR_IDS.textarea));

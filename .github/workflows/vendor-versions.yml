@@ -7,6 +7,10 @@ on:
     - cron: "0 12 1 * *"
   workflow_dispatch:
 
+# O token do GitHub não precisa de nenhuma permissão além de ler o código.
+permissions:
+  contents: read
+
 jobs:
   vendor:
     runs-on: ubuntu-latest
@@ -17,3 +21,4 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/check-vendor-versions.mjs
+      - run: node scripts/verify-vendor-hashes.mjs

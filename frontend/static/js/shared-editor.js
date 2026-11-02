@@ -23,8 +23,9 @@ const RETRY_AFTER_FAILURE_MILLISECONDS = 5000;
  *   copyButton, clearButton). Assim o mesmo código serve para o texto e para o código.
  * - api: `{ get, put }`, as funções que falam com o servidor.
  * - maxBytes: o limite de tamanho do conteúdo.
+ * - purpose: "text" ou "source", a finalidade da criptografia (cada uma usa uma subchave própria).
  */
-export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionKey }) {
+export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionKey, purpose }) {
   const textarea = document.getElementById(ids.textarea);
   const statusElement = document.getElementById(ids.status);
   const copyStatusElement = document.getElementById(ids.copyStatus);
@@ -41,7 +42,7 @@ export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionK
   let pendingConflict = null; // { text, version } do outro aparelho, enquanto a pessoa não escolhe
 
   function decrypt(ciphertext) {
-    return ciphertext === "" ? "" : decryptText(fromBase64Url(ciphertext), getEncryptionKey());
+    return ciphertext === "" ? "" : decryptText(fromBase64Url(ciphertext), getEncryptionKey(), purpose);
   }
 
   function hasUnsavedChanges() {
@@ -80,7 +81,7 @@ export function startSharedEditor({ roomCode, ids, api, maxBytes, getEncryptionK
     sentText = text;
     setStatus("text.saving");
     try {
-      const encrypted = toBase64Url(encryptText(text, getEncryptionKey()));
+      const encrypted = toBase64Url(encryptText(text, getEncryptionKey(), purpose));
       const saved = await api.put(roomCode, encrypted, baseVersion);
       baseVersion = saved.version;
       savedText = text;

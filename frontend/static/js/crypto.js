@@ -18,6 +18,11 @@ const KDF_CONTEXT = "quickdrp";
 const AUTH_KEY_ID = 1;
 const ENCRYPTION_KEY_ID = 2;
 
+// Cada tipo de conteúdo é criptografado com a sua própria subchave. Assim, um texto cifrado de um lugar
+// (um clip, por exemplo) nunca é aceito em outro (os metadados de um arquivo): um servidor adulterado
+// não consegue trocar um pelo outro.
+const PURPOSE_KEY_IDS = { meta: 10, text: 11, source: 12, clip: 13, codeClip: 14, file: 15 };
+
 // Argon2id "interactive": rápido o bastante para celulares (cerca de 64 MB de memória).
 const ARGON2_OPS_LIMIT = sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE;
 const ARGON2_MEMORY_LIMIT = sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE;
@@ -86,12 +91,21 @@ export function deriveRoomKeys(password, salt) {
   return { authKey, encryptionKey };
 }
 
+/** Deriva a subchave de um tipo de conteúdo ("meta", "text", "source", "clip", "codeClip" ou "file"). */
+function deriveSubkey(encryptionKey, purpose) {
+  const keyId = PURPOSE_KEY_IDS[purpose];
+  if (keyId === undefined) {
+    throw new Error(`Finalidade de criptografia desconhecida: ${purpose}`);
+  }
+  return sodium.crypto_kdf_derive_from_key(KEY_BYTES, keyId, KDF_CONTEXT, encryptionKey);
+}
+
 // ---------- Textos (editor, clips e metadados) ----------
 
 /** Criptografa um texto. O resultado é o nonce (24 bytes aleatórios) seguido do texto cifrado. */
-export function encryptText(text, encryptionKey) {
+export function encryptText(text, encryptionKey, purpose) {
   const nonce = sodium.randombytes_buf(NONCE_BYTES);
-  const cipher = sodium.crypto_secretbox_easy(text, nonce, encryptionKey);
+  const cipher = sodium.crypto_secretbox_easy(text, nonce, deriveSubkey(encryptionKey, purpose));
   const result = new Uint8Array(NONCE_BYTES + cipher.length);
   result.set(nonce);
   result.set(cipher, NONCE_BYTES);
@@ -99,21 +113,21 @@ export function encryptText(text, encryptionKey) {
 }
 
 /** Descriptografa o resultado de encryptText. Lança erro se a chave estiver errada ou o dado for alterado. */
-export function decryptText(encryptedBytes, encryptionKey) {
+export function decryptText(encryptedBytes, encryptionKey, purpose) {
   const nonce = encryptedBytes.slice(0, NONCE_BYTES);
   const cipher = encryptedBytes.slice(NONCE_BYTES);
-  const plainBytes = sodium.crypto_secretbox_open_easy(cipher, nonce, encryptionKey);
+  const plainBytes = sodium.crypto_secretbox_open_easy(cipher, nonce, deriveSubkey(encryptionKey, purpose));
   return sodium.to_string(plainBytes);
 }
 
 /** Criptografa um objeto (ex.: nome, tipo e tamanho de um arquivo). */
 export function encryptJson(value, encryptionKey) {
-  return encryptText(JSON.stringify(value), encryptionKey);
+  return encryptText(JSON.stringify(value), encryptionKey, "meta");
 }
 
 /** Descriptografa o resultado de encryptJson. */
 export function decryptJson(encryptedBytes, encryptionKey) {
-  return JSON.parse(decryptText(encryptedBytes, encryptionKey));
+  return JSON.parse(decryptText(encryptedBytes, encryptionKey, "meta"));
 }
 
 // ---------- Arquivos ----------
@@ -123,7 +137,8 @@ export function decryptJson(encryptedBytes, encryptionKey) {
 
 /** Criptografa um File/Blob e devolve um Blob com o conteúdo cifrado. */
 export async function encryptFile(file, encryptionKey) {
-  const { state, header } = sodium.crypto_secretstream_xchacha20poly1305_init_push(encryptionKey);
+  const fileKey = deriveSubkey(encryptionKey, "file");
+  const { state, header } = sodium.crypto_secretstream_xchacha20poly1305_init_push(fileKey);
   const parts = [header];
 
   let offset = 0;
@@ -146,7 +161,7 @@ export async function decryptFile(encryptedBlob, encryptionKey) {
   }
 
   const header = new Uint8Array(await encryptedBlob.slice(0, FILE_HEADER_BYTES).arrayBuffer());
-  const state = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, encryptionKey);
+  const state = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, deriveSubkey(encryptionKey, "file"));
   const parts = [];
 
   let offset = FILE_HEADER_BYTES;
@@ -167,4 +182,13 @@ export async function decryptFile(encryptedBlob, encryptionKey) {
     throw new Error("Arquivo criptografado incompleto: faltam blocos no final.");
   }
   return new Blob(parts);
+}
+
+/**
+ * Identificador de um arquivo criptografado: o cabeçalho aleatório do início dele, em base64url.
+ * Vai dentro dos metadados, para que o servidor não consiga trocar o conteúdo de um arquivo por outro.
+ */
+export async function readFileStreamId(encryptedBlob) {
+  const header = new Uint8Array(await encryptedBlob.slice(0, FILE_HEADER_BYTES).arrayBuffer());
+  return toBase64Url(header);
 }

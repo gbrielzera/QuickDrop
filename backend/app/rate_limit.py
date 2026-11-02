@@ -4,6 +4,7 @@ Tudo fica na memória deste processo. Se um dia houver mais de um servidor rodan
 passam a viver num Redis compartilhado.
 """
 
+import ipaddress
 import math
 import time
 from collections import deque
@@ -104,12 +105,30 @@ def create_rate_limits(settings: Settings) -> RateLimits:
     )
 
 
+IPV6_PREFIX_BITS = 64
+
+
+def normalize_address(host: str) -> str:
+    """Endereço usado como chave dos limites. Em IPv6, vale o prefixo /64 inteiro.
+
+    Quem tem uma conexão IPv6 recebe um /64 (bilhões de endereços): contar cada endereço sozinho
+    deixaria essa pessoa escapar de todos os limites.
+    """
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return host
+    if address.version == 4:
+        return host
+    return str(ipaddress.ip_network(f"{address}/{IPV6_PREFIX_BITS}", strict=False))
+
+
 def client_address(request: Request) -> str:
     """Endereço de quem fez a requisição.
 
     Atrás de um proxy (como o Caddy), o servidor precisa ser iniciado com --proxy-headers.
     """
-    return request.client.host if request.client else "unknown"
+    return normalize_address(request.client.host) if request.client else "unknown"
 
 
 def block_if_over_limit(limiter: RateLimiter, key: str) -> None:

@@ -12,9 +12,9 @@ import { clearMessage, runWithBusyButton, setUpConfirmButton, setUpCopyButton, s
 const HTTP_NOT_FOUND = 404;
 
 /** Transforma o clip guardado no servidor em algo que a tela entende. Se a chave não conferir, `readable` é false. */
-function readClipEntry(storedClip, encryptionKey) {
+function readClipEntry(storedClip, encryptionKey, clipPurpose) {
   try {
-    const text = decryptText(fromBase64Url(storedClip.ciphertext), encryptionKey);
+    const text = decryptText(fromBase64Url(storedClip.ciphertext), encryptionKey, clipPurpose);
     return { id: storedClip.id, readable: true, text };
   } catch {
     return { id: storedClip.id, readable: false, text: "" };
@@ -36,6 +36,7 @@ export function startClipsPanel({ roomCode, ids, api, maxClipBytes, getEncryptio
   const list = document.getElementById(ids.list);
   const statusElement = document.getElementById(ids.status);
 
+  const clipPurpose = isCode ? "codeClip" : "clip";
   const rowsById = new Map();
 
   function showEmptyMessageWhenNoClips() {
@@ -119,7 +120,7 @@ export function startClipsPanel({ roomCode, ids, api, maxClipBytes, getEncryptio
 
   /** Mostra um clip como o servidor o guarda (criptografado). */
   function addStoredClip(storedClip) {
-    addEntry(readClipEntry(storedClip, getEncryptionKey()));
+    addEntry(readClipEntry(storedClip, getEncryptionKey(), clipPurpose));
   }
 
   function removeEntry(clipId) {
@@ -129,7 +130,7 @@ export function startClipsPanel({ roomCode, ids, api, maxClipBytes, getEncryptio
   async function load() {
     try {
       const storedClips = await api.list(roomCode);
-      const entries = storedClips.map((storedClip) => readClipEntry(storedClip, getEncryptionKey()));
+      const entries = storedClips.map((storedClip) => readClipEntry(storedClip, getEncryptionKey(), clipPurpose));
       // Reconcilia com o servidor: some o que foi apagado enquanto estávamos sem conexão e entra o que chegou.
       const idsOnServer = new Set(entries.map((entry) => entry.id));
       for (const clipId of [...rowsById.keys()]) {
@@ -154,7 +155,7 @@ export function startClipsPanel({ roomCode, ids, api, maxClipBytes, getEncryptio
       return false;
     }
     try {
-      const encrypted = toBase64Url(encryptText(text, getEncryptionKey()));
+      const encrypted = toBase64Url(encryptText(text, getEncryptionKey(), clipPurpose));
       const storedClip = await api.create(roomCode, encrypted);
       addStoredClip(storedClip);
       return true;

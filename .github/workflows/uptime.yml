@@ -7,6 +7,9 @@ on:
     - cron: "*/15 * * * *"
   workflow_dispatch:
 
+# O token do GitHub não precisa de nenhuma permissão além de ler o código.
+permissions: {}
+
 jobs:
   health:
     runs-on: ubuntu-latest

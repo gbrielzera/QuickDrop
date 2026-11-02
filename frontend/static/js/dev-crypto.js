@@ -49,8 +49,8 @@ function testText() {
   const original = textInput.value;
   const encryptionKey = createTestKeys();
 
-  const encrypted = encryptText(original, encryptionKey);
-  const decrypted = decryptText(encrypted, encryptionKey);
+  const encrypted = encryptText(original, encryptionKey, "text");
+  const decrypted = decryptText(encrypted, encryptionKey, "text");
 
   const worked = decrypted === original;
   textResult.textContent =
